@@ -1,5 +1,5 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#ifndef TOKEN_HPP
+#define TOKEN_HPP
 
 #include <string>
 
@@ -35,4 +35,4 @@ struct Token
     Token(TokenType type, std::string value, TokenMetadata metadata) : type(type), value(value), metadata(metadata) {}
 };
 
-#endif // TOKEN_H
+#endif // TOKEN_HPP

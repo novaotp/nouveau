@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <stdexcept>
-#include "file.h"
+#include "file.hpp"
 
 std::string readFile(const std::string path)
 {

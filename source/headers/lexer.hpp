@@ -1,9 +1,9 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef LEXER_HPP
+#define LEXER_HPP
 
 #include <string>
 #include <vector>
-#include "token.h"
+#include "token.hpp"
 
 class Lexer
 {
@@ -36,4 +36,4 @@ public:
     std::vector<Token> tokenize();
 };
 
-#endif // LEXER_H
+#endif // LEXER_HPP

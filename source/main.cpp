@@ -1,11 +1,11 @@
 #include <iostream>
 #include <string>
-#include "file.h"
-#include "lexer.h"
+#include "file.hpp"
+#include "lexer.hpp"
 
 int main()
 {
-    std::string contents = readFile("./tests/sample_code/arithmetic.flux");
+    std::string contents = readFile("./tests/sample_code/arithmetic.nv");
 
     Lexer lexer = Lexer(contents);
     std::vector<Token> tokens = lexer.tokenize();

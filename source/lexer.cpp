@@ -1,7 +1,7 @@
 #include <map>
 #include <stdexcept>
-#include "token.h"
-#include "lexer.h"
+#include "token.hpp"
+#include "lexer.hpp"
 
 const size_t TAB_SIZE = 4;
 
