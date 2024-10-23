@@ -3,9 +3,16 @@
 #include "file.hpp"
 #include "lexer.hpp"
 
-int main()
+int main(int argc, char *argv[])
 {
-    std::string contents = readFile("./tests/sample_code/arithmetic.nv");
+    if (argc < 2)
+    {
+        std::cerr << "Error: Please provide the path to the source file." << std::endl;
+        return 1;
+    }
+
+    std::string filePath = argv[1];
+    std::string contents = readFile(filePath);
 
     Lexer lexer = Lexer(contents);
     std::vector<Token> tokens = lexer.tokenize();
