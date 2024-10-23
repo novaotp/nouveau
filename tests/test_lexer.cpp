@@ -6,7 +6,7 @@
 
 TEST_CASE("Lexer works correctly", "[lexer]")
 {
-    SECTION("Integer is tokenized properly")
+    SECTION("Integers are tokenized properly")
     {
         std::string sourceCode = "69";
         Lexer lexer = Lexer(sourceCode);
@@ -22,7 +22,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(intToken.metadata.length == 2);
     }
 
-    SECTION("Floating point number is tokenized properly")
+    SECTION("Floating point numbers are tokenized properly")
     {
         std::string sourceCode = "3.14";
         Lexer lexer = Lexer(sourceCode);
@@ -30,6 +30,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         std::vector<Token> tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 2);
+
         Token floatToken = tokens.at(0);
 
         REQUIRE(floatToken.type == TokenType::FLOAT);
@@ -51,6 +52,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             std::vector<Token> tokens = lexer.tokenize();
 
             REQUIRE(tokens.size() == 2);
+
             Token operatorToken = tokens.at(0);
 
             REQUIRE(operatorToken.type == expectedType);
@@ -78,5 +80,20 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             REQUIRE(tokens.size() == 1);
             REQUIRE(tokens.at(0).type == TokenType::END_OF_FILE);
         }
+    }
+
+    SECTION("Strings are tokenized properly")
+    {
+        std::string sourceCode = "Hello, world !";
+        Lexer lexer = Lexer('"' + sourceCode + '"');
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token stringToken = tokens.at(0);
+
+        REQUIRE(stringToken.type == TokenType::STRING);
+        REQUIRE(stringToken.value == sourceCode);
+        REQUIRE(stringToken.metadata.length == sourceCode.size() + 2);
     }
 }

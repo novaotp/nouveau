@@ -44,11 +44,6 @@ bool Lexer::isArithmeticOperator(char op)
     return op == '+' || op == '-' || op == '*' || op == '/';
 }
 
-bool Lexer::isNumber(char num)
-{
-    return isdigit(num);
-}
-
 std::vector<Token> Lexer::tokenize()
 {
     std::vector<Token> tokens = {};
@@ -93,12 +88,13 @@ std::vector<Token> Lexer::tokenize()
             this->advanceColumn();
             this->advanceIndex();
         }
-        else if (this->isNumber(currentChar))
+        else if (isdigit(currentChar))
         {
             std::string value = "";
             bool containsDot = false;
+            size_t column_start = this->column;
 
-            while (this->isNumber(this->getCurrentChar()) || (this->getCurrentChar() == '.' && !containsDot))
+            while (isdigit(this->getCurrentChar()) || (this->getCurrentChar() == '.' && !containsDot))
             {
                 if (this->getCurrentChar() == '.')
                 {
@@ -112,7 +108,31 @@ std::vector<Token> Lexer::tokenize()
 
             token.type = containsDot ? TokenType::FLOAT : TokenType::INTEGER;
             token.value = value;
-            token.metadata = TokenMetadata(this->column, this->line, value.size());
+            token.metadata = TokenMetadata(column_start, this->line, value.size());
+        }
+        else if (currentChar == '"')
+        {
+            std::string value = "";
+            size_t column_start = this->column;
+
+            // Skip the first "
+            this->advanceColumn();
+            this->advanceIndex();
+
+            while (this->getCurrentChar() != '"')
+            {
+                value += this->getCurrentChar();
+                this->advanceColumn();
+                this->advanceIndex();
+            }
+
+            // Skip the last "
+            this->advanceColumn();
+            this->advanceIndex();
+
+            token.type = TokenType::STRING;
+            token.value = value;
+            token.metadata = TokenMetadata(column_start, this->line, value.size() + 2);
         }
         else
         {

@@ -5,6 +5,7 @@
 
 enum TokenType
 {
+    STRING,
     INTEGER,
     FLOAT,
     ADDITION_OPERATOR,

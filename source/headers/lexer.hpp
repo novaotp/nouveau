@@ -25,7 +25,6 @@ private:
     size_t advanceIndex();
     char getCurrentChar();
     bool isArithmeticOperator(char op);
-    bool isNumber(char num);
 
 public:
     Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
