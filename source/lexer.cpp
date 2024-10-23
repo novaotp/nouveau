@@ -11,7 +11,7 @@ std::map<std::string, TokenType> symbolToTokenType = {
 
 std::map<char, TokenType> arithmeticOperatorToTokenType = {
     {'+', TokenType::ADDITION_OPERATOR},
-    {'-', TokenType::SUBSTRACTION_OPERATOR},
+    {'-', TokenType::SUBTRACTION_OPERATOR},
     {'*', TokenType::MULTIPLICATION_OPERATOR},
     {'/', TokenType::DIVISION_OPERATOR}};
 
