@@ -1,19 +1,18 @@
 #include <iostream>
 #include <string>
 #include "file.h"
+#include "lexer.h"
 
 int main()
 {
-    std::string contents;
-    try
+    std::string contents = readFile("./tests/sample_code/arithmetic.flux");
+
+    Lexer lexer = Lexer(contents);
+    std::vector<Token> tokens = lexer.tokenize();
+
+    for (size_t i = 0; i < tokens.size(); i++)
     {
-        contents = readFile("./tests/sample_code/arithmetic.flux");
-        std::cout << contents;
-    }
-    catch (const std::runtime_error &e)
-    {
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return 1;
+        std::cout << tokens[i].value << std::endl;
     }
 
     return 0;

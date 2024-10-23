@@ -1,0 +1,39 @@
+#ifndef LEXER_H
+#define LEXER_H
+
+#include <string>
+#include <vector>
+#include "token.h"
+
+class Lexer
+{
+private:
+    size_t index = 0;
+    size_t column = 1;
+    size_t line = 1;
+    std::string sourceCode;
+
+    /// @brief Advances the current column by 1 and returns the previous column.
+    /// @param n The number of column to advance. Defaults to 1.
+    /// @return The previous column.
+    size_t advanceColumn(size_t n);
+    /// @brief Advances the line by 1, resets the column and returns the previous line.
+    /// @return The previous line.
+    size_t advanceLine();
+    /// @brief Advances the index by 1 and returns the previous index.
+    /// @return The previous index.
+    size_t advanceIndex();
+    char getCurrentChar();
+    bool isArithmeticOperator(char op);
+    bool isNumber(char num);
+
+public:
+    Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
+    ~Lexer() {};
+
+    /// @brief Transforms a given source code to an array of tokens.
+    /// @return The array of tokens.
+    std::vector<Token> tokenize();
+};
+
+#endif // LEXER_H
