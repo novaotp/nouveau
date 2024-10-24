@@ -231,4 +231,26 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(assignmentToken.value == "=");
         REQUIRE(assignmentToken.metadata.length == 1);
     }
+
+    SECTION("Conditionals are tokenized properly")
+    {
+        std::map<std::string, TokenType> conditionalCases = {
+            {"if", TokenType::IF_KEYWORD},
+            {"else", TokenType::ELSE_KEYWORD},
+            {"else if", TokenType::ELSE_IF_KEYWORD}};
+
+        for (const auto &[sourceCode, expectedType] : conditionalCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token conditionalToken = tokens.at(0);
+
+            REQUIRE(conditionalToken.type == expectedType);
+            REQUIRE(conditionalToken.value == sourceCode);
+            REQUIRE(conditionalToken.metadata.length == sourceCode.size());
+        }
+    }
 }

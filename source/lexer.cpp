@@ -3,6 +3,7 @@
 #include "token.hpp"
 #include "lexer.hpp"
 
+// ? How to handle other tab sizes properly
 const size_t TAB_SIZE = 4;
 
 std::map<char, TokenType> arithmeticOperatorToTokenType = {
@@ -253,6 +254,25 @@ std::vector<Token> Lexer::tokenize()
             else if (value == "const")
             {
                 token.type = TokenType::CONST_KEYWORD;
+            }
+            else if (value == "if")
+            {
+                token.type = TokenType::IF_KEYWORD;
+            }
+            else if (value == "else")
+            {
+                token.type = TokenType::ELSE_KEYWORD;
+
+                // ? There could be more spaces between the else and the if
+                if (this->getCurrentChar() == ' ' && this->getNextChar() == 'i' && this->sourceCode[this->index + 2] == 'f')
+                {
+                    token.value += " if";
+                    token.type = TokenType::ELSE_IF_KEYWORD;
+                    token.metadata.length += 3;
+
+                    this->advanceColumn(3);
+                    this->advanceIndex(3);
+                }
             }
             else
             {
