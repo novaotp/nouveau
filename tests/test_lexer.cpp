@@ -44,7 +44,8 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             {"+", TokenType::ADDITION_OPERATOR},
             {"-", TokenType::SUBTRACTION_OPERATOR},
             {"*", TokenType::MULTIPLICATION_OPERATOR},
-            {"/", TokenType::DIVISION_OPERATOR}};
+            {"/", TokenType::DIVISION_OPERATOR},
+            {"%", TokenType::MODULO_OPERATOR}};
 
         for (const auto &[sourceCode, expectedType] : operatorCases)
         {
@@ -328,7 +329,8 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             {"+=", TokenType::ADDITION_ASSIGNMENT_OPERATOR},
             {"-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR},
             {"*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR},
-            {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR}};
+            {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR},
+            {"%=", TokenType::MODULO_ASSIGNMENT_OPERATOR}};
 
         for (const auto &[sourceCode, expectedType] : compoundAssignmentCases)
         {

@@ -11,10 +11,12 @@ std::map<std::string, TokenType> arithmeticOperatorToTokenType = {
     {"-", TokenType::SUBTRACTION_OPERATOR},
     {"*", TokenType::MULTIPLICATION_OPERATOR},
     {"/", TokenType::DIVISION_OPERATOR},
+    {"%", TokenType::MODULO_OPERATOR},
     {"+=", TokenType::ADDITION_ASSIGNMENT_OPERATOR},
     {"-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR},
     {"*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR},
-    {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR}};
+    {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR},
+    {"%=", TokenType::MODULO_ASSIGNMENT_OPERATOR}};
 
 // ? Better naming
 std::map<char, TokenType> parenthesisToTokenType = {
@@ -62,7 +64,7 @@ char Lexer::getNextChar()
 
 bool Lexer::isArithmeticOperator(char op)
 {
-    return op == '+' || op == '-' || op == '*' || op == '/';
+    return op == '+' || op == '-' || op == '*' || op == '/' || op == '%';
 }
 
 std::vector<Token> Lexer::tokenize()
