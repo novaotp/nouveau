@@ -92,6 +92,16 @@ std::vector<Token> Lexer::tokenize()
             this->advanceIndex();
             continue;
         }
+        else if (currentChar == '/' && this->getCurrentChar() == '/' && this->sourceCode[this->index + 2] == '/')
+        {
+            while (this->getCurrentChar() != '\n' && this->index < this->sourceCode.size())
+            {
+                this->advanceColumn();
+                this->advanceIndex();
+            }
+
+            continue;
+        }
         else if (punctuationToTokenType.find(currentChar) != punctuationToTokenType.end())
         {
             token.type = punctuationToTokenType.at(currentChar);

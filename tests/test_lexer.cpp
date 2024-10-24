@@ -359,4 +359,37 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(fnToken.value == sourceCode);
         REQUIRE(fnToken.metadata.length == sourceCode.size());
     }
+
+    SECTION("Triple-slash comments are ignored properly")
+    {
+        std::string sourceCode = "/// This is a comment\nmut int x = 10;";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 7);
+
+        Token mutToken = tokens.at(0);
+        REQUIRE(mutToken.type == TokenType::MUTABLE_KEYWORD);
+        REQUIRE(mutToken.value == "mut");
+
+        Token intToken = tokens.at(1);
+        REQUIRE(intToken.type == TokenType::TYPE);
+        REQUIRE(intToken.value == "int");
+
+        Token identifierToken = tokens.at(2);
+        REQUIRE(identifierToken.type == TokenType::IDENTIFIER);
+        REQUIRE(identifierToken.value == "x");
+
+        Token equalToken = tokens.at(3);
+        REQUIRE(equalToken.type == TokenType::ASSIGNMENT_OPERATOR);
+        REQUIRE(equalToken.value == "=");
+
+        Token numberToken = tokens.at(4);
+        REQUIRE(numberToken.type == TokenType::INTEGER);
+        REQUIRE(numberToken.value == "10");
+
+        Token semicolonToken = tokens.at(5);
+        REQUIRE(semicolonToken.type == TokenType::SEMI_COLON);
+        REQUIRE(semicolonToken.value == ";");
+    }
 }
