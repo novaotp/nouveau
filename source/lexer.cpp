@@ -134,6 +134,30 @@ std::vector<Token> Lexer::tokenize()
             token.value = value;
             token.metadata = TokenMetadata(column_start, this->line, value.size() + 2);
         }
+        else if (isalpha(currentChar))
+        {
+            std::string value = "";
+            size_t columnStart = this->column;
+
+            while (isalnum(this->getCurrentChar()) || this->getCurrentChar() == '_')
+            {
+                value += this->getCurrentChar();
+
+                this->advanceColumn();
+                this->advanceIndex();
+            }
+
+            token.value = value;
+            token.metadata = TokenMetadata(columnStart, this->line, value.size());
+            if (value == "true" || value == "false")
+            {
+                token.type = TokenType::BOOLEAN;
+            }
+            else
+            {
+                token.type = TokenType::IDENTIFIER;
+            }
+        }
         else
         {
             throw std::runtime_error("Error: Unknown character encountered <" + std::string(1, currentChar) + ">");

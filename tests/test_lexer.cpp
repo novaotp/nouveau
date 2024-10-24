@@ -96,4 +96,38 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(stringToken.value == sourceCode);
         REQUIRE(stringToken.metadata.length == sourceCode.size() + 2);
     }
+
+    SECTION("Booleans are tokenized properly")
+    {
+        std::vector<std::string> booleans = {"true", "false"};
+
+        for (const std::string boolean : booleans)
+        {
+            Lexer lexer = Lexer(boolean);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token booleanToken = tokens.at(0);
+
+            REQUIRE(booleanToken.type == TokenType::BOOLEAN);
+            REQUIRE(booleanToken.value == boolean);
+            REQUIRE(booleanToken.metadata.length == boolean.size());
+        }
+    }
+
+    SECTION("Identifiers are tokenized properly")
+    {
+        std::string sourceCode = "my_variable";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token identifierToken = tokens.at(0);
+
+        REQUIRE(identifierToken.type == TokenType::IDENTIFIER);
+        REQUIRE(identifierToken.value == sourceCode);
+        REQUIRE(identifierToken.metadata.length == sourceCode.size());
+    }
 }
