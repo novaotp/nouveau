@@ -6,11 +6,15 @@
 // ? How to handle other tab sizes properly
 const size_t TAB_SIZE = 4;
 
-std::map<char, TokenType> arithmeticOperatorToTokenType = {
-    {'+', TokenType::ADDITION_OPERATOR},
-    {'-', TokenType::SUBTRACTION_OPERATOR},
-    {'*', TokenType::MULTIPLICATION_OPERATOR},
-    {'/', TokenType::DIVISION_OPERATOR}};
+std::map<std::string, TokenType> arithmeticOperatorToTokenType = {
+    {"+", TokenType::ADDITION_OPERATOR},
+    {"-", TokenType::SUBTRACTION_OPERATOR},
+    {"*", TokenType::MULTIPLICATION_OPERATOR},
+    {"/", TokenType::DIVISION_OPERATOR},
+    {"+=", TokenType::ADDITION_ASSIGNMENT_OPERATOR},
+    {"-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR},
+    {"*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR},
+    {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR}};
 
 // ? Better naming
 std::map<char, TokenType> parenthesisToTokenType = {
@@ -195,11 +199,27 @@ std::vector<Token> Lexer::tokenize()
         }
         else if (this->isArithmeticOperator(currentChar))
         {
-            token.type = arithmeticOperatorToTokenType.at(currentChar);
-            token.value = std::string(1, currentChar);
-            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+            if (this->getNextChar() == '=')
+            {
+                std::string op = std::string(1, currentChar) + std::string(1, this->getNextChar());
 
-            this->advanceIndex();
+                token.type = arithmeticOperatorToTokenType.at(op);
+                token.value = op;
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+
+                this->advanceColumn();
+                this->advanceIndex(2);
+            }
+            else
+            {
+                std::string equalOperator = std::string(1, currentChar);
+
+                token.type = arithmeticOperatorToTokenType.at(equalOperator);
+                token.value = equalOperator;
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+
+                this->advanceIndex();
+            }
         }
         else if (isdigit(currentChar))
         {

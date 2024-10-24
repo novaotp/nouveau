@@ -321,4 +321,27 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             REQUIRE(punctuationToken.metadata.length == 1);
         }
     }
+
+    SECTION("Compound assignment operators are tokenized properly")
+    {
+        std::map<std::string, TokenType> compoundAssignmentCases = {
+            {"+=", TokenType::ADDITION_ASSIGNMENT_OPERATOR},
+            {"-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR},
+            {"*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR},
+            {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR}};
+
+        for (const auto &[sourceCode, expectedType] : compoundAssignmentCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token compoundAssignmentToken = tokens.at(0);
+
+            REQUIRE(compoundAssignmentToken.type == expectedType);
+            REQUIRE(compoundAssignmentToken.value == sourceCode);
+            REQUIRE(compoundAssignmentToken.metadata.length == 2);
+        }
+    }
 }
