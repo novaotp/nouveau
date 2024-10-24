@@ -344,4 +344,19 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             REQUIRE(compoundAssignmentToken.metadata.length == 2);
         }
     }
+
+    SECTION("Function keyword are tokenized properly")
+    {
+        std::string sourceCode = "fn";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token fnToken = tokens.at(0);
+
+        REQUIRE(fnToken.type == TokenType::FUNCTION_KEYWORD);
+        REQUIRE(fnToken.value == sourceCode);
+        REQUIRE(fnToken.metadata.length == sourceCode.size());
+    }
 }

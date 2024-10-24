@@ -290,6 +290,10 @@ std::vector<Token> Lexer::tokenize()
             {
                 token.type = TokenType::TYPE;
             }
+            else if (value == "fn")
+            {
+                token.type = TokenType::FUNCTION_KEYWORD;
+            }
             else if (value == "mut")
             {
                 token.type = TokenType::MUTABLE_KEYWORD;
