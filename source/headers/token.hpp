@@ -38,7 +38,10 @@ enum TokenType
     RIGHT_BRACKET,
     LEFT_BRACE,
     RIGHT_BRACE,
-    SEMI_COLUMN,
+    DOT,
+    COMMA,
+    COLON,
+    SEMI_COLON,
     END_OF_FILE
 };
 

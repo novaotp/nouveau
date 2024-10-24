@@ -299,4 +299,26 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             REQUIRE(parenToken.metadata.length == 1);
         }
     }
+
+    SECTION("Punctuations are tokenized properly")
+    {
+        std::map<std::string, TokenType> punctuationCases = {
+            {":", TokenType::COLON},
+            {";", TokenType::SEMI_COLON},
+            {".", TokenType::DOT},
+            {",", TokenType::COMMA}};
+
+        for (const auto &[sourceCode, expectedType] : punctuationCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+            Token punctuationToken = tokens.at(0);
+
+            REQUIRE(punctuationToken.type == expectedType);
+            REQUIRE(punctuationToken.value == sourceCode);
+            REQUIRE(punctuationToken.metadata.length == 1);
+        }
+    }
 }

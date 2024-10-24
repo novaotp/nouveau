@@ -21,6 +21,12 @@ std::map<char, TokenType> parenthesisToTokenType = {
     {'{', TokenType::LEFT_BRACE},
     {'}', TokenType::RIGHT_BRACE}};
 
+std::map<char, TokenType> punctuationToTokenType = {
+    {',', TokenType::COMMA},
+    {'.', TokenType::DOT},
+    {':', TokenType::COLON},
+    {';', TokenType::SEMI_COLON}};
+
 size_t Lexer::advanceColumn(size_t n = 1)
 {
     this->column += n;
@@ -82,9 +88,9 @@ std::vector<Token> Lexer::tokenize()
             this->advanceIndex();
             continue;
         }
-        else if (currentChar == ';')
+        else if (punctuationToTokenType.find(currentChar) != punctuationToTokenType.end())
         {
-            token.type = TokenType::SEMI_COLUMN;
+            token.type = punctuationToTokenType.at(currentChar);
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
 
