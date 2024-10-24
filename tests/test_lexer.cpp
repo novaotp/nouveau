@@ -274,4 +274,29 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             REQUIRE(loopToken.metadata.length == sourceCode.size());
         }
     }
+
+    SECTION("Parentheses are tokenized properly")
+    {
+        std::map<std::string, TokenType> parenthesesCases = {
+            {"(", TokenType::LEFT_PARENTHESIS},
+            {")", TokenType::RIGHT_PARENTHESIS},
+            {"[", TokenType::LEFT_BRACKET},
+            {"]", TokenType::RIGHT_BRACKET},
+            {"{", TokenType::LEFT_BRACE},
+            {"}", TokenType::RIGHT_BRACE}};
+
+        for (const auto &[sourceCode, expectedType] : parenthesesCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token parenToken = tokens.at(0);
+
+            REQUIRE(parenToken.type == expectedType);
+            REQUIRE(parenToken.value == sourceCode);
+            REQUIRE(parenToken.metadata.length == 1);
+        }
+    }
 }

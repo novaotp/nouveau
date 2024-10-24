@@ -12,6 +12,15 @@ std::map<char, TokenType> arithmeticOperatorToTokenType = {
     {'*', TokenType::MULTIPLICATION_OPERATOR},
     {'/', TokenType::DIVISION_OPERATOR}};
 
+// ? Better naming
+std::map<char, TokenType> parenthesisToTokenType = {
+    {'(', TokenType::LEFT_PARENTHESIS},
+    {')', TokenType::RIGHT_PARENTHESIS},
+    {'[', TokenType::LEFT_BRACKET},
+    {']', TokenType::RIGHT_BRACKET},
+    {'{', TokenType::LEFT_BRACE},
+    {'}', TokenType::RIGHT_BRACE}};
+
 size_t Lexer::advanceColumn(size_t n = 1)
 {
     this->column += n;
@@ -76,6 +85,14 @@ std::vector<Token> Lexer::tokenize()
         else if (currentChar == ';')
         {
             token.type = TokenType::SEMI_COLUMN;
+            token.value = currentChar;
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+
+            this->advanceIndex();
+        }
+        else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end())
+        {
+            token.type = parenthesisToTokenType.at(currentChar);
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
 
