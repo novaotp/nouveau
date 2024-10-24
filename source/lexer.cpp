@@ -274,6 +274,14 @@ std::vector<Token> Lexer::tokenize()
                     this->advanceIndex(3);
                 }
             }
+            else if (value == "for")
+            {
+                token.type = TokenType::FOR_KEYWORD;
+            }
+            else if (value == "while")
+            {
+                token.type = TokenType::WHILE_KEYWORD;
+            }
             else
             {
                 token.type = TokenType::IDENTIFIER;

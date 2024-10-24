@@ -253,4 +253,25 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             REQUIRE(conditionalToken.metadata.length == sourceCode.size());
         }
     }
+
+    SECTION("Loop keywords are tokenized properly")
+    {
+        std::map<std::string, TokenType> loopCases = {
+            {"while", TokenType::WHILE_KEYWORD},
+            {"for", TokenType::FOR_KEYWORD}};
+
+        for (const auto &[sourceCode, expectedType] : loopCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token loopToken = tokens.at(0);
+
+            REQUIRE(loopToken.type == expectedType);
+            REQUIRE(loopToken.value == sourceCode);
+            REQUIRE(loopToken.metadata.length == sourceCode.size());
+        }
+    }
 }
