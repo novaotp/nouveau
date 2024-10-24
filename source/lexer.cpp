@@ -13,8 +13,8 @@ std::map<char, TokenType> arithmeticOperatorToTokenType = {
 
 size_t Lexer::advanceColumn(size_t n = 1)
 {
-    this->column += 1;
-    return this->column - 1;
+    this->column += n;
+    return this->column - n;
 }
 
 size_t Lexer::advanceLine()
@@ -24,15 +24,20 @@ size_t Lexer::advanceLine()
     return this->line - 1;
 }
 
-size_t Lexer::advanceIndex()
+size_t Lexer::advanceIndex(size_t n = 1)
 {
-    this->index += 1;
-    return this->index - 1;
+    this->index += n;
+    return this->index - n;
 }
 
 char Lexer::getCurrentChar()
 {
     return this->sourceCode[this->index];
+}
+
+char Lexer::getNextChar()
+{
+    return this->sourceCode[this->index + 1];
 }
 
 bool Lexer::isArithmeticOperator(char op)
@@ -75,20 +80,108 @@ std::vector<Token> Lexer::tokenize()
 
             this->advanceIndex();
         }
+        else if ((((currentChar == '=') || (currentChar == '!')) && (this->getNextChar() == '=')) || currentChar == '>' || currentChar == '<')
+        {
+            if (currentChar == '=')
+            {
+                token.type = TokenType::EQUAL_OPERATOR;
+                token.value = "==";
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+
+                this->advanceColumn();
+                this->advanceIndex(2);
+            }
+            else if (currentChar == '!')
+            {
+                token.type = TokenType::NOT_EQUAL_OPERATOR;
+                token.value = "!=";
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+
+                this->advanceColumn();
+                this->advanceIndex(2);
+            }
+            else
+            {
+                if ((currentChar == '>') && (this->getNextChar() == '='))
+                {
+                    token.type = TokenType::GREATER_OR_EQUAL_OPERATOR;
+                    token.value = ">=";
+                    token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+
+                    this->advanceColumn();
+                    this->advanceIndex(2);
+                }
+                else if ((currentChar == '<') && (this->getNextChar() == '='))
+                {
+                    token.type = TokenType::LESS_OR_EQUAL_OPERATOR;
+                    token.value = "<=";
+                    token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+
+                    this->advanceColumn();
+                    this->advanceIndex(2);
+                }
+                else if (currentChar == '>')
+                {
+                    token.type = TokenType::GREATER_THAN_OPERATOR;
+                    token.value = ">";
+                    token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+                    this->advanceIndex();
+                }
+                else
+                {
+                    token.type = TokenType::LESS_THAN_OPERATOR;
+                    token.value = "<";
+                    token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+                    this->advanceIndex();
+                }
+            }
+        }
+        else if (currentChar == '!' || (currentChar == '&' && this->getNextChar() == '&') || (currentChar == '|' && this->getNextChar() == '|'))
+        {
+            if (currentChar == '!')
+            {
+                token.type = TokenType::NOT_OPERATOR;
+                token.value = "!";
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+                this->advanceIndex();
+            }
+            else if (currentChar == '&' && this->getNextChar() == '&')
+            {
+                token.type = TokenType::AND_OPERATOR;
+                token.value = "&&";
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+                this->advanceColumn();
+                this->advanceIndex(2);
+            }
+            else if (currentChar == '|' && this->getNextChar() == '|')
+            {
+                token.type = TokenType::OR_OPERATOR;
+                token.value = "||";
+                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
+                this->advanceColumn();
+                this->advanceIndex(2);
+            }
+        }
+        else if (currentChar == '=')
+        {
+            token.type = TokenType::ASSIGNMENT_OPERATOR;
+            token.value = currentChar;
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+            this->advanceIndex();
+        }
         else if (this->isArithmeticOperator(currentChar))
         {
             token.type = arithmeticOperatorToTokenType.at(currentChar);
             token.value = std::string(1, currentChar);
-            token.metadata = TokenMetadata(this->column, this->line, 1);
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
 
-            this->advanceColumn();
             this->advanceIndex();
         }
         else if (isdigit(currentChar))
         {
             std::string value = "";
             bool containsDot = false;
-            size_t column_start = this->column;
+            size_t columnStart = this->column;
 
             while (isdigit(this->getCurrentChar()) || (this->getCurrentChar() == '.' && !containsDot))
             {
@@ -104,12 +197,12 @@ std::vector<Token> Lexer::tokenize()
 
             token.type = containsDot ? TokenType::FLOAT : TokenType::INTEGER;
             token.value = value;
-            token.metadata = TokenMetadata(column_start, this->line, value.size());
+            token.metadata = TokenMetadata(columnStart, this->line, value.size());
         }
         else if (currentChar == '"')
         {
             std::string value = "";
-            size_t column_start = this->column;
+            size_t columnStart = this->column;
 
             // Skip the first "
             this->advanceColumn();
@@ -128,7 +221,7 @@ std::vector<Token> Lexer::tokenize()
 
             token.type = TokenType::STRING;
             token.value = value;
-            token.metadata = TokenMetadata(column_start, this->line, value.size() + 2);
+            token.metadata = TokenMetadata(columnStart, this->line, value.size() + 2);
         }
         else if (isalpha(currentChar))
         {
@@ -148,6 +241,18 @@ std::vector<Token> Lexer::tokenize()
             if (value == "true" || value == "false")
             {
                 token.type = TokenType::BOOLEAN;
+            }
+            else if (value == "string" || value == "int" || value == "float" || value == "bool")
+            {
+                token.type = TokenType::TYPE;
+            }
+            else if (value == "mut")
+            {
+                token.type = TokenType::MUTABLE_KEYWORD;
+            }
+            else if (value == "const")
+            {
+                token.type = TokenType::CONST_KEYWORD;
             }
             else
             {

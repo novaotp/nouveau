@@ -21,9 +21,11 @@ private:
     /// @return The previous line.
     size_t advanceLine();
     /// @brief Advances the index by 1 and returns the previous index.
+    /// @param n The number of indexes to advance. Defaults to 1.
     /// @return The previous index.
-    size_t advanceIndex();
+    size_t advanceIndex(size_t n);
     char getCurrentChar();
+    char getNextChar();
     bool isArithmeticOperator(char op);
 
 public:

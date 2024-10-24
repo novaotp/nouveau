@@ -130,4 +130,105 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(identifierToken.value == sourceCode);
         REQUIRE(identifierToken.metadata.length == sourceCode.size());
     }
+
+    SECTION("Const and Mut are tokenized properly")
+    {
+        std::map<std::string, TokenType> keywordCases = {
+            {"const", TokenType::CONST_KEYWORD},
+            {"mut", TokenType::MUTABLE_KEYWORD}};
+
+        for (const auto &[sourceCode, expectedType] : keywordCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token keywordToken = tokens.at(0);
+            REQUIRE(keywordToken.type == expectedType);
+            REQUIRE(keywordToken.value == sourceCode);
+            REQUIRE(keywordToken.metadata.length == sourceCode.size());
+        }
+    }
+
+    SECTION("Data types (string, int, float, bool) are tokenized properly")
+    {
+        std::vector<std::string> dataTypes = {"string", "int", "float", "bool"};
+
+        for (const std::string dataType : dataTypes)
+        {
+            Lexer lexer = Lexer(dataType);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token typeToken = tokens.at(0);
+            REQUIRE(typeToken.type == TokenType::TYPE);
+            REQUIRE(typeToken.value == dataType);
+            REQUIRE(typeToken.metadata.length == dataType.size());
+        }
+    }
+
+    SECTION("Comparison operators are tokenized properly")
+    {
+        std::map<std::string, TokenType> comparisonCases = {
+            {"==", TokenType::EQUAL_OPERATOR},
+            {"!=", TokenType::NOT_EQUAL_OPERATOR},
+            {">=", TokenType::GREATER_OR_EQUAL_OPERATOR},
+            {">", TokenType::GREATER_THAN_OPERATOR},
+            {"<=", TokenType::LESS_OR_EQUAL_OPERATOR},
+            {"<", TokenType::LESS_THAN_OPERATOR}};
+
+        for (const auto &[sourceCode, expectedType] : comparisonCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token comparisonToken = tokens.at(0);
+
+            REQUIRE(comparisonToken.type == expectedType);
+            REQUIRE(comparisonToken.value == sourceCode);
+            REQUIRE(comparisonToken.metadata.length == sourceCode.size());
+        }
+    }
+
+    SECTION("Logical operators are tokenized properly")
+    {
+        std::map<std::string, TokenType> logicalCases = {
+            {"!", TokenType::NOT_OPERATOR},
+            {"||", TokenType::OR_OPERATOR},
+            {"&&", TokenType::AND_OPERATOR}};
+
+        for (const auto &[sourceCode, expectedType] : logicalCases)
+        {
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            REQUIRE(tokens.size() == 2);
+
+            Token logicalToken = tokens.at(0);
+
+            REQUIRE(logicalToken.type == expectedType);
+            REQUIRE(logicalToken.value == sourceCode);
+            REQUIRE(logicalToken.metadata.length == sourceCode.size());
+        }
+    }
+
+    SECTION("Assignment operator is tokenized properly")
+    {
+        std::string sourceCode = "=";
+        Lexer lexer = Lexer(sourceCode);
+
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token assignmentToken = tokens.at(0);
+
+        REQUIRE(assignmentToken.type == TokenType::ASSIGNMENT_OPERATOR);
+        REQUIRE(assignmentToken.value == "=");
+        REQUIRE(assignmentToken.metadata.length == 1);
+    }
 }
