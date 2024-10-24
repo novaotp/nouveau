@@ -5,10 +5,6 @@
 
 const size_t TAB_SIZE = 4;
 
-std::map<std::string, TokenType> symbolToTokenType = {
-    {"+", TokenType::ADDITION_OPERATOR},
-    {";", TokenType::SEMI_COLUMN}};
-
 std::map<char, TokenType> arithmeticOperatorToTokenType = {
     {'+', TokenType::ADDITION_OPERATOR},
     {'-', TokenType::SUBTRACTION_OPERATOR},
