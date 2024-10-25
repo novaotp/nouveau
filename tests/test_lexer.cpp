@@ -10,7 +10,6 @@ TEST_CASE("Lexer works correctly", "[lexer]")
     {
         std::string sourceCode = "69";
         Lexer lexer = Lexer(sourceCode);
-
         std::vector<Token> tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 2);
@@ -26,7 +25,6 @@ TEST_CASE("Lexer works correctly", "[lexer]")
     {
         std::string sourceCode = "3.14";
         Lexer lexer = Lexer(sourceCode);
-
         std::vector<Token> tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 2);
@@ -221,7 +219,6 @@ TEST_CASE("Lexer works correctly", "[lexer]")
     {
         std::string sourceCode = "=";
         Lexer lexer = Lexer(sourceCode);
-
         std::vector<Token> tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 2);
@@ -393,5 +390,50 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         Token semicolonToken = tokens.at(5);
         REQUIRE(semicolonToken.type == TokenType::SEMI_COLON);
         REQUIRE(semicolonToken.value == ";");
+    }
+
+    SECTION("Break keyword is tokenized properly")
+    {
+        std::string sourceCode = "break";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token breakToken = tokens.at(0);
+
+        REQUIRE(breakToken.type == TokenType::BREAK_KEYWORD);
+        REQUIRE(breakToken.value == "break");
+        REQUIRE(breakToken.metadata.length == 5);
+    }
+
+    SECTION("Continue keyword is tokenized properly")
+    {
+        std::string sourceCode = "continue";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token continueToken = tokens.at(0);
+
+        REQUIRE(continueToken.type == TokenType::CONTINUE_KEYWORD);
+        REQUIRE(continueToken.value == "continue");
+        REQUIRE(continueToken.metadata.length == 8);
+    }
+
+    SECTION("Return keyword is tokenized properly")
+    {
+        std::string sourceCode = "return";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token returnToken = tokens.at(0);
+
+        REQUIRE(returnToken.type == TokenType::RETURN_KEYWORD);
+        REQUIRE(returnToken.value == "return");
+        REQUIRE(returnToken.metadata.length == 6);
     }
 }
