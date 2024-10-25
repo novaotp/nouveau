@@ -1,19 +1,25 @@
 #include <iostream>
 #include <string>
-#include "file.h"
+#include "file.hpp"
+#include "lexer.hpp"
 
-int main()
+int main(int argc, char *argv[])
 {
-    std::string contents;
-    try
+    if (argc < 2)
     {
-        contents = readFile("./tests/sample_code/arithmetic.flux");
-        std::cout << contents;
-    }
-    catch (const std::runtime_error &e)
-    {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Error: Please provide the path to the source file." << std::endl;
         return 1;
+    }
+
+    std::string filePath = argv[1];
+    std::string contents = readFile(filePath);
+
+    Lexer lexer = Lexer(contents);
+    std::vector<Token> tokens = lexer.tokenize();
+
+    for (size_t i = 0; i < tokens.size(); i++)
+    {
+        std::cout << tokens[i].value << std::endl;
     }
 
     return 0;

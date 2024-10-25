@@ -1,5 +1,5 @@
-#ifndef FILE_H
-#define FILE_H
+#ifndef FILE_HPP
+#define FILE_HPP
 
 #include <string>
 
@@ -8,4 +8,4 @@
 /// @return The contents of the file.
 std::string readFile(const std::string path);
 
-#endif // FILE_H
+#endif // FILE_HPP
