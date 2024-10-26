@@ -4,10 +4,8 @@
 #include "lexer.hpp"
 #include "catch_amalgamated.hpp"
 
-TEST_CASE("Lexer works correctly", "[lexer]")
-{
-    SECTION("Integers are tokenized properly")
-    {
+TEST_CASE("Lexer works correctly", "[lexer]") {
+    SECTION("Integers are tokenized properly") {
         std::string sourceCode = "69";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -21,8 +19,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(intToken.metadata.length == 2);
     }
 
-    SECTION("Floating point numbers are tokenized properly")
-    {
+    SECTION("Floating point numbers are tokenized properly") {
         std::string sourceCode = "3.14";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -36,17 +33,15 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(floatToken.metadata.length == 4);
     }
 
-    SECTION("Operators are tokenized properly")
-    {
+    SECTION("Operators are tokenized properly") {
         std::map<std::string, TokenType> operatorCases = {
-            {"+", TokenType::ADDITION_OPERATOR},
-            {"-", TokenType::SUBTRACTION_OPERATOR},
-            {"*", TokenType::MULTIPLICATION_OPERATOR},
-            {"/", TokenType::DIVISION_OPERATOR},
-            {"%", TokenType::MODULO_OPERATOR}};
+            { "+", TokenType::ADDITION_OPERATOR },
+            { "-", TokenType::SUBTRACTION_OPERATOR },
+            { "*", TokenType::MULTIPLICATION_OPERATOR },
+            { "/", TokenType::DIVISION_OPERATOR },
+            { "%", TokenType::MODULO_OPERATOR } };
 
-        for (const auto &[sourceCode, expectedType] : operatorCases)
-        {
+        for (const auto& [sourceCode, expectedType] : operatorCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -60,8 +55,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Whitespace is handled properly")
-    {
+    SECTION("Whitespace is handled properly") {
         std::vector<std::string> whitespaceCases = {
             " ",
             "\n",
@@ -69,10 +63,9 @@ TEST_CASE("Lexer works correctly", "[lexer]")
             "\r",
             "\v",
             "\f",
-            "  \t\n"};
+            "  \t\n" };
 
-        for (const std::string &sourceCode : whitespaceCases)
-        {
+        for (const std::string& sourceCode : whitespaceCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -81,8 +74,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Strings are tokenized properly")
-    {
+    SECTION("Strings are tokenized properly") {
         std::string sourceCode = "Hello, world !";
         Lexer lexer = Lexer('"' + sourceCode + '"');
         std::vector<Token> tokens = lexer.tokenize();
@@ -96,12 +88,10 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(stringToken.metadata.length == sourceCode.size() + 2);
     }
 
-    SECTION("Booleans are tokenized properly")
-    {
-        std::vector<std::string> booleans = {"true", "false"};
+    SECTION("Booleans are tokenized properly") {
+        std::vector<std::string> booleans = { "true", "false" };
 
-        for (const std::string boolean : booleans)
-        {
+        for (const std::string boolean : booleans) {
             Lexer lexer = Lexer(boolean);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -115,8 +105,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Identifiers are tokenized properly")
-    {
+    SECTION("Identifiers are tokenized properly") {
         std::string sourceCode = "my_variable";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -130,14 +119,12 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(identifierToken.metadata.length == sourceCode.size());
     }
 
-    SECTION("Const and Mut are tokenized properly")
-    {
+    SECTION("Const and Mut are tokenized properly") {
         std::map<std::string, TokenType> keywordCases = {
-            {"const", TokenType::CONST_KEYWORD},
-            {"mut", TokenType::MUTABLE_KEYWORD}};
+            { "const", TokenType::CONST_KEYWORD },
+            { "mut", TokenType::MUTABLE_KEYWORD } };
 
-        for (const auto &[sourceCode, expectedType] : keywordCases)
-        {
+        for (const auto& [sourceCode, expectedType] : keywordCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -150,12 +137,10 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Data types (string, int, float, bool) are tokenized properly")
-    {
-        std::vector<std::string> dataTypes = {"string", "int", "float", "bool"};
+    SECTION("Data types (string, int, float, bool) are tokenized properly") {
+        std::vector<std::string> dataTypes = { "string", "int", "float", "bool" };
 
-        for (const std::string dataType : dataTypes)
-        {
+        for (const std::string dataType : dataTypes) {
             Lexer lexer = Lexer(dataType);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -168,18 +153,16 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Comparison operators are tokenized properly")
-    {
+    SECTION("Comparison operators are tokenized properly") {
         std::map<std::string, TokenType> comparisonCases = {
-            {"==", TokenType::EQUAL_OPERATOR},
-            {"!=", TokenType::NOT_EQUAL_OPERATOR},
-            {">=", TokenType::GREATER_OR_EQUAL_OPERATOR},
-            {">", TokenType::GREATER_THAN_OPERATOR},
-            {"<=", TokenType::LESS_OR_EQUAL_OPERATOR},
-            {"<", TokenType::LESS_THAN_OPERATOR}};
+            { "==", TokenType::EQUAL_OPERATOR },
+            { "!=", TokenType::NOT_EQUAL_OPERATOR },
+            { ">=", TokenType::GREATER_OR_EQUAL_OPERATOR },
+            { ">", TokenType::GREATER_THAN_OPERATOR },
+            { "<=", TokenType::LESS_OR_EQUAL_OPERATOR },
+            { "<", TokenType::LESS_THAN_OPERATOR } };
 
-        for (const auto &[sourceCode, expectedType] : comparisonCases)
-        {
+        for (const auto& [sourceCode, expectedType] : comparisonCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -193,15 +176,13 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Logical operators are tokenized properly")
-    {
+    SECTION("Logical operators are tokenized properly") {
         std::map<std::string, TokenType> logicalCases = {
-            {"!", TokenType::NOT_OPERATOR},
-            {"||", TokenType::OR_OPERATOR},
-            {"&&", TokenType::AND_OPERATOR}};
+            { "!", TokenType::NOT_OPERATOR },
+            { "||", TokenType::OR_OPERATOR },
+            { "&&", TokenType::AND_OPERATOR } };
 
-        for (const auto &[sourceCode, expectedType] : logicalCases)
-        {
+        for (const auto& [sourceCode, expectedType] : logicalCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -215,8 +196,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Assignment operator is tokenized properly")
-    {
+    SECTION("Assignment operator is tokenized properly") {
         std::string sourceCode = "=";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -230,15 +210,13 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(assignmentToken.metadata.length == 1);
     }
 
-    SECTION("Conditionals are tokenized properly")
-    {
+    SECTION("Conditionals are tokenized properly") {
         std::map<std::string, TokenType> conditionalCases = {
-            {"if", TokenType::IF_KEYWORD},
-            {"else", TokenType::ELSE_KEYWORD},
-            {"else if", TokenType::ELSE_IF_KEYWORD}};
+            { "if", TokenType::IF_KEYWORD },
+            { "else", TokenType::ELSE_KEYWORD },
+            { "else if", TokenType::ELSE_IF_KEYWORD } };
 
-        for (const auto &[sourceCode, expectedType] : conditionalCases)
-        {
+        for (const auto& [sourceCode, expectedType] : conditionalCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -252,14 +230,12 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Loop keywords are tokenized properly")
-    {
+    SECTION("Loop keywords are tokenized properly") {
         std::map<std::string, TokenType> loopCases = {
-            {"while", TokenType::WHILE_KEYWORD},
-            {"for", TokenType::FOR_KEYWORD}};
+            { "while", TokenType::WHILE_KEYWORD },
+            { "for", TokenType::FOR_KEYWORD } };
 
-        for (const auto &[sourceCode, expectedType] : loopCases)
-        {
+        for (const auto& [sourceCode, expectedType] : loopCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -273,18 +249,16 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Parentheses are tokenized properly")
-    {
+    SECTION("Parentheses are tokenized properly") {
         std::map<std::string, TokenType> parenthesesCases = {
-            {"(", TokenType::LEFT_PARENTHESIS},
-            {")", TokenType::RIGHT_PARENTHESIS},
-            {"[", TokenType::LEFT_BRACKET},
-            {"]", TokenType::RIGHT_BRACKET},
-            {"{", TokenType::LEFT_BRACE},
-            {"}", TokenType::RIGHT_BRACE}};
+            { "(", TokenType::LEFT_PARENTHESIS },
+            { ")", TokenType::RIGHT_PARENTHESIS },
+            { "[", TokenType::LEFT_BRACKET },
+            { "]", TokenType::RIGHT_BRACKET },
+            { "{", TokenType::LEFT_BRACE },
+            { "}", TokenType::RIGHT_BRACE } };
 
-        for (const auto &[sourceCode, expectedType] : parenthesesCases)
-        {
+        for (const auto& [sourceCode, expectedType] : parenthesesCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -298,16 +272,14 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Punctuations are tokenized properly")
-    {
+    SECTION("Punctuations are tokenized properly") {
         std::map<std::string, TokenType> punctuationCases = {
-            {":", TokenType::COLON},
-            {";", TokenType::SEMI_COLON},
-            {".", TokenType::DOT},
-            {",", TokenType::COMMA}};
+            { ":", TokenType::COLON },
+            { ";", TokenType::SEMI_COLON },
+            { ".", TokenType::DOT },
+            { ",", TokenType::COMMA } };
 
-        for (const auto &[sourceCode, expectedType] : punctuationCases)
-        {
+        for (const auto& [sourceCode, expectedType] : punctuationCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -320,17 +292,15 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Compound assignment operators are tokenized properly")
-    {
+    SECTION("Compound assignment operators are tokenized properly") {
         std::map<std::string, TokenType> compoundAssignmentCases = {
-            {"+=", TokenType::ADDITION_ASSIGNMENT_OPERATOR},
-            {"-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR},
-            {"*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR},
-            {"/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR},
-            {"%=", TokenType::MODULO_ASSIGNMENT_OPERATOR}};
+            { "+=", TokenType::ADDITION_ASSIGNMENT_OPERATOR },
+            { "-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR },
+            { "*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR },
+            { "/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR },
+            { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR } };
 
-        for (const auto &[sourceCode, expectedType] : compoundAssignmentCases)
-        {
+        for (const auto& [sourceCode, expectedType] : compoundAssignmentCases) {
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
@@ -344,8 +314,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         }
     }
 
-    SECTION("Function keyword are tokenized properly")
-    {
+    SECTION("Function keyword are tokenized properly") {
         std::string sourceCode = "fn";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -359,8 +328,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(fnToken.metadata.length == sourceCode.size());
     }
 
-    SECTION("Triple-slash comments are ignored properly")
-    {
+    SECTION("Triple-slash comments are ignored properly") {
         std::string sourceCode = "/// This is a comment\nmut int x = 10;";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -392,8 +360,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(semicolonToken.value == ";");
     }
 
-    SECTION("Break keyword is tokenized properly")
-    {
+    SECTION("Break keyword is tokenized properly") {
         std::string sourceCode = "break";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -407,8 +374,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(breakToken.metadata.length == 5);
     }
 
-    SECTION("Continue keyword is tokenized properly")
-    {
+    SECTION("Continue keyword is tokenized properly") {
         std::string sourceCode = "continue";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -422,8 +388,7 @@ TEST_CASE("Lexer works correctly", "[lexer]")
         REQUIRE(continueToken.metadata.length == 8);
     }
 
-    SECTION("Return keyword is tokenized properly")
-    {
+    SECTION("Return keyword is tokenized properly") {
         std::string sourceCode = "return";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();

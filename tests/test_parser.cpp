@@ -6,10 +6,8 @@
 #include "parser.hpp"
 #include "catch_amalgamated.hpp"
 
-TEST_CASE("Parser works correctly", "[parser]")
-{
-    SECTION("String literals are parsed properly")
-    {
+TEST_CASE("Parser works correctly", "[parser]") {
+    SECTION("String literals are parsed properly") {
         std::string sourceCode = "\"Hello, World!\"";
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -19,10 +17,10 @@ TEST_CASE("Parser works correctly", "[parser]")
 
         REQUIRE(program.body.size() == 1);
 
-        auto &firstElement = program.body[0];
+        auto& firstElement = program.body[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
-        auto &expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
         REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
 
         Literal literal = std::get<Literal>(*expressionPtr);
@@ -32,8 +30,7 @@ TEST_CASE("Parser works correctly", "[parser]")
         REQUIRE(stringLiteral.value == "Hello, World!");
     }
 
-    SECTION("Int literals are parsed properly")
-    {
+    SECTION("Int literals are parsed properly") {
         std::string sourceCode = "69";
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -43,10 +40,10 @@ TEST_CASE("Parser works correctly", "[parser]")
 
         REQUIRE(program.body.size() == 1);
 
-        auto &firstElement = program.body[0];
+        auto& firstElement = program.body[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
-        auto &expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
         REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
 
         Literal literal = std::get<Literal>(*expressionPtr);
@@ -56,8 +53,7 @@ TEST_CASE("Parser works correctly", "[parser]")
         REQUIRE(intLiteral.value == 69);
     }
 
-    SECTION("Float literals are parsed properly")
-    {
+    SECTION("Float literals are parsed properly") {
         std::string sourceCode = "3.14";
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -67,10 +63,10 @@ TEST_CASE("Parser works correctly", "[parser]")
 
         REQUIRE(program.body.size() == 1);
 
-        auto &firstElement = program.body[0];
+        auto& firstElement = program.body[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
-        auto &expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
         REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
 
         Literal literal = std::get<Literal>(*expressionPtr);
@@ -80,8 +76,7 @@ TEST_CASE("Parser works correctly", "[parser]")
         REQUIRE(floatLiteral.value == 3.14f);
     }
 
-    SECTION("Boolean literals are parsed properly")
-    {
+    SECTION("Boolean literals are parsed properly") {
         std::string sourceCode = "true";
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -91,10 +86,10 @@ TEST_CASE("Parser works correctly", "[parser]")
 
         REQUIRE(program.body.size() == 1);
 
-        auto &firstElement = program.body[0];
+        auto& firstElement = program.body[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
-        auto &expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
         REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
 
         Literal literal = std::get<Literal>(*expressionPtr);
@@ -104,8 +99,7 @@ TEST_CASE("Parser works correctly", "[parser]")
         REQUIRE(booleanLiteral.value == true);
     }
 
-    SECTION("Additive arithmetic operations are parsed properly")
-    {
+    SECTION("Additive arithmetic operations are parsed properly") {
         std::string sourceCode = "69 + 3.14";
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -115,14 +109,14 @@ TEST_CASE("Parser works correctly", "[parser]")
 
         REQUIRE(program.body.size() == 1);
 
-        auto &firstElement = program.body[0];
+        auto& firstElement = program.body[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
-        auto &expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
         REQUIRE(std::holds_alternative<ArithmeticOperation>(*expressionPtr));
         ArithmeticOperation arithmeticOperation = std::move(std::get<ArithmeticOperation>(*expressionPtr));
 
-        auto &lhs = arithmeticOperation.lhs;
+        auto& lhs = arithmeticOperation.lhs;
         REQUIRE(std::holds_alternative<Literal>(*lhs));
 
         Literal lhsLiteral = std::get<Literal>(*lhs);
@@ -133,7 +127,7 @@ TEST_CASE("Parser works correctly", "[parser]")
 
         REQUIRE(arithmeticOperation.op == "+");
 
-        auto &rhs = arithmeticOperation.rhs;
+        auto& rhs = arithmeticOperation.rhs;
         REQUIRE(std::holds_alternative<Literal>(*rhs));
 
         Literal rhsLiteral = std::get<Literal>(*rhs);

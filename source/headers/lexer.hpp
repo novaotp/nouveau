@@ -5,9 +5,8 @@
 #include <vector>
 #include "token.hpp"
 
-class Lexer
-{
-private:
+class Lexer {
+    private:
     size_t index = 0;
     size_t column = 1;
     size_t line = 1;
@@ -28,7 +27,7 @@ private:
     char getNextChar();
     bool isArithmeticOperator(char op);
 
-public:
+    public:
     Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
     ~Lexer() {};
 

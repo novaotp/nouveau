@@ -2,17 +2,14 @@
 #include <stdexcept>
 #include "parser.hpp"
 
-Token Parser::advanceToken()
-{
+Token Parser::advanceToken() {
     return this->tokens.at(this->index++);
 }
 
-Program Parser::parse()
-{
+Program Parser::parse() {
     Program program;
 
-    while (this->tokens.at(this->index).type != TokenType::END_OF_FILE)
-    {
+    while (this->tokens.at(this->index).type != TokenType::END_OF_FILE) {
         Expression expression = this->parseExpression();
         program.body.push_back(
             std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>(
@@ -23,23 +20,19 @@ Program Parser::parse()
     return program;
 }
 
-Expression Parser::parseExpression()
-{
+Expression Parser::parseExpression() {
     return this->parseMultiplicativeExpression();
 }
 
-Expression Parser::parseMultiplicativeExpression()
-{
+Expression Parser::parseMultiplicativeExpression() {
     return this->parseAdditiveExpression();
 }
 
-Expression Parser::parseAdditiveExpression()
-{
+Expression Parser::parseAdditiveExpression() {
     Expression left = this->parsePrimitiveExpression();
 
     while (this->tokens.at(this->index).type == TokenType::ADDITION_OPERATOR ||
-           this->tokens.at(this->index).type == TokenType::SUBTRACTION_OPERATOR)
-    {
+        this->tokens.at(this->index).type == TokenType::SUBTRACTION_OPERATOR) {
         Token op = this->advanceToken();
         Expression right = this->parsePrimitiveExpression();
         left = ArithmeticOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
@@ -48,25 +41,23 @@ Expression Parser::parseAdditiveExpression()
     return left;
 }
 
-Literal Parser::parsePrimitiveExpression()
-{
+Literal Parser::parsePrimitiveExpression() {
     Token currentToken = this->advanceToken();
 
-    switch (currentToken.type)
-    {
-    case TokenType::STRING:
-        return StringLiteral(currentToken.value);
+    switch (currentToken.type) {
+        case TokenType::STRING:
+            return StringLiteral(currentToken.value);
 
-    case TokenType::INTEGER:
-        return IntLiteral(std::stoi(currentToken.value));
+        case TokenType::INTEGER:
+            return IntLiteral(std::stoi(currentToken.value));
 
-    case TokenType::FLOAT:
-        return FloatLiteral(std::stof(currentToken.value));
+        case TokenType::FLOAT:
+            return FloatLiteral(std::stof(currentToken.value));
 
-    case TokenType::BOOLEAN:
-        return BooleanLiteral(currentToken.value == "true");
+        case TokenType::BOOLEAN:
+            return BooleanLiteral(currentToken.value == "true");
 
-    default:
-        throw std::runtime_error("Unsupported token found :" + currentToken.value);
+        default:
+            throw std::runtime_error("Unsupported token found :" + currentToken.value);
     }
 }
