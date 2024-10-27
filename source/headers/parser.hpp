@@ -114,7 +114,7 @@ class Parser {
     Expression parseExpression();
     Expression parseMultiplicativeExpression();
     Expression parseAdditiveExpression();
-    Literal parsePrimitiveExpression();
+    Expression parsePrimitiveExpression();
 
     public:
     Parser(std::vector<Token> tokens) : tokens(tokens) {};

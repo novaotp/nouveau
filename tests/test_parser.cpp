@@ -196,6 +196,65 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(rightLiteral.value == 7);
     }
 
+    SECTION("Complex arithmetic operations with parentheses are parsed properly") {
+        std::string sourceCode = "(420 + 69) * (3.14 - 7)";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<ArithmeticOperation>(*expressionPtr));
+
+        // Top-level ((420 + 69) * (3.14 - 7))
+        ArithmeticOperation topLevelOperation = std::move(std::get<ArithmeticOperation>(*expressionPtr));
+        REQUIRE(topLevelOperation.op == "*");
+
+        // Left side should be (420 + 69)
+        REQUIRE(std::holds_alternative<ArithmeticOperation>(*topLevelOperation.lhs));
+        ArithmeticOperation additiveOperation = std::move(std::get<ArithmeticOperation>(*topLevelOperation.lhs));
+        REQUIRE(additiveOperation.op == "+");
+
+        // Left side of the "+" (420)
+        REQUIRE(std::holds_alternative<Literal>(*additiveOperation.lhs));
+        Literal leftLiteralWrapper = std::get<Literal>(*additiveOperation.lhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(leftLiteralWrapper));
+        IntLiteral leftLiteral = std::get<IntLiteral>(leftLiteralWrapper);
+        REQUIRE(leftLiteral.value == 420);
+
+        // Right side of the "+" (69)
+        REQUIRE(std::holds_alternative<Literal>(*additiveOperation.rhs));
+        Literal rightLiteralWrapper = std::get<Literal>(*additiveOperation.rhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(rightLiteralWrapper));
+        IntLiteral rightLiteral = std::get<IntLiteral>(rightLiteralWrapper);
+        REQUIRE(rightLiteral.value == 69);
+
+        // Right side of the "*" (3.14 - 7)
+        REQUIRE(std::holds_alternative<ArithmeticOperation>(*topLevelOperation.rhs));
+        ArithmeticOperation subtractiveOperation = std::move(std::get<ArithmeticOperation>(*topLevelOperation.rhs));
+        REQUIRE(subtractiveOperation.op == "-");
+
+        // Left side of the "-" (3.14)
+        REQUIRE(std::holds_alternative<Literal>(*subtractiveOperation.lhs));
+        Literal subLeftLiteralWrapper = std::get<Literal>(*subtractiveOperation.lhs);
+        REQUIRE(std::holds_alternative<FloatLiteral>(subLeftLiteralWrapper));
+        FloatLiteral subLeftLiteral = std::get<FloatLiteral>(subLeftLiteralWrapper);
+        REQUIRE(subLeftLiteral.value == 3.14f);
+
+        // Right side of the "-" (7)
+        REQUIRE(std::holds_alternative<Literal>(*subtractiveOperation.rhs));
+        Literal subRightLiteralWrapper = std::get<Literal>(*subtractiveOperation.rhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(subRightLiteralWrapper));
+        IntLiteral subRightLiteral = std::get<IntLiteral>(subRightLiteralWrapper);
+        REQUIRE(subRightLiteral.value == 7);
+    }
+
     SECTION("Variable declarations are handled properly") {
         std::string sourceCode = "const string message = \"Hello, World !\";";
         Lexer lexer(sourceCode);

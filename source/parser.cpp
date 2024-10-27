@@ -111,7 +111,7 @@ Expression Parser::parseMultiplicativeExpression() {
     return left;
 }
 
-Literal Parser::parsePrimitiveExpression() {
+Expression Parser::parsePrimitiveExpression() {
     Token currentToken = this->advanceToken();
 
     switch (currentToken.type) {
@@ -125,6 +125,14 @@ Literal Parser::parsePrimitiveExpression() {
             return BooleanLiteral(currentToken.value == "true");
         case TokenType::NULL_KEYWORD:
             return NullLiteral();
+        case TokenType::LEFT_PARENTHESIS: {
+            Expression expression = this->parseExpression();
+
+            // Skip the ) token
+            this->advanceToken();
+
+            return expression;
+        }
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }
