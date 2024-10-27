@@ -11,12 +11,14 @@
 
 enum NodeKind {
     PROGRAM,
+    VARIABLE_DECLARATION,
     VARIABLE_ASSIGNMENT,
     ARITHMETIC_OPERATION,
     STRING_LITERAL,
     INTEGER_LITERAL,
     FLOAT_LITERAL,
-    BOOLEAN_LITERAL
+    BOOLEAN_LITERAL,
+    NULL_LITERAL
 };
 
 struct Node {
@@ -53,9 +55,13 @@ struct BooleanLiteral : public Node {
     BooleanLiteral(bool value) : Node(NodeKind::BOOLEAN_LITERAL), value(value) {};
 };
 
+struct NullLiteral : public Node {
+    NullLiteral() : Node(NodeKind::NULL_LITERAL) {};
+};
+
 struct ArithmeticOperation;
 
-using Literal = std::variant<StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral>;
+using Literal = std::variant<StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
 using Expression = std::variant<ArithmeticOperation, Literal>;
 
 struct ArithmeticOperation : public Node {
@@ -74,10 +80,18 @@ struct VariableDeclaration : public Node {
     std::optional<std::unique_ptr<Expression>> value;
 
     VariableDeclaration(bool isMutable, const std::string& type, const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
-        : Node(NodeKind::VARIABLE_ASSIGNMENT), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
+        : Node(NodeKind::VARIABLE_DECLARATION), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
 };
 
-using Statement = std::variant<VariableDeclaration>;
+struct VariableAssignment : public Node {
+    std::string identifier;
+    std::optional<std::unique_ptr<Expression>> value;
+
+    VariableAssignment(const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
+        : Node(NodeKind::VARIABLE_ASSIGNMENT), identifier(identifier), value(std::move(value)) {}
+};
+
+using Statement = std::variant<VariableDeclaration, VariableAssignment>;
 
 struct Program : public Node {
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body;
@@ -95,6 +109,7 @@ class Parser {
 
     std::variant<Statement, Expression> parseStatementOrExpression();
     VariableDeclaration parseVariableDeclaration();
+    VariableAssignment parseVariableAssignment();
 
     Expression parseExpression();
     Expression parseMultiplicativeExpression();

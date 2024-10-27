@@ -35,6 +35,9 @@ std::variant<Statement, Expression> Parser::parseStatementOrExpression() {
         case TokenType::CONST_KEYWORD:
         case TokenType::MUTABLE_KEYWORD:
             return this->parseVariableDeclaration();
+        case TokenType::IDENTIFIER:
+            // TODO : Identifier could be a function
+            return this->parseVariableAssignment();
         default:
             return this->parseExpression();
     }
@@ -46,9 +49,8 @@ VariableDeclaration Parser::parseVariableDeclaration() {
     std::string identifier = this->advanceToken().value;
 
     if (this->getCurrentToken().type != TokenType::ASSIGNMENT_OPERATOR) {
-        if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
-            this->advanceToken();
-        }
+        // Skip the ; token
+        this->advanceToken();
 
         return VariableDeclaration(isMutable, type, identifier, std::nullopt);
     }
@@ -58,11 +60,24 @@ VariableDeclaration Parser::parseVariableDeclaration() {
 
     Expression value = this->parseExpression();
 
-    if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
-        this->advanceToken();
-    }
+    // Skip the ; token
+    this->advanceToken();
 
     return VariableDeclaration(isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
+}
+
+VariableAssignment Parser::parseVariableAssignment() {
+    std::string identifier = this->advanceToken().value;
+
+    // Skip the = token
+    this->advanceToken();
+
+    Expression value = this->parseExpression();
+
+    // Skip the ; token
+    this->advanceToken();
+
+    return VariableAssignment(identifier, std::make_unique<Expression>(std::move(value)));
 }
 
 Expression Parser::parseExpression() {
@@ -102,16 +117,14 @@ Literal Parser::parsePrimitiveExpression() {
     switch (currentToken.type) {
         case TokenType::STRING:
             return StringLiteral(currentToken.value);
-
         case TokenType::INTEGER:
             return IntLiteral(std::stoi(currentToken.value));
-
         case TokenType::FLOAT:
             return FloatLiteral(std::stof(currentToken.value));
-
         case TokenType::BOOLEAN:
             return BooleanLiteral(currentToken.value == "true");
-
+        case TokenType::NULL_KEYWORD:
+            return NullLiteral();
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }

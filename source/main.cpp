@@ -22,6 +22,10 @@ void printExpression(const NodeType& n, const size_t indentCount) {
                 std::cout << indent << "FloatLiteral: " << literal.value << std::endl;
             } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
                 std::cout << indent << "BooleanLiteral: " << (literal.value ? "true" : "false") << std::endl;
+            } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
+                std::cout << indent << "NullLiteral" << std::endl;
+            } else {
+                std::cout << indent << "Unknown Literal Type" << std::endl;
             }
         }, n);
     } else if constexpr (std::is_same_v<NodeType, ArithmeticOperation>) {
@@ -46,9 +50,24 @@ void printStatement(const NodeType& n, const size_t indentCount) {
     if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
         std::string indent(indentCount * SPACE_COUNT, ' ');
 
-        std::cout << "Variable Assignment" << std::endl;
+        std::cout << "Variable Declaration" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "IsMutable: " << (n.isMutable ? "true" : "false") << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Type: " << n.type << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
+
+        if (n.value.has_value()) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
+
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount + 2);
+            }, *n.value.value());
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
+        }
+    } else if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
+        std::string indent(indentCount * SPACE_COUNT, ' ');
+
+        std::cout << "Variable Assignment" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
 
         if (n.value.has_value()) {
