@@ -314,6 +314,20 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         }
     }
 
+    SECTION("Null keyword are tokenized properly") {
+        std::string sourceCode = "null";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        REQUIRE(tokens.size() == 2);
+
+        Token nullToken = tokens.at(0);
+
+        REQUIRE(nullToken.type == TokenType::NULL_KEYWORD);
+        REQUIRE(nullToken.value == sourceCode);
+        REQUIRE(nullToken.metadata.length == sourceCode.size());
+    }
+
     SECTION("Function keyword are tokenized properly") {
         std::string sourceCode = "fn";
         Lexer lexer = Lexer(sourceCode);

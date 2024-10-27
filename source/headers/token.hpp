@@ -10,6 +10,7 @@ enum TokenType {
     BOOLEAN,
     IDENTIFIER,
     TYPE,
+    NULL_KEYWORD,
     FUNCTION_KEYWORD,
     RETURN_KEYWORD,
     CONST_KEYWORD,

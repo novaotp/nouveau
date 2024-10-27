@@ -48,6 +48,7 @@ const std::map<std::string, TokenType> keywordToTokenType = {
     { "int", TokenType::TYPE },
     { "float", TokenType::TYPE },
     { "bool", TokenType::TYPE },
+    { "null", TokenType::NULL_KEYWORD },
     { "fn", TokenType::FUNCTION_KEYWORD },
     { "mut", TokenType::MUTABLE_KEYWORD },
     { "const", TokenType::CONST_KEYWORD },
