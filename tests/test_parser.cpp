@@ -136,4 +136,63 @@ TEST_CASE("Parser works correctly", "[parser]") {
         FloatLiteral rhsIntLiteral = std::get<FloatLiteral>(rhsLiteral);
         REQUIRE(rhsIntLiteral.value == 3.14f);
     }
+
+    SECTION("Complex arithmetic operations are parsed properly") {
+        std::string sourceCode = "420 + 69 * 3.14 - 7";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<ArithmeticOperation>(*expressionPtr));
+
+        // Top-level ((420 + (69 * 3.14)) - 7)
+        ArithmeticOperation topLevelOperation = std::move(std::get<ArithmeticOperation>(*expressionPtr));
+        REQUIRE(topLevelOperation.op == "-");
+
+        // Left side should (420 + (69 * 3.14))
+        REQUIRE(std::holds_alternative<ArithmeticOperation>(*topLevelOperation.lhs));
+        ArithmeticOperation additiveOperation = std::move(std::get<ArithmeticOperation>(*topLevelOperation.lhs));
+        REQUIRE(additiveOperation.op == "+");
+
+        // Left side of the "+" (420)
+        REQUIRE(std::holds_alternative<Literal>(*additiveOperation.lhs));
+        Literal leftLiteralWrapper = std::get<Literal>(*additiveOperation.lhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(leftLiteralWrapper));
+        IntLiteral leftLiteral = std::get<IntLiteral>(leftLiteralWrapper);
+        REQUIRE(leftLiteral.value == 420);
+
+        // Right side of the "+" (69 * 3.14)
+        REQUIRE(std::holds_alternative<ArithmeticOperation>(*additiveOperation.rhs));
+        ArithmeticOperation multiplicativeOperation = std::move(std::get<ArithmeticOperation>(*additiveOperation.rhs));
+        REQUIRE(multiplicativeOperation.op == "*");
+
+        // Left side of the "*" (69)
+        REQUIRE(std::holds_alternative<Literal>(*multiplicativeOperation.lhs));
+        Literal multLeftLiteralWrapper = std::get<Literal>(*multiplicativeOperation.lhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(multLeftLiteralWrapper));
+        IntLiteral multLeftLiteral = std::get<IntLiteral>(multLeftLiteralWrapper);
+        REQUIRE(multLeftLiteral.value == 69);
+
+        // Right side of the "*" (3.14)
+        REQUIRE(std::holds_alternative<Literal>(*multiplicativeOperation.rhs));
+        Literal multRightLiteralWrapper = std::get<Literal>(*multiplicativeOperation.rhs);
+        REQUIRE(std::holds_alternative<FloatLiteral>(multRightLiteralWrapper));
+        FloatLiteral multRightLiteral = std::get<FloatLiteral>(multRightLiteralWrapper);
+        REQUIRE(multRightLiteral.value == 3.14f);
+
+        // Right side of the "-" (7)
+        REQUIRE(std::holds_alternative<Literal>(*topLevelOperation.rhs));
+        Literal rightLiteralWrapper = std::get<Literal>(*topLevelOperation.rhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(rightLiteralWrapper));
+        IntLiteral rightLiteral = std::get<IntLiteral>(rightLiteralWrapper);
+        REQUIRE(rightLiteral.value == 7);
+    }
 }

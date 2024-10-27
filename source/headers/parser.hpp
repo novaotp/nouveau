@@ -83,6 +83,7 @@ class Parser {
     size_t index = 0;
     std::vector<Token> tokens;
 
+    Token getCurrentToken();
     Token advanceToken();
 
     Expression parseExpression();

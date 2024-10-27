@@ -2,6 +2,10 @@
 #include <stdexcept>
 #include "parser.hpp"
 
+Token Parser::getCurrentToken() {
+    return this->tokens.at(this->index);
+}
+
 Token Parser::advanceToken() {
     return this->tokens.at(this->index++);
 }
@@ -9,7 +13,7 @@ Token Parser::advanceToken() {
 Program Parser::parse() {
     Program program;
 
-    while (this->tokens.at(this->index).type != TokenType::END_OF_FILE) {
+    while (this->getCurrentToken().type != TokenType::END_OF_FILE) {
         Expression expression = this->parseExpression();
         program.body.push_back(
             std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>(
@@ -21,18 +25,28 @@ Program Parser::parse() {
 }
 
 Expression Parser::parseExpression() {
-    return this->parseMultiplicativeExpression();
-}
-
-Expression Parser::parseMultiplicativeExpression() {
     return this->parseAdditiveExpression();
 }
 
 Expression Parser::parseAdditiveExpression() {
+    Expression left = this->parseMultiplicativeExpression();
+
+    while (this->getCurrentToken().type == TokenType::ADDITION_OPERATOR ||
+        this->getCurrentToken().type == TokenType::SUBTRACTION_OPERATOR) {
+        Token op = this->advanceToken();
+        Expression right = this->parseMultiplicativeExpression();
+        left = ArithmeticOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+    }
+
+    return left;
+}
+
+Expression Parser::parseMultiplicativeExpression() {
     Expression left = this->parsePrimitiveExpression();
 
-    while (this->tokens.at(this->index).type == TokenType::ADDITION_OPERATOR ||
-        this->tokens.at(this->index).type == TokenType::SUBTRACTION_OPERATOR) {
+    while (this->getCurrentToken().type == TokenType::MULTIPLICATION_OPERATOR ||
+        this->getCurrentToken().type == TokenType::DIVISION_OPERATOR ||
+        this->getCurrentToken().type == TokenType::MODULO_OPERATOR) {
         Token op = this->advanceToken();
         Expression right = this->parsePrimitiveExpression();
         left = ArithmeticOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
@@ -58,6 +72,6 @@ Literal Parser::parsePrimitiveExpression() {
             return BooleanLiteral(currentToken.value == "true");
 
         default:
-            throw std::runtime_error("Unsupported token found :" + currentToken.value);
+            throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }
 }
