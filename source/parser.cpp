@@ -81,7 +81,24 @@ VariableAssignment Parser::parseVariableAssignment() {
 }
 
 Expression Parser::parseExpression() {
-    return this->parseAdditiveExpression();
+    return this->parseComparitiveExpression();
+}
+
+Expression Parser::parseComparitiveExpression() {
+    Expression left = this->parseAdditiveExpression();
+
+    while (this->getCurrentToken().type == TokenType::EQUAL_OPERATOR ||
+        this->getCurrentToken().type == TokenType::NOT_EQUAL_OPERATOR ||
+        this->getCurrentToken().type == TokenType::GREATER_THAN_OPERATOR ||
+        this->getCurrentToken().type == TokenType::GREATER_OR_EQUAL_OPERATOR ||
+        this->getCurrentToken().type == TokenType::LESS_THAN_OPERATOR ||
+        this->getCurrentToken().type == TokenType::LESS_OR_EQUAL_OPERATOR) {
+        Token op = this->advanceToken();
+        Expression right = this->parseAdditiveExpression();
+        left = ComparisonOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+    }
+
+    return left;
 }
 
 Expression Parser::parseAdditiveExpression() {

@@ -255,6 +255,44 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(subRightLiteral.value == 7);
     }
 
+    SECTION("Comparison operations are parsed properly") {
+        std::string sourceCode = "69 > 3.14";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<ComparisonOperation>(*expressionPtr));
+        ComparisonOperation comparisonOperation = std::move(std::get<ComparisonOperation>(*expressionPtr));
+
+        auto& lhs = comparisonOperation.lhs;
+        REQUIRE(std::holds_alternative<Literal>(*lhs));
+
+        Literal lhsLiteral = std::get<Literal>(*lhs);
+        REQUIRE(std::holds_alternative<IntLiteral>(lhsLiteral));
+
+        IntLiteral lhsIntLiteral = std::get<IntLiteral>(lhsLiteral);
+        REQUIRE(lhsIntLiteral.value == 69);
+
+        REQUIRE(comparisonOperation.op == ">");
+
+        auto& rhs = comparisonOperation.rhs;
+        REQUIRE(std::holds_alternative<Literal>(*rhs));
+
+        Literal rhsLiteral = std::get<Literal>(*rhs);
+        REQUIRE(std::holds_alternative<FloatLiteral>(rhsLiteral));
+
+        FloatLiteral rhsFloatLiteral = std::get<FloatLiteral>(rhsLiteral);
+        REQUIRE(rhsFloatLiteral.value == 3.14f);
+    }
+
     SECTION("Variable declarations are handled properly") {
         std::string sourceCode = "const string message = \"Hello, World !\";";
         Lexer lexer(sourceCode);
@@ -306,7 +344,6 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         VariableAssignment variableAssignment = std::move(std::get<VariableAssignment>(*statement));
 
-        // Validate the variable assignment
         REQUIRE(variableAssignment.identifier == "message");
         REQUIRE(variableAssignment.value.has_value() == true);
 

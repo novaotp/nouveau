@@ -15,6 +15,7 @@ enum NodeKind {
     VARIABLE_DECLARATION,
     VARIABLE_ASSIGNMENT,
     ARITHMETIC_OPERATION,
+    COMPARISON_OPERATION,
     STRING_LITERAL,
     INTEGER_LITERAL,
     FLOAT_LITERAL,
@@ -61,9 +62,10 @@ struct NullLiteral : public Node {
 };
 
 struct ArithmeticOperation;
+struct ComparisonOperation;
 
 using Literal = std::variant<StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
-using Expression = std::variant<ArithmeticOperation, Literal>;
+using Expression = std::variant<ArithmeticOperation, ComparisonOperation, Literal>;
 
 struct ArithmeticOperation : public Node {
     std::unique_ptr<Expression> lhs;
@@ -72,6 +74,15 @@ struct ArithmeticOperation : public Node {
 
     ArithmeticOperation(std::unique_ptr<Expression> left, const std::string& operation, std::unique_ptr<Expression> right)
         : Node(NodeKind::ARITHMETIC_OPERATION), lhs(std::move(left)), op(operation), rhs(std::move(right)) {}
+};
+
+struct ComparisonOperation : public Node {
+    std::unique_ptr<Expression> lhs;
+    std::string op;
+    std::unique_ptr<Expression> rhs;
+
+    ComparisonOperation(std::unique_ptr<Expression> left, const std::string& operation, std::unique_ptr<Expression> right)
+        : Node(NodeKind::COMPARISON_OPERATION), lhs(std::move(left)), op(operation), rhs(std::move(right)) {}
 };
 
 struct VariableDeclaration : public Node {
@@ -113,8 +124,9 @@ class Parser {
     VariableAssignment parseVariableAssignment();
 
     Expression parseExpression();
-    Expression parseMultiplicativeExpression();
+    Expression parseComparitiveExpression();
     Expression parseAdditiveExpression();
+    Expression parseMultiplicativeExpression();
     Expression parsePrimitiveExpression();
 
     public:
