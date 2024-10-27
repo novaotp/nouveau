@@ -14,14 +14,55 @@ Program Parser::parse() {
     Program program;
 
     while (this->getCurrentToken().type != TokenType::END_OF_FILE) {
-        Expression expression = this->parseExpression();
-        program.body.push_back(
-            std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>(
-                std::make_unique<Expression>(
-                    std::move(expression))));
+        auto statementOrExpression = this->parseStatementOrExpression();
+
+        if (std::holds_alternative<Statement>(statementOrExpression)) {
+            program.body.push_back(
+                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+            );
+        } else {
+            program.body.push_back(
+                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+            );
+        }
     }
 
     return program;
+}
+
+std::variant<Statement, Expression> Parser::parseStatementOrExpression() {
+    switch (this->getCurrentToken().type) {
+        case TokenType::CONST_KEYWORD:
+        case TokenType::MUTABLE_KEYWORD:
+            return this->parseVariableAssignment();
+        default:
+            return this->parseExpression();
+    }
+}
+
+VariableAssignment Parser::parseVariableAssignment() {
+    bool isMutable = this->advanceToken().type == TokenType::MUTABLE_KEYWORD;
+    std::string type = this->advanceToken().value;
+    std::string identifier = this->advanceToken().value;
+
+    if (this->getCurrentToken().type != TokenType::ASSIGNMENT_OPERATOR) {
+        if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
+            this->advanceToken();
+        }
+
+        return VariableAssignment(isMutable, type, identifier, std::nullopt);
+    }
+
+    // Skip the = token
+    this->advanceToken();
+
+    Expression value = this->parseExpression();
+
+    if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
+        this->advanceToken();
+    }
+
+    return VariableAssignment(isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
 }
 
 Expression Parser::parseExpression() {
