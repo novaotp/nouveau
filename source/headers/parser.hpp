@@ -67,17 +67,17 @@ struct ArithmeticOperation : public Node {
         : Node(NodeKind::ARITHMETIC_OPERATION), lhs(std::move(left)), op(operation), rhs(std::move(right)) {}
 };
 
-struct VariableAssignment : public Node {
+struct VariableDeclaration : public Node {
     bool isMutable;
     std::string type;
     std::string identifier;
     std::optional<std::unique_ptr<Expression>> value;
 
-    VariableAssignment(bool isMutable, const std::string& type, const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
+    VariableDeclaration(bool isMutable, const std::string& type, const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
         : Node(NodeKind::VARIABLE_ASSIGNMENT), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
 };
 
-using Statement = std::variant<VariableAssignment>;
+using Statement = std::variant<VariableDeclaration>;
 
 struct Program : public Node {
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body;
@@ -94,7 +94,7 @@ class Parser {
     Token advanceToken();
 
     std::variant<Statement, Expression> parseStatementOrExpression();
-    VariableAssignment parseVariableAssignment();
+    VariableDeclaration parseVariableDeclaration();
 
     Expression parseExpression();
     Expression parseMultiplicativeExpression();

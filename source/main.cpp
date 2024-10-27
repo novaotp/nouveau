@@ -43,7 +43,7 @@ void printExpression(const NodeType& n, const size_t indentCount) {
 
 template <typename NodeType>
 void printStatement(const NodeType& n, const size_t indentCount) {
-    if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
+    if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
         std::string indent(indentCount * SPACE_COUNT, ' ');
 
         std::cout << "Variable Assignment" << std::endl;

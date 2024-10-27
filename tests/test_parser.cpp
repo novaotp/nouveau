@@ -210,9 +210,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
 
         auto& statement = std::get<std::unique_ptr<Statement>>(firstElement);
-        REQUIRE(std::holds_alternative<VariableAssignment>(*statement));
+        REQUIRE(std::holds_alternative<VariableDeclaration>(*statement));
 
-        VariableAssignment variableAssignment = std::move(std::get<VariableAssignment>(*statement));
+        VariableDeclaration variableAssignment = std::move(std::get<VariableDeclaration>(*statement));
 
         REQUIRE(variableAssignment.isMutable == false);
         REQUIRE(variableAssignment.type == "string");

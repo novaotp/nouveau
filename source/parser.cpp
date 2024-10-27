@@ -34,13 +34,13 @@ std::variant<Statement, Expression> Parser::parseStatementOrExpression() {
     switch (this->getCurrentToken().type) {
         case TokenType::CONST_KEYWORD:
         case TokenType::MUTABLE_KEYWORD:
-            return this->parseVariableAssignment();
+            return this->parseVariableDeclaration();
         default:
             return this->parseExpression();
     }
 }
 
-VariableAssignment Parser::parseVariableAssignment() {
+VariableDeclaration Parser::parseVariableDeclaration() {
     bool isMutable = this->advanceToken().type == TokenType::MUTABLE_KEYWORD;
     std::string type = this->advanceToken().value;
     std::string identifier = this->advanceToken().value;
@@ -50,7 +50,7 @@ VariableAssignment Parser::parseVariableAssignment() {
             this->advanceToken();
         }
 
-        return VariableAssignment(isMutable, type, identifier, std::nullopt);
+        return VariableDeclaration(isMutable, type, identifier, std::nullopt);
     }
 
     // Skip the = token
@@ -62,7 +62,7 @@ VariableAssignment Parser::parseVariableAssignment() {
         this->advanceToken();
     }
 
-    return VariableAssignment(isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
+    return VariableDeclaration(isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
 }
 
 Expression Parser::parseExpression() {
