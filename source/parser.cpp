@@ -25,6 +25,17 @@ Program Parser::parse() {
                 std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
             );
         }
+        auto statementOrExpression = this->parseStatementOrExpression();
+
+        if (std::holds_alternative<Statement>(statementOrExpression)) {
+            program.body.push_back(
+                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+            );
+        } else {
+            program.body.push_back(
+                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+            );
+        }
     }
 
     return program;

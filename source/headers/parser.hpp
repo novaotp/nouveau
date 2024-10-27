@@ -7,6 +7,7 @@
 #include <memory>
 #include <utility>
 #include <optional>
+#include <optional>
 #include "token.hpp"
 
 enum NodeKind {
