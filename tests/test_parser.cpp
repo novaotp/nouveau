@@ -195,4 +195,37 @@ TEST_CASE("Parser works correctly", "[parser]") {
         IntLiteral rightLiteral = std::get<IntLiteral>(rightLiteralWrapper);
         REQUIRE(rightLiteral.value == 7);
     }
+
+    SECTION("Variable assignments are handled properly") {
+        std::string sourceCode = "const string message = \"Hello, World !\"";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body.at(0);
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
+
+        auto& statement = std::get<std::unique_ptr<Statement>>(firstElement);
+        REQUIRE(std::holds_alternative<VariableAssignment>(*statement));
+
+        VariableAssignment variableAssignment = std::move(std::get<VariableAssignment>(*statement));
+
+        REQUIRE(variableAssignment.isMutable == false);
+        REQUIRE(variableAssignment.type == "string");
+        REQUIRE(variableAssignment.identifier == "message");
+        REQUIRE(variableAssignment.value.has_value() == true);
+
+        auto& valueExpressionPtr = variableAssignment.value.value();
+        REQUIRE(std::holds_alternative<Literal>(*valueExpressionPtr));
+
+        Literal valueLiteral = std::get<Literal>(*valueExpressionPtr);
+        REQUIRE(std::holds_alternative<StringLiteral>(valueLiteral));
+
+        StringLiteral stringLiteral = std::get<StringLiteral>(valueLiteral);
+        REQUIRE(stringLiteral.value == "Hello, World !");
+    }
 }

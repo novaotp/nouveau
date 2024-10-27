@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <optional>
 #include "token.hpp"
 
 enum NodeKind {
@@ -67,7 +68,13 @@ struct ArithmeticOperation : public Node {
 };
 
 struct VariableAssignment : public Node {
-    VariableAssignment() : Node(NodeKind::VARIABLE_ASSIGNMENT) {};
+    bool isMutable;
+    std::string type;
+    std::string identifier;
+    std::optional<std::unique_ptr<Expression>> value;
+
+    VariableAssignment(bool isMutable, const std::string& type, const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
+        : Node(NodeKind::VARIABLE_ASSIGNMENT), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
 };
 
 using Statement = std::variant<VariableAssignment>;
@@ -85,6 +92,9 @@ class Parser {
 
     Token getCurrentToken();
     Token advanceToken();
+
+    std::variant<Statement, Expression> parseStatementOrExpression();
+    VariableAssignment parseVariableAssignment();
 
     Expression parseExpression();
     Expression parseMultiplicativeExpression();

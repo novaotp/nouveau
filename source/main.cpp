@@ -5,10 +5,10 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 
+constexpr int SPACE_COUNT = 4;
+
 template <typename NodeType>
 void printExpression(const NodeType& n, const size_t indentCount) {
-    constexpr int SPACE_COUNT = 4;
-
     if constexpr (std::is_same_v<NodeType, Literal>) {
         std::visit([&indentCount](const auto& literal) {
             using LiteralType = std::decay_t<decltype(literal)>;
@@ -26,7 +26,7 @@ void printExpression(const NodeType& n, const size_t indentCount) {
         }, n);
     } else if constexpr (std::is_same_v<NodeType, ArithmeticOperation>) {
         std::string indent(indentCount * SPACE_COUNT, ' ');
-        std::cout << indent << "ArithmeticOperation\n";
+        std::cout << indent << "ArithmeticOperation" << std::endl;
 
         std::visit([&indentCount](const auto& expr) {
             printExpression(expr, indentCount + 1);
@@ -38,6 +38,31 @@ void printExpression(const NodeType& n, const size_t indentCount) {
     } else {
         std::string indent(indentCount * SPACE_COUNT, ' ');
         std::cout << indent << "Unknown Expression Type" << std::endl;
+    }
+}
+
+template <typename NodeType>
+void printStatement(const NodeType& n, const size_t indentCount) {
+    if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
+        std::string indent(indentCount * SPACE_COUNT, ' ');
+
+        std::cout << "Variable Assignment" << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "IsMutable: " << (n.isMutable ? "true" : "false") << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Type: " << n.type << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
+
+        if (n.value.has_value()) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
+
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount + 2);
+            }, *n.value.value());
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
+        }
+    } else {
+        std::string indent(indentCount * SPACE_COUNT, ' ');
+        std::cout << indent << "Unknown Statement Type" << std::endl;
     }
 }
 
@@ -56,7 +81,9 @@ void printProgram(Program& program) {
                         printExpression(expr, 0);
                     }, *ptr);
                 } else if constexpr (std::is_same_v<NodeType, Statement>) {
-                    // Placeholder for Statement handling, currently left empty
+                    std::visit([](const auto& expr) {
+                        printStatement(expr, 0);
+                    }, *ptr);
                 } else {
                     std::cout << "Unknown Node Type" << std::endl;
                 }
