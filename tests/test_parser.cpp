@@ -21,12 +21,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
+        REQUIRE(std::holds_alternative<StringLiteral>(*expressionPtr));
 
-        Literal literal = std::get<Literal>(*expressionPtr);
-        REQUIRE(std::holds_alternative<StringLiteral>(literal));
-
-        StringLiteral stringLiteral = std::get<StringLiteral>(literal);
+        StringLiteral stringLiteral = std::get<StringLiteral>(*expressionPtr);
         REQUIRE(stringLiteral.value == "Hello, World!");
     }
 
@@ -44,12 +41,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
+        REQUIRE(std::holds_alternative<IntLiteral>(*expressionPtr));
 
-        Literal literal = std::get<Literal>(*expressionPtr);
-        REQUIRE(std::holds_alternative<IntLiteral>(literal));
-
-        IntLiteral intLiteral = std::get<IntLiteral>(literal);
+        IntLiteral intLiteral = std::get<IntLiteral>(*expressionPtr);
         REQUIRE(intLiteral.value == 69);
     }
 
@@ -67,12 +61,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
+        REQUIRE(std::holds_alternative<FloatLiteral>(*expressionPtr));
 
-        Literal literal = std::get<Literal>(*expressionPtr);
-        REQUIRE(std::holds_alternative<FloatLiteral>(literal));
-
-        FloatLiteral floatLiteral = std::get<FloatLiteral>(literal);
+        FloatLiteral floatLiteral = std::get<FloatLiteral>(*expressionPtr);
         REQUIRE(floatLiteral.value == 3.14f);
     }
 
@@ -90,12 +81,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<Literal>(*expressionPtr));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*expressionPtr));
 
-        Literal literal = std::get<Literal>(*expressionPtr);
-        REQUIRE(std::holds_alternative<BooleanLiteral>(literal));
-
-        BooleanLiteral booleanLiteral = std::get<BooleanLiteral>(literal);
+        BooleanLiteral booleanLiteral = std::get<BooleanLiteral>(*expressionPtr);
         REQUIRE(booleanLiteral.value == true);
     }
 
@@ -113,27 +101,21 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*expressionPtr));
-        ArithmeticOperation arithmeticOperation = std::move(std::get<ArithmeticOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
+        BinaryOperation arithmeticOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
 
         auto& lhs = arithmeticOperation.lhs;
-        REQUIRE(std::holds_alternative<Literal>(*lhs));
+        REQUIRE(std::holds_alternative<IntLiteral>(*lhs));
 
-        Literal lhsLiteral = std::get<Literal>(*lhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(lhsLiteral));
-
-        IntLiteral lhsIntLiteral = std::get<IntLiteral>(lhsLiteral);
+        IntLiteral lhsIntLiteral = std::get<IntLiteral>(*lhs);
         REQUIRE(lhsIntLiteral.value == 69);
 
         REQUIRE(arithmeticOperation.op == "+");
 
         auto& rhs = arithmeticOperation.rhs;
-        REQUIRE(std::holds_alternative<Literal>(*rhs));
+        REQUIRE(std::holds_alternative<FloatLiteral>(*rhs));
 
-        Literal rhsLiteral = std::get<Literal>(*rhs);
-        REQUIRE(std::holds_alternative<FloatLiteral>(rhsLiteral));
-
-        FloatLiteral rhsIntLiteral = std::get<FloatLiteral>(rhsLiteral);
+        FloatLiteral rhsIntLiteral = std::get<FloatLiteral>(*rhs);
         REQUIRE(rhsIntLiteral.value == 3.14f);
     }
 
@@ -151,48 +133,40 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         // Top-level ((420 + (69 * 3.14)) - 7)
-        ArithmeticOperation topLevelOperation = std::move(std::get<ArithmeticOperation>(*expressionPtr));
+        BinaryOperation topLevelOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
         REQUIRE(topLevelOperation.op == "-");
 
         // Left side should (420 + (69 * 3.14))
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*topLevelOperation.lhs));
-        ArithmeticOperation additiveOperation = std::move(std::get<ArithmeticOperation>(*topLevelOperation.lhs));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.lhs));
+        BinaryOperation additiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.lhs));
         REQUIRE(additiveOperation.op == "+");
 
         // Left side of the "+" (420)
-        REQUIRE(std::holds_alternative<Literal>(*additiveOperation.lhs));
-        Literal leftLiteralWrapper = std::get<Literal>(*additiveOperation.lhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(leftLiteralWrapper));
-        IntLiteral leftLiteral = std::get<IntLiteral>(leftLiteralWrapper);
+        REQUIRE(std::holds_alternative<IntLiteral>(*additiveOperation.lhs));
+        IntLiteral leftLiteral = std::get<IntLiteral>(*additiveOperation.lhs);
         REQUIRE(leftLiteral.value == 420);
 
         // Right side of the "+" (69 * 3.14)
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*additiveOperation.rhs));
-        ArithmeticOperation multiplicativeOperation = std::move(std::get<ArithmeticOperation>(*additiveOperation.rhs));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*additiveOperation.rhs));
+        BinaryOperation multiplicativeOperation = std::move(std::get<BinaryOperation>(*additiveOperation.rhs));
         REQUIRE(multiplicativeOperation.op == "*");
 
         // Left side of the "*" (69)
-        REQUIRE(std::holds_alternative<Literal>(*multiplicativeOperation.lhs));
-        Literal multLeftLiteralWrapper = std::get<Literal>(*multiplicativeOperation.lhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(multLeftLiteralWrapper));
-        IntLiteral multLeftLiteral = std::get<IntLiteral>(multLeftLiteralWrapper);
+        REQUIRE(std::holds_alternative<IntLiteral>(*multiplicativeOperation.lhs));
+        IntLiteral multLeftLiteral = std::get<IntLiteral>(*multiplicativeOperation.lhs);
         REQUIRE(multLeftLiteral.value == 69);
 
         // Right side of the "*" (3.14)
-        REQUIRE(std::holds_alternative<Literal>(*multiplicativeOperation.rhs));
-        Literal multRightLiteralWrapper = std::get<Literal>(*multiplicativeOperation.rhs);
-        REQUIRE(std::holds_alternative<FloatLiteral>(multRightLiteralWrapper));
-        FloatLiteral multRightLiteral = std::get<FloatLiteral>(multRightLiteralWrapper);
+        REQUIRE(std::holds_alternative<FloatLiteral>(*multiplicativeOperation.rhs));
+        FloatLiteral multRightLiteral = std::get<FloatLiteral>(*multiplicativeOperation.rhs);
         REQUIRE(multRightLiteral.value == 3.14f);
 
         // Right side of the "-" (7)
-        REQUIRE(std::holds_alternative<Literal>(*topLevelOperation.rhs));
-        Literal rightLiteralWrapper = std::get<Literal>(*topLevelOperation.rhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(rightLiteralWrapper));
-        IntLiteral rightLiteral = std::get<IntLiteral>(rightLiteralWrapper);
+        REQUIRE(std::holds_alternative<IntLiteral>(*topLevelOperation.rhs));
+        IntLiteral rightLiteral = std::get<IntLiteral>(*topLevelOperation.rhs);
         REQUIRE(rightLiteral.value == 7);
     }
 
@@ -210,48 +184,40 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         // Top-level ((420 + 69) * (3.14 - 7))
-        ArithmeticOperation topLevelOperation = std::move(std::get<ArithmeticOperation>(*expressionPtr));
+        BinaryOperation topLevelOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
         REQUIRE(topLevelOperation.op == "*");
 
         // Left side should be (420 + 69)
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*topLevelOperation.lhs));
-        ArithmeticOperation additiveOperation = std::move(std::get<ArithmeticOperation>(*topLevelOperation.lhs));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.lhs));
+        BinaryOperation additiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.lhs));
         REQUIRE(additiveOperation.op == "+");
 
         // Left side of the "+" (420)
-        REQUIRE(std::holds_alternative<Literal>(*additiveOperation.lhs));
-        Literal leftLiteralWrapper = std::get<Literal>(*additiveOperation.lhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(leftLiteralWrapper));
-        IntLiteral leftLiteral = std::get<IntLiteral>(leftLiteralWrapper);
+        REQUIRE(std::holds_alternative<IntLiteral>(*additiveOperation.lhs));
+        IntLiteral leftLiteral = std::get<IntLiteral>(*additiveOperation.lhs);
         REQUIRE(leftLiteral.value == 420);
 
         // Right side of the "+" (69)
-        REQUIRE(std::holds_alternative<Literal>(*additiveOperation.rhs));
-        Literal rightLiteralWrapper = std::get<Literal>(*additiveOperation.rhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(rightLiteralWrapper));
-        IntLiteral rightLiteral = std::get<IntLiteral>(rightLiteralWrapper);
+        REQUIRE(std::holds_alternative<IntLiteral>(*additiveOperation.rhs));
+        IntLiteral rightLiteral = std::get<IntLiteral>(*additiveOperation.rhs);
         REQUIRE(rightLiteral.value == 69);
 
         // Right side of the "*" (3.14 - 7)
-        REQUIRE(std::holds_alternative<ArithmeticOperation>(*topLevelOperation.rhs));
-        ArithmeticOperation subtractiveOperation = std::move(std::get<ArithmeticOperation>(*topLevelOperation.rhs));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.rhs));
+        BinaryOperation subtractiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.rhs));
         REQUIRE(subtractiveOperation.op == "-");
 
         // Left side of the "-" (3.14)
-        REQUIRE(std::holds_alternative<Literal>(*subtractiveOperation.lhs));
-        Literal subLeftLiteralWrapper = std::get<Literal>(*subtractiveOperation.lhs);
-        REQUIRE(std::holds_alternative<FloatLiteral>(subLeftLiteralWrapper));
-        FloatLiteral subLeftLiteral = std::get<FloatLiteral>(subLeftLiteralWrapper);
+        REQUIRE(std::holds_alternative<FloatLiteral>(*subtractiveOperation.lhs));
+        FloatLiteral subLeftLiteral = std::get<FloatLiteral>(*subtractiveOperation.lhs);
         REQUIRE(subLeftLiteral.value == 3.14f);
 
         // Right side of the "-" (7)
-        REQUIRE(std::holds_alternative<Literal>(*subtractiveOperation.rhs));
-        Literal subRightLiteralWrapper = std::get<Literal>(*subtractiveOperation.rhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(subRightLiteralWrapper));
-        IntLiteral subRightLiteral = std::get<IntLiteral>(subRightLiteralWrapper);
+        REQUIRE(std::holds_alternative<IntLiteral>(*subtractiveOperation.rhs));
+        IntLiteral subRightLiteral = std::get<IntLiteral>(*subtractiveOperation.rhs);
         REQUIRE(subRightLiteral.value == 7);
     }
 
@@ -269,27 +235,21 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
 
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
-        REQUIRE(std::holds_alternative<ComparisonOperation>(*expressionPtr));
-        ComparisonOperation comparisonOperation = std::move(std::get<ComparisonOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
+        BinaryOperation comparisonOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
 
         auto& lhs = comparisonOperation.lhs;
-        REQUIRE(std::holds_alternative<Literal>(*lhs));
+        REQUIRE(std::holds_alternative<IntLiteral>(*lhs));
 
-        Literal lhsLiteral = std::get<Literal>(*lhs);
-        REQUIRE(std::holds_alternative<IntLiteral>(lhsLiteral));
-
-        IntLiteral lhsIntLiteral = std::get<IntLiteral>(lhsLiteral);
+        IntLiteral lhsIntLiteral = std::get<IntLiteral>(*lhs);
         REQUIRE(lhsIntLiteral.value == 69);
 
         REQUIRE(comparisonOperation.op == ">");
 
         auto& rhs = comparisonOperation.rhs;
-        REQUIRE(std::holds_alternative<Literal>(*rhs));
+        REQUIRE(std::holds_alternative<FloatLiteral>(*rhs));
 
-        Literal rhsLiteral = std::get<Literal>(*rhs);
-        REQUIRE(std::holds_alternative<FloatLiteral>(rhsLiteral));
-
-        FloatLiteral rhsFloatLiteral = std::get<FloatLiteral>(rhsLiteral);
+        FloatLiteral rhsFloatLiteral = std::get<FloatLiteral>(*rhs);
         REQUIRE(rhsFloatLiteral.value == 3.14f);
     }
 
@@ -310,12 +270,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<LogicalNotOperation>(*expressionPtr));
 
         LogicalNotOperation notOperation = std::move(std::get<LogicalNotOperation>(*expressionPtr));
-        REQUIRE(std::holds_alternative<Literal>(*notOperation.expression));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*notOperation.expression));
 
-        Literal literal = std::get<Literal>(*notOperation.expression);
-        REQUIRE(std::holds_alternative<BooleanLiteral>(literal));
-
-        BooleanLiteral boolLiteral = std::get<BooleanLiteral>(literal);
+        BooleanLiteral boolLiteral = std::get<BooleanLiteral>(*notOperation.expression);
         REQUIRE(boolLiteral.value == false);
     }
 
@@ -336,23 +293,17 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
-        REQUIRE(std::holds_alternative<Literal>(*andOperation.lhs));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*andOperation.lhs));
 
-        Literal lhsLiteral = std::get<Literal>(*andOperation.lhs);
-        REQUIRE(std::holds_alternative<BooleanLiteral>(lhsLiteral));
-
-        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(lhsLiteral);
+        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*andOperation.lhs);
         REQUIRE(lhsBooleanLiteral.value == true);
 
         REQUIRE(andOperation.op == "&&");
 
         auto& rhs = andOperation.rhs;
-        REQUIRE(std::holds_alternative<Literal>(*rhs));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*rhs));
 
-        Literal rhsLiteral = std::get<Literal>(*rhs);
-        REQUIRE(std::holds_alternative<BooleanLiteral>(rhsLiteral));
-
-        BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(rhsLiteral);
+        BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(*rhs);
         REQUIRE(rhsBooleanLiteral.value == false);
     }
 
@@ -373,23 +324,17 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
-        REQUIRE(std::holds_alternative<Literal>(*andOperation.lhs));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*andOperation.lhs));
 
-        Literal lhsLiteral = std::get<Literal>(*andOperation.lhs);
-        REQUIRE(std::holds_alternative<BooleanLiteral>(lhsLiteral));
-
-        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(lhsLiteral);
+        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*andOperation.lhs);
         REQUIRE(lhsBooleanLiteral.value == false);
 
         REQUIRE(andOperation.op == "||");
 
         auto& rhs = andOperation.rhs;
-        REQUIRE(std::holds_alternative<Literal>(*rhs));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*rhs));
 
-        Literal rhsLiteral = std::get<Literal>(*rhs);
-        REQUIRE(std::holds_alternative<BooleanLiteral>(rhsLiteral));
-
-        BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(rhsLiteral);
+        BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(*rhs);
         REQUIRE(rhsBooleanLiteral.value == true);
     }
 
@@ -417,12 +362,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(variableAssignment.value.has_value() == true);
 
         auto& valueExpressionPtr = variableAssignment.value.value();
-        REQUIRE(std::holds_alternative<Literal>(*valueExpressionPtr));
+        REQUIRE(std::holds_alternative<StringLiteral>(*valueExpressionPtr));
 
-        Literal valueLiteral = std::get<Literal>(*valueExpressionPtr);
-        REQUIRE(std::holds_alternative<StringLiteral>(valueLiteral));
-
-        StringLiteral stringLiteral = std::get<StringLiteral>(valueLiteral);
+        StringLiteral stringLiteral = std::get<StringLiteral>(*valueExpressionPtr);
         REQUIRE(stringLiteral.value == "Hello, World !");
     }
 
@@ -448,12 +390,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(variableAssignment.value.has_value() == true);
 
         auto& valueExpressionPtr = variableAssignment.value.value();
-        REQUIRE(std::holds_alternative<Literal>(*valueExpressionPtr));
+        REQUIRE(std::holds_alternative<StringLiteral>(*valueExpressionPtr));
 
-        Literal valueLiteral = std::get<Literal>(*valueExpressionPtr);
-        REQUIRE(std::holds_alternative<StringLiteral>(valueLiteral));
-
-        StringLiteral stringLiteral = std::get<StringLiteral>(valueLiteral);
+        StringLiteral stringLiteral = std::get<StringLiteral>(*valueExpressionPtr);
         REQUIRE(stringLiteral.value == "Hello, World !");
     }
 }

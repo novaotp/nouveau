@@ -9,28 +9,19 @@ constexpr int SPACE_COUNT = 4;
 
 template <typename NodeType>
 void printExpression(const NodeType& n, const size_t indentCount) {
-    if constexpr (std::is_same_v<NodeType, Literal>) {
-        std::visit([&indentCount](const auto& literal) {
-            using LiteralType = std::decay_t<decltype(literal)>;
-            std::string indent(indentCount * SPACE_COUNT, ' ');
-
-            if constexpr (std::is_same_v<LiteralType, StringLiteral>) {
-                std::cout << indent << "StringLiteral: " << literal.value << std::endl;
-            } else if constexpr (std::is_same_v<LiteralType, IntLiteral>) {
-                std::cout << indent << "IntLiteral: " << literal.value << std::endl;
-            } else if constexpr (std::is_same_v<LiteralType, FloatLiteral>) {
-                std::cout << indent << "FloatLiteral: " << literal.value << std::endl;
-            } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
-                std::cout << indent << "BooleanLiteral: " << (literal.value ? "true" : "false") << std::endl;
-            } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
-                std::cout << indent << "NullLiteral" << std::endl;
-            } else {
-                std::cout << indent << "Unknown Literal Type" << std::endl;
-            }
-        }, n);
-    } else if constexpr (std::is_same_v<NodeType, ArithmeticOperation>) {
+    if constexpr (std::is_same_v<LiteralType, StringLiteral>) {
+        std::cout << indent << "StringLiteral: " << literal.value << std::endl;
+    } else if constexpr (std::is_same_v<LiteralType, IntLiteral>) {
+        std::cout << indent << "IntLiteral: " << literal.value << std::endl;
+    } else if constexpr (std::is_same_v<LiteralType, FloatLiteral>) {
+        std::cout << indent << "FloatLiteral: " << literal.value << std::endl;
+    } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
+        std::cout << indent << "BooleanLiteral: " << (literal.value ? "true" : "false") << std::endl;
+    } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
+        std::cout << indent << "NullLiteral" << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, BinaryOperation>) {
         std::string indent(indentCount * SPACE_COUNT, ' ');
-        std::cout << indent << "ArithmeticOperation" << std::endl;
+        std::cout << indent << "BinaryOperation" << std::endl;
 
         std::visit([&indentCount](const auto& expr) {
             printExpression(expr, indentCount + 1);

@@ -119,7 +119,7 @@ Expression Parser::parseComparitiveExpression() {
         this->getCurrentToken().type == TokenType::LESS_OR_EQUAL_OPERATOR) {
         Token op = this->advanceToken();
         Expression right = this->parseAdditiveExpression();
-        left = ComparisonOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
     }
 
     return left;
@@ -132,7 +132,7 @@ Expression Parser::parseAdditiveExpression() {
         this->getCurrentToken().type == TokenType::SUBTRACTION_OPERATOR) {
         Token op = this->advanceToken();
         Expression right = this->parseMultiplicativeExpression();
-        left = ArithmeticOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
     }
 
     return left;
@@ -146,7 +146,7 @@ Expression Parser::parseMultiplicativeExpression() {
         this->getCurrentToken().type == TokenType::MODULO_OPERATOR) {
         Token op = this->advanceToken();
         Expression right = this->parseLogicalNotExpression();
-        left = ArithmeticOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
     }
 
     return left;
