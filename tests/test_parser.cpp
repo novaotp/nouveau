@@ -293,6 +293,106 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(rhsFloatLiteral.value == 3.14f);
     }
 
+    SECTION("Logical NOT operations are parsed properly") {
+        std::string sourceCode = "!false";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<LogicalNotOperation>(*expressionPtr));
+
+        LogicalNotOperation notOperation = std::move(std::get<LogicalNotOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<Literal>(*notOperation.expression));
+
+        Literal literal = std::get<Literal>(*notOperation.expression);
+        REQUIRE(std::holds_alternative<BooleanLiteral>(literal));
+
+        BooleanLiteral boolLiteral = std::get<BooleanLiteral>(literal);
+        REQUIRE(boolLiteral.value == false);
+    }
+
+    SECTION("Logical AND operations are parsed properly") {
+        std::string sourceCode = "true && false";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
+
+        BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<Literal>(*andOperation.lhs));
+
+        Literal lhsLiteral = std::get<Literal>(*andOperation.lhs);
+        REQUIRE(std::holds_alternative<BooleanLiteral>(lhsLiteral));
+
+        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(lhsLiteral);
+        REQUIRE(lhsBooleanLiteral.value == true);
+
+        REQUIRE(andOperation.op == "&&");
+
+        auto& rhs = andOperation.rhs;
+        REQUIRE(std::holds_alternative<Literal>(*rhs));
+
+        Literal rhsLiteral = std::get<Literal>(*rhs);
+        REQUIRE(std::holds_alternative<BooleanLiteral>(rhsLiteral));
+
+        BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(rhsLiteral);
+        REQUIRE(rhsBooleanLiteral.value == false);
+    }
+
+    SECTION("Logical OR operations are parsed properly") {
+        std::string sourceCode = "false || true";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
+
+        BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<Literal>(*andOperation.lhs));
+
+        Literal lhsLiteral = std::get<Literal>(*andOperation.lhs);
+        REQUIRE(std::holds_alternative<BooleanLiteral>(lhsLiteral));
+
+        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(lhsLiteral);
+        REQUIRE(lhsBooleanLiteral.value == false);
+
+        REQUIRE(andOperation.op == "||");
+
+        auto& rhs = andOperation.rhs;
+        REQUIRE(std::holds_alternative<Literal>(*rhs));
+
+        Literal rhsLiteral = std::get<Literal>(*rhs);
+        REQUIRE(std::holds_alternative<BooleanLiteral>(rhsLiteral));
+
+        BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(rhsLiteral);
+        REQUIRE(rhsBooleanLiteral.value == true);
+    }
+
     SECTION("Variable declarations are handled properly") {
         std::string sourceCode = "const string message = \"Hello, World !\";";
         Lexer lexer(sourceCode);
@@ -356,5 +456,4 @@ TEST_CASE("Parser works correctly", "[parser]") {
         StringLiteral stringLiteral = std::get<StringLiteral>(valueLiteral);
         REQUIRE(stringLiteral.value == "Hello, World !");
     }
-
 }

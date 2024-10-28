@@ -16,6 +16,7 @@ enum NodeKind {
     VARIABLE_ASSIGNMENT,
     ARITHMETIC_OPERATION,
     COMPARISON_OPERATION,
+    LOGICAL_NOT_OPERATION,
     STRING_LITERAL,
     INTEGER_LITERAL,
     FLOAT_LITERAL,
@@ -63,9 +64,11 @@ struct NullLiteral : public Node {
 
 struct ArithmeticOperation;
 struct ComparisonOperation;
+struct LogicalNotOperation;
+struct BinaryOperation;
 
 using Literal = std::variant<StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
-using Expression = std::variant<ArithmeticOperation, ComparisonOperation, Literal>;
+using Expression = std::variant<ArithmeticOperation, ComparisonOperation, LogicalNotOperation, BinaryOperation, Literal>;
 
 struct ArithmeticOperation : public Node {
     std::unique_ptr<Expression> lhs;
@@ -83,6 +86,21 @@ struct ComparisonOperation : public Node {
 
     ComparisonOperation(std::unique_ptr<Expression> left, const std::string& operation, std::unique_ptr<Expression> right)
         : Node(NodeKind::COMPARISON_OPERATION), lhs(std::move(left)), op(operation), rhs(std::move(right)) {}
+};
+
+struct LogicalNotOperation : public Node {
+    std::unique_ptr<Expression> expression;
+
+    LogicalNotOperation(std::unique_ptr<Expression> expression) : Node(NodeKind::LOGICAL_NOT_OPERATION), expression(std::move(expression)) {};
+};
+
+struct BinaryOperation {
+    std::unique_ptr<Expression> lhs;
+    std::string op;
+    std::unique_ptr<Expression> rhs;
+
+    BinaryOperation(std::unique_ptr<Expression> left, const std::string& op, std::unique_ptr<Expression> right)
+        : lhs(std::move(left)), op(op), rhs(std::move(right)) {}
 };
 
 struct VariableDeclaration : public Node {
@@ -124,9 +142,12 @@ class Parser {
     VariableAssignment parseVariableAssignment();
 
     Expression parseExpression();
+    Expression parseLogicalAndExpression();
+    Expression parseLogicalOrExpression();
     Expression parseComparitiveExpression();
     Expression parseAdditiveExpression();
     Expression parseMultiplicativeExpression();
+    Expression parseLogicalNotExpression();
     Expression parsePrimitiveExpression();
 
     public:

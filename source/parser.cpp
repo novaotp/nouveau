@@ -81,7 +81,31 @@ VariableAssignment Parser::parseVariableAssignment() {
 }
 
 Expression Parser::parseExpression() {
-    return this->parseComparitiveExpression();
+    return this->parseLogicalOrExpression();
+}
+
+Expression Parser::parseLogicalOrExpression() {
+    Expression left = this->parseLogicalAndExpression();
+
+    while (this->getCurrentToken().type == TokenType::OR_OPERATOR) {
+        Token op = this->advanceToken();
+        Expression right = this->parseLogicalAndExpression();
+        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+    }
+
+    return left;
+}
+
+Expression Parser::parseLogicalAndExpression() {
+    Expression left = this->parseComparitiveExpression();
+
+    while (this->getCurrentToken().type == TokenType::AND_OPERATOR) {
+        Token op = this->advanceToken();
+        Expression right = this->parseComparitiveExpression();
+        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+    }
+
+    return left;
 }
 
 Expression Parser::parseComparitiveExpression() {
@@ -115,17 +139,28 @@ Expression Parser::parseAdditiveExpression() {
 }
 
 Expression Parser::parseMultiplicativeExpression() {
-    Expression left = this->parsePrimitiveExpression();
+    Expression left = this->parseLogicalNotExpression();
 
     while (this->getCurrentToken().type == TokenType::MULTIPLICATION_OPERATOR ||
         this->getCurrentToken().type == TokenType::DIVISION_OPERATOR ||
         this->getCurrentToken().type == TokenType::MODULO_OPERATOR) {
         Token op = this->advanceToken();
-        Expression right = this->parsePrimitiveExpression();
+        Expression right = this->parseLogicalNotExpression();
         left = ArithmeticOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
     }
 
     return left;
+}
+
+Expression Parser::parseLogicalNotExpression() {
+    if (this->getCurrentToken().type == TokenType::NOT_OPERATOR) {
+        this->advanceToken();
+        Expression expression = this->parsePrimitiveExpression();
+
+        return LogicalNotOperation(std::make_unique<Expression>(std::move(expression)));
+    }
+
+    return this->parsePrimitiveExpression();
 }
 
 Expression Parser::parsePrimitiveExpression() {
