@@ -87,6 +87,49 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(booleanLiteral.value == true);
     }
 
+    SECTION("Vectors are parsed properly") {
+        std::string sourceCode = "[69, false, \"hello\", 3.14]";
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+        auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+        REQUIRE(std::holds_alternative<Vector>(*expressionPtr));
+
+        const Vector& vector = std::get<Vector>(*expressionPtr);
+
+        const Expression& expr1 = *vector.values[0];
+        REQUIRE(std::holds_alternative<IntLiteral>(expr1));
+
+        IntLiteral intLiteral = std::get<IntLiteral>(expr1);
+        REQUIRE(intLiteral.value == 69);
+
+        const Expression& expr2 = *vector.values[1];
+        REQUIRE(std::holds_alternative<BooleanLiteral>(expr2));
+
+        BooleanLiteral booleanLiteral = std::get<BooleanLiteral>(expr2);
+        REQUIRE(booleanLiteral.value == false);
+
+        const Expression& expr3 = *vector.values[2];
+        REQUIRE(std::holds_alternative<StringLiteral>(expr3));
+
+        StringLiteral stringLiteral = std::get<StringLiteral>(expr3);
+        REQUIRE(stringLiteral.value == "hello");
+
+        const Expression& expr4 = *vector.values[3];
+        REQUIRE(std::holds_alternative<FloatLiteral>(expr4));
+
+        FloatLiteral floatLiteral = std::get<FloatLiteral>(expr4);
+        REQUIRE(floatLiteral.value == 3.14f);
+    }
+
     SECTION("Additive arithmetic operations are parsed properly") {
         std::string sourceCode = "69 + 3.14";
         Lexer lexer(sourceCode);

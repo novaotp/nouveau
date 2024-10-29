@@ -41,8 +41,26 @@ struct NullLiteral {
 
 struct LogicalNotOperation;
 struct BinaryOperation;
+struct Vector;
 
-using Expression = std::variant<BinaryOperation, LogicalNotOperation, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
+using Expression = std::variant<BinaryOperation, LogicalNotOperation, Vector, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
+
+struct Vector {
+    std::vector<std::unique_ptr<Expression>> values;
+
+    Vector(std::vector<std::unique_ptr<Expression>> values) : values(std::move(values)) {}
+    Vector(Vector&& other) noexcept : values(std::move(other.values)) {}
+
+    Vector& operator=(Vector&& other) noexcept {
+        if (this != &other) {
+            values = std::move(other.values);
+        }
+        return *this;
+    }
+
+    Vector(const Vector&) = delete;
+    Vector& operator=(const Vector&) = delete;
+};
 
 struct LogicalNotOperation {
     std::unique_ptr<Expression> expression;

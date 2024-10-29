@@ -185,6 +185,22 @@ Expression Parser::parsePrimitiveExpression() {
 
             return expression;
         }
+        case TokenType::LEFT_BRACKET: {
+            std::vector<std::unique_ptr<Expression>> expressions = {};
+
+            while (this->getCurrentToken().type != TokenType::RIGHT_BRACKET) {
+                expressions.push_back(std::make_unique<Expression>(this->parseExpression()));
+
+                if (this->getCurrentToken().type == TokenType::COMMA) {
+                    this->advanceToken();
+                }
+            }
+
+            // Skip the ]
+            this->advanceToken();
+
+            return Vector(std::move(expressions));
+        }
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }

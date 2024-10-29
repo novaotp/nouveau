@@ -36,6 +36,14 @@ void printExpression(const NodeType& n, const size_t indentCount) {
         std::visit([&indentCount](const auto& expr) {
             printExpression(expr, indentCount + 1);
         }, *n.expression);
+    } else if constexpr (std::is_same_v<NodeType, Vector>) {
+        std::cout << indent << "Vector" << std::endl;
+
+        for (const auto& expr : n.values) {
+            std::visit([&indentCount](const auto& element) {
+                printExpression(element, indentCount + 1);
+            }, *expr);
+        }
     } else {
         std::cout << indent << "Unknown Expression Type" << std::endl;
     }
