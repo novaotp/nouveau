@@ -9,18 +9,19 @@ constexpr int SPACE_COUNT = 4;
 
 template <typename NodeType>
 void printExpression(const NodeType& n, const size_t indentCount) {
-    if constexpr (std::is_same_v<LiteralType, StringLiteral>) {
-        std::cout << indent << "StringLiteral: " << literal.value << std::endl;
-    } else if constexpr (std::is_same_v<LiteralType, IntLiteral>) {
-        std::cout << indent << "IntLiteral: " << literal.value << std::endl;
-    } else if constexpr (std::is_same_v<LiteralType, FloatLiteral>) {
-        std::cout << indent << "FloatLiteral: " << literal.value << std::endl;
-    } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
-        std::cout << indent << "BooleanLiteral: " << (literal.value ? "true" : "false") << std::endl;
-    } else if constexpr (std::is_same_v<LiteralType, BooleanLiteral>) {
+    std::string indent(indentCount * SPACE_COUNT, ' ');
+
+    if constexpr (std::is_same_v<NodeType, StringLiteral>) {
+        std::cout << indent << "StringLiteral: " << n.value << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, IntLiteral>) {
+        std::cout << indent << "IntLiteral: " << n.value << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, FloatLiteral>) {
+        std::cout << indent << "FloatLiteral: " << n.value << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, BooleanLiteral>) {
+        std::cout << indent << "BooleanLiteral: " << (n.value ? "true" : "false") << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, BooleanLiteral>) {
         std::cout << indent << "NullLiteral" << std::endl;
     } else if constexpr (std::is_same_v<NodeType, BinaryOperation>) {
-        std::string indent(indentCount * SPACE_COUNT, ' ');
         std::cout << indent << "BinaryOperation" << std::endl;
 
         std::visit([&indentCount](const auto& expr) {
@@ -30,17 +31,21 @@ void printExpression(const NodeType& n, const size_t indentCount) {
         std::visit([&indentCount](const auto& expr) {
             printExpression(expr, indentCount + 1);
         }, *n.rhs);
+    } else if constexpr (std::is_same_v<NodeType, LogicalNotOperation>) {
+        std::cout << indent << "NotOperation" << std::endl;
+        std::visit([&indentCount](const auto& expr) {
+            printExpression(expr, indentCount + 1);
+        }, *n.expression);
     } else {
-        std::string indent(indentCount * SPACE_COUNT, ' ');
         std::cout << indent << "Unknown Expression Type" << std::endl;
     }
 }
 
 template <typename NodeType>
 void printStatement(const NodeType& n, const size_t indentCount) {
-    if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
-        std::string indent(indentCount * SPACE_COUNT, ' ');
+    std::string indent(indentCount * SPACE_COUNT, ' ');
 
+    if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
         std::cout << "Variable Declaration" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "IsMutable: " << (n.isMutable ? "true" : "false") << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Type: " << n.type << std::endl;
@@ -56,7 +61,6 @@ void printStatement(const NodeType& n, const size_t indentCount) {
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
         }
     } else if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
-        std::string indent(indentCount * SPACE_COUNT, ' ');
 
         std::cout << "Variable Assignment" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
@@ -71,7 +75,6 @@ void printStatement(const NodeType& n, const size_t indentCount) {
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
         }
     } else {
-        std::string indent(indentCount * SPACE_COUNT, ' ');
         std::cout << indent << "Unknown Statement Type" << std::endl;
     }
 }
@@ -81,25 +84,20 @@ void printProgram(Program& program) {
         const auto& node = program.body[i];
 
         std::visit([](const auto& ptr) {
-            using PtrType = std::decay_t<decltype(ptr)>;
+            using NodeType = std::decay_t<decltype(*ptr)>;
 
-            if (ptr) {
-                using NodeType = std::decay_t<decltype(*ptr)>;
-
-                if constexpr (std::is_same_v<NodeType, Expression>) {
-                    std::visit([](const auto& expr) {
-                        printExpression(expr, 0);
-                    }, *ptr);
-                } else if constexpr (std::is_same_v<NodeType, Statement>) {
-                    std::visit([](const auto& expr) {
-                        printStatement(expr, 0);
-                    }, *ptr);
-                } else {
-                    std::cout << "Unknown Node Type" << std::endl;
-                }
+            if constexpr (std::is_same_v<NodeType, Expression>) {
+                std::visit([](const auto& expr) {
+                    printExpression(expr, 0);
+                }, *ptr);
+            } else if constexpr (std::is_same_v<NodeType, Statement>) {
+                std::visit([](const auto& expr) {
+                    printStatement(expr, 0);
+                }, *ptr);
             } else {
-                std::cout << "Null Pointer" << std::endl;
-            } }, node);
+                std::cout << "Unknown Node Type" << std::endl;
+            }
+        }, node);
     }
 }
 

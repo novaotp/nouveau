@@ -1,3 +1,6 @@
+#ifndef AST_HPP
+#define AST_HPP
+
 #include <string>
 #include <vector>
 #include <variant>
@@ -81,3 +84,5 @@ struct Program {
 
     Program() : body{} {};
 };
+
+#endif // AST_HPP
