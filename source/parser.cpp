@@ -14,13 +14,13 @@ Program Parser::parse() {
     Program program;
 
     while (this->getCurrentToken().type != TokenType::END_OF_FILE) {
-        auto statementOrExpression = this->parseStatementOrExpression();
+        std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
 
         if (std::holds_alternative<Statement>(statementOrExpression)) {
             program.body.push_back(
                 std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
             );
-        } else {
+        } else if (std::holds_alternative<Expression>(statementOrExpression)) {
             program.body.push_back(
                 std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
             );
@@ -30,7 +30,7 @@ Program Parser::parse() {
     return program;
 }
 
-std::variant<Statement, Expression> Parser::parseStatementOrExpression() {
+std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpression() {
     switch (this->getCurrentToken().type) {
         case TokenType::CONST_KEYWORD:
         case TokenType::MUTABLE_KEYWORD:
@@ -38,6 +38,11 @@ std::variant<Statement, Expression> Parser::parseStatementOrExpression() {
         case TokenType::IDENTIFIER:
             // TODO : Identifier could be a function
             return this->parseVariableAssignment();
+        case TokenType::IF_KEYWORD:
+            return this->parseIfStatement();
+        case TokenType::SEMI_COLON:
+            this->advanceToken();
+            return std::monostate{};
         default:
             return this->parseExpression();
     }
@@ -78,6 +83,94 @@ VariableAssignment Parser::parseVariableAssignment() {
     this->advanceToken();
 
     return VariableAssignment(identifier, std::make_unique<Expression>(std::move(value)));
+}
+
+IfStatement Parser::parseIfStatement() {
+    this->advanceToken(); // Skip the "if" token
+    this->advanceToken(); // Skip the "(" token
+
+    // Parse the condition expression inside the parentheses
+    std::unique_ptr<Expression> condition = std::make_unique<Expression>(this->parseExpression());
+
+    this->advanceToken(); // Skip the ")" token
+    this->advanceToken(); // Skip the "{" token
+
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock;
+    while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
+        std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
+
+        if (std::holds_alternative<Statement>(statementOrExpression)) {
+            thenBlock.push_back(
+                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+            );
+        } else if (std::holds_alternative<Expression>(statementOrExpression)) {
+            thenBlock.push_back(
+                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+            );
+        }
+    }
+
+    this->advanceToken(); // Skip the "}" token
+
+    std::vector<std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses = {};
+    while (this->getCurrentToken().type == TokenType::ELSE_IF_KEYWORD) {
+        this->advanceToken(); // Skip the "elseif" token
+        this->advanceToken(); // Skip the "(" token
+
+        std::unique_ptr<Expression> elseifCondition = std::make_unique<Expression>(this->parseExpression());
+
+        this->advanceToken(); // Skip the ")" token
+        this->advanceToken(); // Skip the "{" token
+
+        // Parse the "elseif" block
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseifBlock;
+        while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
+            std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
+
+            if (std::holds_alternative<Statement>(statementOrExpression)) {
+                elseifBlock.push_back(
+                    std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                );
+            } else if (std::holds_alternative<Expression>(statementOrExpression)) {
+                elseifBlock.push_back(
+                    std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                );
+            }
+        }
+
+        this->advanceToken(); // Skip the "}" token
+
+        elseifClauses.push_back(std::make_pair(std::move(elseifCondition), std::move(elseifBlock)));
+    }
+
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock;
+    if (this->getCurrentToken().type == TokenType::ELSE_KEYWORD) {
+        this->advanceToken(); // Skip the "else" token
+        this->advanceToken(); // Skip the "{" token
+
+        while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
+            std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
+
+            if (std::holds_alternative<Statement>(statementOrExpression)) {
+                elseBlock.push_back(
+                    std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                );
+            } else if (std::holds_alternative<Expression>(statementOrExpression)) {
+                elseBlock.push_back(
+                    std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                );
+            }
+        }
+
+        this->advanceToken(); // Skip the "}" token
+    }
+
+    return IfStatement(
+        std::move(condition),
+        std::move(thenBlock),
+        std::move(elseifClauses),
+        std::move(elseBlock)
+    );
 }
 
 Expression Parser::parseExpression() {

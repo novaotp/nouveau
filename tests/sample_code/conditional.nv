@@ -1,0 +1,7 @@
+const bool is_valid = false;
+
+if (false) {
+    "valid";
+} else {
+    "invalid";
+}

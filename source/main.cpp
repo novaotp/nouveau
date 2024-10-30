@@ -19,7 +19,7 @@ void printExpression(const NodeType& n, const size_t indentCount) {
         std::cout << indent << "FloatLiteral: " << n.value << std::endl;
     } else if constexpr (std::is_same_v<NodeType, BooleanLiteral>) {
         std::cout << indent << "BooleanLiteral: " << (n.value ? "true" : "false") << std::endl;
-    } else if constexpr (std::is_same_v<NodeType, BooleanLiteral>) {
+    } else if constexpr (std::is_same_v<NodeType, NullLiteral>) {
         std::cout << indent << "NullLiteral" << std::endl;
     } else if constexpr (std::is_same_v<NodeType, BinaryOperation>) {
         std::cout << indent << "BinaryOperation" << std::endl;
@@ -81,6 +81,54 @@ void printStatement(const NodeType& n, const size_t indentCount) {
             }, *n.value.value());
         } else {
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
+        }
+    } else if constexpr (std::is_same_v<NodeType, IfStatement>) {
+        std::cout << indent << "If Statement" << std::endl;
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Condition:" << std::endl;
+        std::visit([&indentCount](const auto& condition) {
+            printExpression(condition, indentCount + 2);
+        }, *n.condition);
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Then Block:" << std::endl;
+        for (const auto& element : n.thenBlock) {
+            std::visit([&indentCount](const auto& item) {
+                std::cout << "Type of item: " << typeid(*item).name() << std::endl; // Debugging line
+
+                using ItemType = std::decay_t<decltype(*item)>;
+
+                if constexpr (std::is_same_v<ItemType, Statement>) {
+                    printStatement(*item, indentCount + 1); // Dereference unique_ptr
+                } else if constexpr (std::is_same_v<ItemType, Expression>) {
+                    printExpression(*item, indentCount + 1); // Dereference unique_ptr
+                } else {
+                    std::cout << "Unknown Type in Then Block" << std::endl; // Fallback for debugging
+                }
+            }, element);
+        }
+
+        for (const auto& elseif : n.elseifClauses) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Else If:" << std::endl;
+            std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "Condition:" << std::endl;
+            std::visit([&indentCount](const auto& condition) {
+                printExpression(condition, indentCount + 2);
+            }, *elseif.first);
+
+            std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "Block:" << std::endl;
+            for (const auto& stmt : elseif.second) {
+                std::visit([&indentCount](const auto& statement) {
+                    printStatement(statement, indentCount + 2);
+                }, stmt);
+            }
+        }
+
+        if (!n.elseBlock.empty()) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Else Block:" << std::endl;
+            for (const auto& stmt : n.elseBlock) {
+                std::visit([&indentCount](const auto& statement) {
+                    printStatement(statement, indentCount + 1);
+                }, stmt);
+            }
         }
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;
