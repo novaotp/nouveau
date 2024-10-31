@@ -458,7 +458,6 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Parser parser(tokens);
         Program program = parser.parse();
 
-        // Validate that the parsed program has one main statement (the IfStatement)
         REQUIRE(program.body.size() == 1);
 
         REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(program.body[0]));

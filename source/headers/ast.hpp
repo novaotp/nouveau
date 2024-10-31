@@ -49,17 +49,6 @@ struct Vector {
     std::vector<std::unique_ptr<Expression>> values;
 
     Vector(std::vector<std::unique_ptr<Expression>> values) : values(std::move(values)) {}
-    Vector(Vector&& other) noexcept : values(std::move(other.values)) {}
-
-    Vector& operator=(Vector&& other) noexcept {
-        if (this != &other) {
-            values = std::move(other.values);
-        }
-        return *this;
-    }
-
-    Vector(const Vector&) = delete;
-    Vector& operator=(const Vector&) = delete;
 };
 
 struct LogicalNotOperation {
@@ -96,13 +85,14 @@ struct VariableAssignment {
 };
 
 struct IfStatement;
+struct WhileStatement;
 
 using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement>;
 
 struct IfStatement {
     std::unique_ptr<Expression> condition;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock;
-    std::vector < std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses;
+    std::vector<std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock;
 
     IfStatement(std::unique_ptr<Expression> condition,
@@ -113,6 +103,14 @@ struct IfStatement {
         thenBlock(std::move(thenBlock)),
         elseifClauses(std::move(elseifClauses)),
         elseBlock(std::move(elseBlock)) {}
+};
+
+struct WhileStatement {
+    std::unique_ptr<Expression> condition;
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block;
+
+    WhileStatement(std::unique_ptr<Expression> condition, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block)
+        : condition(std::move(condition)), block(std::move(block)) {}
 };
 
 struct Program {
