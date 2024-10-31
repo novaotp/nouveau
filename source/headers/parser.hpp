@@ -14,9 +14,14 @@ class Parser {
     Token getCurrentToken();
     Token advanceToken();
 
-    std::variant<Statement, Expression> parseStatementOrExpression();
+    /// @attention
+    /// Returns a monostate if it parsed a delimiter such as a ;
+    ///             
+    /// In those cases, there's no need to handle it.
+    std::variant<Statement, Expression, std::monostate> parseStatementOrExpression();
     VariableDeclaration parseVariableDeclaration();
     VariableAssignment parseVariableAssignment();
+    IfStatement parseIfStatement();
 
     Expression parseExpression();
     Expression parseLogicalAndExpression();

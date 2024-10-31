@@ -438,4 +438,84 @@ TEST_CASE("Parser works correctly", "[parser]") {
         StringLiteral stringLiteral = std::get<StringLiteral>(*valueExpressionPtr);
         REQUIRE(stringLiteral.value == "Hello, World !");
     }
+
+    SECTION("If-else conditions are parsed properly") {
+        std::string sourceCode = R"(
+            if (true) {
+                x = 10;
+                "hello";
+            } else if (false) {
+                y = 3.14;
+            } else {
+                const int z = 20;
+                null;
+            }
+        )";
+
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        // Validate that the parsed program has one main statement (the IfStatement)
+        REQUIRE(program.body.size() == 1);
+
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(program.body[0]));
+        auto& mainStatement = std::get<std::unique_ptr<Statement>>(program.body[0]);
+
+        REQUIRE(std::holds_alternative<IfStatement>(*mainStatement));
+        const IfStatement& ifStatement = std::get<IfStatement>(*mainStatement);
+
+        SECTION("Validate the main if condition") {
+            REQUIRE(std::holds_alternative<BooleanLiteral>(*ifStatement.condition));
+            REQUIRE(std::get<BooleanLiteral>(*ifStatement.condition).value == true);
+        }
+
+        SECTION("Validate the thenBlock") {
+            REQUIRE(ifStatement.thenBlock.size() == 2);
+
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(ifStatement.thenBlock[0]));
+            auto& thenStmt1 = std::get<std::unique_ptr<Statement>>(ifStatement.thenBlock[0]);
+
+            REQUIRE(std::holds_alternative<VariableAssignment>(*thenStmt1));
+            REQUIRE(std::get<VariableAssignment>(*thenStmt1).identifier == "x");
+
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(ifStatement.thenBlock[1]));
+            auto& thenExpr2 = std::get<std::unique_ptr<Expression>>(ifStatement.thenBlock[1]);
+
+            REQUIRE(std::holds_alternative<StringLiteral>(*thenExpr2));
+            REQUIRE(std::get<StringLiteral>(*thenExpr2).value == "hello");
+        }
+
+        SECTION("Validate the elseifClauses") {
+            REQUIRE(ifStatement.elseifClauses.size() == 1);
+
+            REQUIRE(std::holds_alternative<BooleanLiteral>(*ifStatement.elseifClauses[0].first));
+            REQUIRE(std::get<BooleanLiteral>(*ifStatement.elseifClauses[0].first).value == false);
+
+            REQUIRE(ifStatement.elseifClauses[0].second.size() == 1);
+
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(ifStatement.elseifClauses[0].second[0]));
+            auto& elseifStmt = std::get<std::unique_ptr<Statement>>(ifStatement.elseifClauses[0].second[0]);
+
+            REQUIRE(std::holds_alternative<VariableAssignment>(*elseifStmt));
+            REQUIRE(std::get<VariableAssignment>(*elseifStmt).identifier == "y");
+        }
+
+        SECTION("Validate the elseBlock") {
+            REQUIRE(ifStatement.elseBlock.size() == 2);
+
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(ifStatement.elseBlock[0]));
+            auto& elseStmt1 = std::get<std::unique_ptr<Statement>>(ifStatement.elseBlock[0]);
+
+            REQUIRE(std::holds_alternative<VariableDeclaration>(*elseStmt1));
+            REQUIRE(std::get<VariableDeclaration>(*elseStmt1).identifier == "z");
+
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(ifStatement.elseBlock[1]));
+            auto& elseExpr2 = std::get<std::unique_ptr<Expression>>(ifStatement.elseBlock[1]);
+
+            REQUIRE(std::holds_alternative<NullLiteral>(*elseExpr2));
+        }
+    }
 }

@@ -95,7 +95,25 @@ struct VariableAssignment {
         : identifier(identifier), value(std::move(value)) {}
 };
 
-using Statement = std::variant<VariableDeclaration, VariableAssignment>;
+struct IfStatement;
+
+using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement>;
+
+struct IfStatement {
+    std::unique_ptr<Expression> condition;
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock;
+    std::vector < std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses;
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock;
+
+    IfStatement(std::unique_ptr<Expression> condition,
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock,
+        std::vector<std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses = {},
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock = {})
+        : condition(std::move(condition)),
+        thenBlock(std::move(thenBlock)),
+        elseifClauses(std::move(elseifClauses)),
+        elseBlock(std::move(elseBlock)) {}
+};
 
 struct Program {
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body;
