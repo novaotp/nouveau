@@ -1,7 +1,10 @@
 const bool is_valid = false;
 
+mut int counter = 0;
 if (false) {
-    "valid";
+    counter = 10;
+} else if (5 > 10) {
+    counter = 5;
 } else {
-    "invalid";
+    counter = 50;
 }

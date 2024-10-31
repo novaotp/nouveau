@@ -70,7 +70,7 @@ void printStatement(const NodeType& n, const size_t indentCount) {
         }
     } else if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
 
-        std::cout << "Variable Assignment" << std::endl;
+        std::cout << indent << "Variable Assignment" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
 
         if (n.value.has_value()) {
@@ -93,16 +93,18 @@ void printStatement(const NodeType& n, const size_t indentCount) {
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Then Block:" << std::endl;
         for (const auto& element : n.thenBlock) {
             std::visit([&indentCount](const auto& item) {
-                std::cout << "Type of item: " << typeid(*item).name() << std::endl; // Debugging line
-
                 using ItemType = std::decay_t<decltype(*item)>;
 
                 if constexpr (std::is_same_v<ItemType, Statement>) {
-                    printStatement(*item, indentCount + 1); // Dereference unique_ptr
+                    std::visit([&indentCount](const auto& expr) {
+                        printStatement(expr, indentCount + 2);
+                    }, *item);
                 } else if constexpr (std::is_same_v<ItemType, Expression>) {
-                    printExpression(*item, indentCount + 1); // Dereference unique_ptr
+                    std::visit([&indentCount](const auto& expr) {
+                        printExpression(expr, indentCount + 2);
+                    }, *item);
                 } else {
-                    std::cout << "Unknown Type in Then Block" << std::endl; // Fallback for debugging
+                    std::cout << "Unknown Type in Then Block" << std::endl;
                 }
             }, element);
         }
@@ -111,23 +113,47 @@ void printStatement(const NodeType& n, const size_t indentCount) {
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Else If:" << std::endl;
             std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "Condition:" << std::endl;
             std::visit([&indentCount](const auto& condition) {
-                printExpression(condition, indentCount + 2);
+                printExpression(condition, indentCount + 3);
             }, *elseif.first);
 
             std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "Block:" << std::endl;
-            for (const auto& stmt : elseif.second) {
-                std::visit([&indentCount](const auto& statement) {
-                    printStatement(statement, indentCount + 2);
-                }, stmt);
+            for (const auto& element : elseif.second) {
+                std::visit([&indentCount](const auto& item) {
+                    using ItemType = std::decay_t<decltype(*item)>;
+
+                    if constexpr (std::is_same_v<ItemType, Statement>) {
+                        std::visit([&indentCount](const auto& expr) {
+                            printStatement(expr, indentCount + 3);
+                        }, *item);
+                    } else if constexpr (std::is_same_v<ItemType, Expression>) {
+                        std::visit([&indentCount](const auto& expr) {
+                            printExpression(expr, indentCount + 3);
+                        }, *item);
+                    } else {
+                        std::cout << "Unknown Type in Then Block" << std::endl;
+                    }
+                }, element);
             }
         }
 
         if (!n.elseBlock.empty()) {
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Else Block:" << std::endl;
-            for (const auto& stmt : n.elseBlock) {
-                std::visit([&indentCount](const auto& statement) {
-                    printStatement(statement, indentCount + 1);
-                }, stmt);
+            for (const auto& element : n.elseBlock) {
+                std::visit([&indentCount](const auto& item) {
+                    using ItemType = std::decay_t<decltype(*item)>;
+
+                    if constexpr (std::is_same_v<ItemType, Statement>) {
+                        std::visit([&indentCount](const auto& expr) {
+                            printStatement(expr, indentCount + 2);
+                        }, *item);
+                    } else if constexpr (std::is_same_v<ItemType, Expression>) {
+                        std::visit([&indentCount](const auto& expr) {
+                            printExpression(expr, indentCount + 2);
+                        }, *item);
+                    } else {
+                        std::cout << "Unknown Type in Then Block" << std::endl;
+                    }
+                }, element);
             }
         }
     } else {
