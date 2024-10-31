@@ -87,7 +87,7 @@ struct VariableAssignment {
 struct IfStatement;
 struct WhileStatement;
 
-using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement>;
+using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement>;
 
 struct IfStatement {
     std::unique_ptr<Expression> condition;

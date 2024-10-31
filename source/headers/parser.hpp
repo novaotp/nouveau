@@ -22,6 +22,7 @@ class Parser {
     VariableDeclaration parseVariableDeclaration();
     VariableAssignment parseVariableAssignment();
     IfStatement parseIfStatement();
+    WhileStatement parseWhileStatement();
 
     Expression parseExpression();
     Expression parseLogicalAndExpression();

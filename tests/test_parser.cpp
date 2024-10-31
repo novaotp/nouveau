@@ -517,4 +517,52 @@ TEST_CASE("Parser works correctly", "[parser]") {
             REQUIRE(std::holds_alternative<NullLiteral>(*elseExpr2));
         }
     }
+
+    SECTION("While loops are parsed properly") {
+        std::string sourceCode = R"(
+        while (true) {
+            x = 0;
+        }
+    )";
+
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstStatement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstStatement));
+
+        auto& statementPtr = std::get<std::unique_ptr<Statement>>(firstStatement);
+        REQUIRE(std::holds_alternative<WhileStatement>(*statementPtr));
+
+        const WhileStatement& whileStatement = std::get<WhileStatement>(*statementPtr);
+
+        const Expression& condition = *whileStatement.condition;
+        REQUIRE(std::holds_alternative<BooleanLiteral>(condition));
+
+        BooleanLiteral boolLiteral = std::get<BooleanLiteral>(condition);
+        REQUIRE(boolLiteral.value == true);
+
+        REQUIRE(whileStatement.block.size() == 1);
+
+        const auto& blockElement = whileStatement.block[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(blockElement));
+
+        const auto& assignmentPtr = std::get<std::unique_ptr<Statement>>(blockElement);
+        REQUIRE(std::holds_alternative<VariableAssignment>(*assignmentPtr));
+
+        const VariableAssignment& assignment = std::get<VariableAssignment>(*assignmentPtr);
+        REQUIRE(assignment.identifier == "x");
+
+        const Expression& valueExpr = *assignment.value.value();
+        REQUIRE(std::holds_alternative<IntLiteral>(valueExpr));
+
+        IntLiteral intLiteral = std::get<IntLiteral>(valueExpr);
+        REQUIRE(intLiteral.value == 0);
+    }
+
 }
