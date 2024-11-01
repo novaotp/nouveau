@@ -21,6 +21,8 @@ void printExpression(const NodeType& n, const size_t indentCount) {
         std::cout << indent << "BooleanLiteral: " << (n.value ? "true" : "false") << std::endl;
     } else if constexpr (std::is_same_v<NodeType, NullLiteral>) {
         std::cout << indent << "NullLiteral" << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, Identifier>) {
+        std::cout << indent << "Identifier: " << n.name << std::endl;
     } else if constexpr (std::is_same_v<NodeType, BinaryOperation>) {
         std::cout << indent << "BinaryOperation" << std::endl;
 
@@ -72,6 +74,7 @@ void printStatement(const NodeType& n, const size_t indentCount) {
 
         std::cout << indent << "Variable Assignment" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Operator: " << n.op << std::endl;
 
         if (n.value.has_value()) {
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
@@ -155,6 +158,100 @@ void printStatement(const NodeType& n, const size_t indentCount) {
                     }
                 }, element);
             }
+        }
+    } else if constexpr (std::is_same_v<NodeType, WhileStatement>) {
+        std::cout << indent << "While Statement" << std::endl;
+
+        /**
+         * CONDITION
+         */
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Condition" << std::endl;
+        std::visit([&indentCount](const auto& condition) {
+            printStatement(condition, indentCount + 2);
+        }, *n.condition);
+
+        /**
+         * BLOCK
+         */
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Block" << std::endl;
+        for (const auto& element : n.block) {
+            std::visit([&indentCount](const auto& item) {
+                using ItemType = std::decay_t<decltype(*item)>;
+
+                if constexpr (std::is_same_v<ItemType, Statement>) {
+                    std::visit([&indentCount](const auto& expr) {
+                        printStatement(expr, indentCount + 2);
+                    }, *item);
+                } else if constexpr (std::is_same_v<ItemType, Expression>) {
+                    std::visit([&indentCount](const auto& expr) {
+                        printExpression(expr, indentCount + 2);
+                    }, *item);
+                } else {
+                    std::cout << "Unknown Type in Block" << std::endl;
+                }
+            }, element);
+        }
+    } else if constexpr (std::is_same_v<NodeType, ForStatement>) {
+        std::cout << indent << "For Statement" << std::endl;
+
+        /**
+         * INITIALIZATION
+         */
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Initialization" << std::endl;
+        if (n.initialization.has_value()) {
+            std::visit([&indentCount](const auto& stmt) {
+                printStatement(stmt, indentCount + 2);
+            }, *n.initialization.value());
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "None provided" << std::endl;
+        }
+
+        /**
+         * CONDITION
+         */
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Condition" << std::endl;
+        if (n.condition.has_value()) {
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount + 2);
+            }, *n.condition.value());
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "None provided" << std::endl;
+        }
+
+        /**
+         * UPDATE
+         */
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Update" << std::endl;
+        if (n.update.has_value()) {
+            std::visit([&indentCount](const auto& stmt) {
+                printStatement(stmt, indentCount + 2);
+            }, *n.update.value());
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT * 2, ' ')) << "None provided" << std::endl;
+        }
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Block" << std::endl;
+        for (const auto& element : n.block) {
+            std::visit([&indentCount](const auto& item) {
+                using ItemType = std::decay_t<decltype(*item)>;
+
+                if constexpr (std::is_same_v<ItemType, Statement>) {
+                    std::visit([&indentCount](const auto& expr) {
+                        printStatement(expr, indentCount + 2);
+                    }, *item);
+                } else if constexpr (std::is_same_v<ItemType, Expression>) {
+                    std::visit([&indentCount](const auto& expr) {
+                        printExpression(expr, indentCount + 2);
+                    }, *item);
+                } else {
+                    std::cout << "Unknown Type in Block" << std::endl;
+                }
+            }, element);
         }
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;

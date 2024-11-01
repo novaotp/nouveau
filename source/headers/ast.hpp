@@ -39,11 +39,17 @@ struct NullLiteral {
     NullLiteral() {};
 };
 
+struct Identifier {
+    std::string name;
+
+    Identifier(std::string name) : name(name) {}
+};
+
 struct LogicalNotOperation;
 struct BinaryOperation;
 struct Vector;
 
-using Expression = std::variant<BinaryOperation, LogicalNotOperation, Vector, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
+using Expression = std::variant<BinaryOperation, LogicalNotOperation, Vector, Identifier, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
 
 struct Vector {
     std::vector<std::unique_ptr<Expression>> values;
@@ -78,16 +84,18 @@ struct VariableDeclaration {
 
 struct VariableAssignment {
     std::string identifier;
+    std::string op;
     std::optional<std::unique_ptr<Expression>> value;
 
-    VariableAssignment(const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
-        : identifier(identifier), value(std::move(value)) {}
+    VariableAssignment(const std::string& identifier, const std::string& op, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
+        : identifier(identifier), op(op), value(std::move(value)) {}
 };
 
 struct IfStatement;
 struct WhileStatement;
+struct ForStatement;
 
-using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement>;
+using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement, ForStatement>;
 
 struct IfStatement {
     std::unique_ptr<Expression> condition;
@@ -111,6 +119,20 @@ struct WhileStatement {
 
     WhileStatement(std::unique_ptr<Expression> condition, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block)
         : condition(std::move(condition)), block(std::move(block)) {}
+};
+
+struct ForStatement {
+    std::optional<std::unique_ptr<Statement>> initialization;
+    std::optional<std::unique_ptr<Expression>> condition;
+    std::optional<std::unique_ptr<Statement>> update;
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block;
+
+    ForStatement(
+        std::optional<std::unique_ptr<Statement>> initialization,
+        std::optional<std::unique_ptr<Expression>> condition,
+        std::optional<std::unique_ptr<Statement>> update,
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block)
+        : initialization(std::move(initialization)), condition(std::move(condition)), update(std::move(update)), block(std::move(block)) {}
 };
 
 struct Program {

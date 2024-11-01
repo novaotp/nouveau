@@ -42,6 +42,8 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
             return this->parseIfStatement();
         case TokenType::WHILE_KEYWORD:
             return this->parseWhileStatement();
+        case TokenType::FOR_KEYWORD:
+            return this->parseForStatement();
         case TokenType::SEMI_COLON:
             this->advanceToken();
             return std::monostate{};
@@ -67,8 +69,14 @@ VariableDeclaration Parser::parseVariableDeclaration() {
 
     Expression value = this->parseExpression();
 
-    // Skip the ; token
-    this->advanceToken();
+    // TODO : Enforce semicolons
+    // ? But how to not parse semicolons in constructs like for
+    // * Example, for (mut int i = 0; i < 10; i += 1) {}
+    // *                                      ~~~~~~~
+    // *                                     statement
+    if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
+        this->advanceToken(); // Skip the ; token
+    }
 
     return VariableDeclaration(isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
 }
@@ -77,14 +85,20 @@ VariableAssignment Parser::parseVariableAssignment() {
     std::string identifier = this->advanceToken().value;
 
     // Skip the = token
-    this->advanceToken();
+    std::string op = this->advanceToken().value;
 
     Expression value = this->parseExpression();
 
-    // Skip the ; token
-    this->advanceToken();
+    // TODO : Enforce semicolons
+    // ? But how to not parse semicolons in constructs like for
+    // * Example, for (mut int i = 0; i < 10; i += 1) {}
+    // *                                      ~~~~~~~
+    // *                                     statement
+    if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
+        this->advanceToken(); // Skip the ; token
+    }
 
-    return VariableAssignment(identifier, std::make_unique<Expression>(std::move(value)));
+    return VariableAssignment(identifier, op, std::make_unique<Expression>(std::move(value)));
 }
 
 IfStatement Parser::parseIfStatement() {
@@ -204,6 +218,56 @@ WhileStatement Parser::parseWhileStatement() {
     return WhileStatement(std::make_unique<Expression>(std::move(condition)), std::move(block));
 }
 
+ForStatement Parser::parseForStatement() {
+    this->advanceToken(); // Skip "for" token
+    this->advanceToken(); // Skip "(" token
+
+    std::optional<std::unique_ptr<Statement>> initialization;
+    if (getCurrentToken().type != TokenType::SEMI_COLON) {
+        std::variant<Statement, Expression, std::monostate> initializationStatement = this->parseStatementOrExpression();
+
+        if (std::holds_alternative<Statement>(initializationStatement)) {
+            initialization = std::make_unique<Statement>(std::move(std::get<Statement>(initializationStatement)));
+        }
+    } else {
+        this->advanceToken(); // Skip ";" token
+    }
+
+    std::optional<std::unique_ptr<Expression>> condition;
+    if (this->getCurrentToken().type != TokenType::SEMI_COLON) {
+        std::cout << this->getCurrentToken().value << std::endl;
+        condition = std::make_unique<Expression>(this->parseExpression());
+    }
+
+    this->advanceToken(); // Skip ";" token
+
+    std::optional<std::unique_ptr<Statement>> update;
+    if (getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
+        std::variant<Statement, Expression, std::monostate> updateStmt = this->parseStatementOrExpression();
+
+        if (std::holds_alternative<Statement>(updateStmt)) {
+            update = std::make_unique<Statement>(std::move(std::get<Statement>(updateStmt)));
+        }
+    }
+
+    this->advanceToken(); // Skip ")" token
+    this->advanceToken(); // Skip "{" token
+
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block;
+    while (getCurrentToken().type != TokenType::RIGHT_BRACE) {
+        std::variant<Statement, Expression, std::monostate> element = this->parseStatementOrExpression();
+        if (std::holds_alternative<Statement>(element)) {
+            block.push_back(std::make_unique<Statement>(std::move(std::get<Statement>(element))));
+        } else if (std::holds_alternative<Expression>(element)) {
+            block.push_back(std::make_unique<Expression>(std::move(std::get<Expression>(element))));
+        }
+    }
+
+    this->advanceToken(); // Skip "}" token
+
+    return ForStatement(std::move(initialization), std::move(condition), std::move(update), std::move(block));
+}
+
 Expression Parser::parseExpression() {
     return this->parseLogicalOrExpression();
 }
@@ -301,6 +365,8 @@ Expression Parser::parsePrimitiveExpression() {
             return BooleanLiteral(currentToken.value == "true");
         case TokenType::NULL_KEYWORD:
             return NullLiteral();
+        case TokenType::IDENTIFIER:
+            return Identifier(currentToken.value);
         case TokenType::LEFT_PARENTHESIS: {
             Expression expression = this->parseExpression();
 
@@ -326,6 +392,7 @@ Expression Parser::parsePrimitiveExpression() {
             return Vector(std::move(expressions));
         }
         default:
+            std::cout << "Previous value : " << this->tokens[this->index - 2].value << std::endl;
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }
 }

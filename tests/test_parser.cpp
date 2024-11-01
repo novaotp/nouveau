@@ -520,10 +520,10 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
     SECTION("While loops are parsed properly") {
         std::string sourceCode = R"(
-        while (true) {
-            x = 0;
-        }
-    )";
+            while (true) {
+                x = 0;
+            }
+        )";
 
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
@@ -565,4 +565,114 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(intLiteral.value == 0);
     }
 
+    SECTION("For loops are parsed properly") {
+        std::string sourceCode = R"(
+            for (mut int i = 0; i < 10; i = i + 1) {
+                x = i;
+            }
+        )";
+
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
+
+        auto& statementPtr = std::get<std::unique_ptr<Statement>>(firstElement);
+        REQUIRE(std::holds_alternative<ForStatement>(*statementPtr));
+
+        const ForStatement& forStmt = std::get<ForStatement>(*statementPtr);
+
+        /**
+         * VARIABLE DECLARATION
+         */
+
+        REQUIRE(forStmt.initialization.has_value());
+        const Statement& initializationStatement = *forStmt.initialization.value();
+
+        REQUIRE(std::holds_alternative<VariableDeclaration>(initializationStatement));
+        const VariableDeclaration& variableDeclaration = std::get<VariableDeclaration>(initializationStatement);
+
+        REQUIRE(variableDeclaration.isMutable == true);
+        REQUIRE(variableDeclaration.identifier == "i");
+        REQUIRE(variableDeclaration.type == "int");
+
+        REQUIRE(variableDeclaration.value.has_value());
+        const Expression& initExpr = *variableDeclaration.value.value();
+
+        REQUIRE(std::holds_alternative<IntLiteral>(initExpr));
+        const IntLiteral& initLiteral = std::get<IntLiteral>(initExpr);
+        REQUIRE(initLiteral.value == 0);
+
+        /**
+         * CONDITION
+         */
+
+        REQUIRE(forStmt.condition.has_value());
+        const auto& conditionExpr = forStmt.condition.value();
+        REQUIRE(std::holds_alternative<BinaryOperation>(*conditionExpr));
+
+        const BinaryOperation& binaryOp = std::get<BinaryOperation>(*conditionExpr);
+        REQUIRE(binaryOp.op == "<");
+
+        const Expression& lhs = *binaryOp.lhs;
+        REQUIRE(std::holds_alternative<Identifier>(lhs));
+        const Identifier& lhsId = std::get<Identifier>(lhs);
+        REQUIRE(lhsId.name == "i");
+
+        const Expression& rhs = *binaryOp.rhs;
+        REQUIRE(std::holds_alternative<IntLiteral>(rhs));
+        const IntLiteral& rhsLiteral = std::get<IntLiteral>(rhs);
+        REQUIRE(rhsLiteral.value == 10);
+
+        /**
+         * UPDATE
+         */
+
+        REQUIRE(forStmt.update.has_value());
+        const Statement& updateStmt = *forStmt.update.value();
+        REQUIRE(std::holds_alternative<VariableAssignment>(updateStmt));
+
+        const VariableAssignment& varAssign = std::get<VariableAssignment>(updateStmt);
+        REQUIRE(varAssign.identifier == "i");
+
+        REQUIRE(varAssign.value.has_value());
+        const Expression& updateExpr = *varAssign.value.value();
+        REQUIRE(std::holds_alternative<BinaryOperation>(updateExpr));
+
+        const BinaryOperation& updateBinaryOp = std::get<BinaryOperation>(updateExpr);
+        REQUIRE(updateBinaryOp.op == "+");
+
+        const Expression& updateLhs = *updateBinaryOp.lhs;
+        REQUIRE(std::holds_alternative<Identifier>(updateLhs));
+        REQUIRE(std::get<Identifier>(updateLhs).name == "i");
+
+        const Expression& updateRhs = *updateBinaryOp.rhs;
+        REQUIRE(std::holds_alternative<IntLiteral>(updateRhs));
+        REQUIRE(std::get<IntLiteral>(updateRhs).value == 1);
+
+        /**
+         * BLOCK
+         */
+
+        REQUIRE(forStmt.block.size() == 1);
+        const auto& blockStmt = forStmt.block[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(blockStmt));
+
+        const Statement& blockStatement = *std::get<std::unique_ptr<Statement>>(blockStmt);
+        REQUIRE(std::holds_alternative<VariableAssignment>(blockStatement));
+
+        const VariableAssignment& blockAssignment = std::get<VariableAssignment>(blockStatement);
+        REQUIRE(blockAssignment.identifier == "x");
+
+        REQUIRE(blockAssignment.value.has_value());
+        const Expression& blockExpr = *blockAssignment.value.value();
+        REQUIRE(std::holds_alternative<Identifier>(blockExpr));
+        REQUIRE(std::get<Identifier>(blockExpr).name == "i");
+    }
 }
