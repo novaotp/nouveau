@@ -353,7 +353,13 @@ int main(int argc, char* argv[]) {
     std::vector<Token> tokens = lexer.tokenize();
 
     Parser parser = Parser(tokens);
-    Program program = parser.parse();
+    Program program;
+    try {
+        program = parser.parse();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << '\n';
+        return 1;
+    }
 
     printProgram(program);
 

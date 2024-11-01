@@ -1,7 +1,7 @@
 const bool is_valid = false;
 
 mut int counter = 0;
-if (false) {
+if s(false) {
     counter = 10;
 } else if (5 > 10) {
     counter = 5;
