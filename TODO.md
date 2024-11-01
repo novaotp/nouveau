@@ -1,19 +1,14 @@
 # To do
 
-> I don't want to add more features before releasing the 0.1.0-alpha version.
-
-A very simple roadmap for tasks to complete before releasing the 0.1.0-alpha version of Nouveau.
+A very simple roadmap for tasks.
 
 Last update : 01.11.2024
 
-## Lexer
+## 0.1.0-alpha release
 
-> Postponed to after the release of the 0.1.0-alpha version.
+Tasks to complete before releasing the 0.1.0-alpha version of Nouveau.
 
--   [ ] Handle spread operator
--   [ ] Handle `unknown` type
-
-## Parser
+### Parser
 
 -   [x] While/For Loops
     -   [x] Handle `break` keyword
@@ -26,6 +21,37 @@ Last update : 01.11.2024
         -   [ ] Handle default value for non-supplied parameter
         -   [ ] Handle return keyword
     -   [ ] Handle function calls
+
+### Semer
+
+-   [ ] Validate correct constructs
+-   [ ] Validate types
+-   [ ] Validate correct type for variable/struct property declaration/assignment
+-   [ ] Validate symbol usage with a symbol table
+
+### IR Generation
+
+TODO
+
+### Code Optimization
+
+TODO
+
+### Code generation
+
+TODO
+
+## Future
+
+Tasks to complete after the 0.1.0-alpha release.
+
+### Lexer
+
+-   [ ] Handle spread operator
+-   [ ] Handle `unknown` type
+
+### Parser
+
 -   [ ] Structs
     -   [ ] Handle empty struct
     -   [ ] Handle partial struct
@@ -33,22 +59,3 @@ Last update : 01.11.2024
     -   [ ] Handle struct property assignment
     -   [ ] Types
         -   [ ] Handle struct definition
-
-## Semer
-
--   [ ] Validate correct constructs
--   [ ] Validate types
--   [ ] Validate correct type for variable/struct property declaration/assignment
--   [ ] Validate symbol usage with a symbol table
-
-## IR Generation
-
-TODO
-
-## Code Optimization
-
-TODO
-
-## Code generation
-
-TODO
