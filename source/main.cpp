@@ -79,6 +79,21 @@ void printExpression(const NodeType& n, const size_t indentCount) {
                 }
             }, element);
         }
+    } else if constexpr (std::is_same_v<NodeType, FunctionCall>) {
+        std::cout << indent << "Function Call" << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
+
+        if (n.arguments.empty()) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Arguments: None" << std::endl;
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Arguments" << std::endl;
+
+            for (const auto& arg : n.arguments) {
+                std::visit([&indentCount](const auto& expr) {
+                    printExpression(expr, indentCount + 2);
+                }, *arg);
+            }
+        }
     } else {
         std::cout << indent << "Unknown Expression Type" << std::endl;
     }

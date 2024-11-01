@@ -6,6 +6,10 @@ Token Parser::getCurrentToken() {
     return this->tokens.at(this->index);
 }
 
+const Token& Parser::peekNextToken() {
+    return this->tokens.at(this->index + 1);
+}
+
 Token Parser::advanceToken() {
     return this->tokens.at(this->index++);
 }
@@ -35,9 +39,13 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
         case TokenType::CONST_KEYWORD:
         case TokenType::MUTABLE_KEYWORD:
             return this->parseVariableDeclaration();
-        case TokenType::IDENTIFIER:
-            // TODO : Identifier could be a function
-            return this->parseVariableAssignment();
+        case TokenType::IDENTIFIER: {
+            if (this->peekNextToken().type == TokenType::LEFT_PARENTHESIS) {
+                return this->parseFunctionCall();
+            } else {
+                return this->parseVariableAssignment();
+            }
+        }
         case TokenType::IF_KEYWORD:
             return this->parseIfStatement();
         case TokenType::WHILE_KEYWORD:
@@ -392,8 +400,14 @@ Expression Parser::parsePrimitiveExpression() {
             return BooleanLiteral(currentToken.value == "true");
         case TokenType::NULL_KEYWORD:
             return NullLiteral();
-        case TokenType::IDENTIFIER:
-            return Identifier(currentToken.value);
+        case TokenType::IDENTIFIER: {
+            if (this->getCurrentToken().type == TokenType::LEFT_PARENTHESIS) {
+                this->index -= 1; // * Go back because we skipped the identifier
+                return this->parseFunctionCall();
+            } else {
+                return Identifier(currentToken.value);
+            }
+        }
         case TokenType::FUNCTION_KEYWORD:
             return this->parseFunction();
         case TokenType::LEFT_PARENTHESIS: {
@@ -472,4 +486,23 @@ Expression Parser::parseFunction() {
     this->advanceToken(); // Skip the "}" token
 
     return Function(returnType, identifier, std::move(parameters), std::move(body));
+}
+
+Expression Parser::parseFunctionCall() {
+    std::string identifier = this->advanceToken().value;
+
+    this->advanceToken(); // Skip the "(" token
+
+    std::vector<std::unique_ptr<Expression>> arguments = {};
+    while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
+        arguments.push_back(std::make_unique<Expression>(this->parseExpression()));
+
+        if (this->getCurrentToken().type == TokenType::COMMA) {
+            this->advanceToken();
+        }
+    }
+
+    this->advanceToken(); // Skip the ")" token
+
+    return FunctionCall(identifier, std::move(arguments));
 }

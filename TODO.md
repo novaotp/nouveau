@@ -8,19 +8,6 @@ Last update : 01.11.2024
 
 Tasks to complete before releasing the 0.1.0-alpha version of Nouveau.
 
-### Parser
-
--   [x] While/For Loops
-    -   [x] Handle `break` keyword
-    -   [x] Handle `continue` keyword
--   [ ] Functions
-    -   [x] Handle function declaration
-        -   [x] Handle no parameters
-        -   [x] Handle multiple parameters
-        -   [x] Handle default value for non-supplied parameter
-        -   [x] Handle return keyword
-    -   [ ] Handle function calls
-
 ### Semer
 
 -   [ ] Validate correct constructs

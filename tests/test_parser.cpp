@@ -987,4 +987,64 @@ TEST_CASE("Parser works correctly", "[parser]") {
         }
     }
 
+    SECTION("Function calls are parsed properly") {
+        SECTION("Function call with no arguments is parsed properly") {
+            std::string sourceCode = R"(
+                greet();
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+            auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+            REQUIRE(std::holds_alternative<FunctionCall>(*expressionPtr));
+
+            const FunctionCall& functionCall = std::get<FunctionCall>(*expressionPtr);
+            REQUIRE(functionCall.identifier == "greet");
+
+            REQUIRE(functionCall.arguments.empty() == true);
+        }
+
+        SECTION("Function call with multiple arguments is parsed properly") {
+            std::string sourceCode = R"(
+                add(69, 3.14, "hello");
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+            auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+            REQUIRE(std::holds_alternative<FunctionCall>(*expressionPtr));
+
+            const FunctionCall& functionCall = std::get<FunctionCall>(*expressionPtr);
+            REQUIRE(functionCall.identifier == "add");
+
+            REQUIRE(functionCall.arguments.size() == 3);
+
+            REQUIRE(std::holds_alternative<IntLiteral>(*functionCall.arguments[0]));
+            REQUIRE(std::get<IntLiteral>(*functionCall.arguments[0]).value == 69);
+
+            REQUIRE(std::holds_alternative<FloatLiteral>(*functionCall.arguments[1]));
+            REQUIRE(std::get<FloatLiteral>(*functionCall.arguments[1]).value == 3.14f);
+
+            REQUIRE(std::holds_alternative<StringLiteral>(*functionCall.arguments[2]));
+            REQUIRE(std::get<StringLiteral>(*functionCall.arguments[2]).value == "hello");
+        }
+    }
 }

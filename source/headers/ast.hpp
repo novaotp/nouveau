@@ -49,8 +49,21 @@ struct LogicalNotOperation;
 struct BinaryOperation;
 struct Vector;
 struct Function;
+struct FunctionCall;
 
-using Expression = std::variant<Function, BinaryOperation, LogicalNotOperation, Vector, Identifier, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
+using Expression = std::variant<
+    Function,
+    FunctionCall,
+    BinaryOperation,
+    LogicalNotOperation,
+    Vector,
+    Identifier,
+    StringLiteral,
+    IntLiteral,
+    FloatLiteral,
+    BooleanLiteral,
+    NullLiteral
+>;
 
 struct Vector {
     std::vector<std::unique_ptr<Expression>> values;
@@ -172,6 +185,14 @@ struct Function {
         std::vector<std::unique_ptr<VariableDeclaration>> parameters,
         std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body
     ) : returnType(returnType), name(name), parameters(std::move(parameters)), body(std::move(body)) {}
+};
+
+struct FunctionCall {
+    std::string identifier;
+    std::vector<std::unique_ptr<Expression>> arguments;
+
+    FunctionCall(const std::string& identifier, std::vector<std::unique_ptr<Expression>> arguments)
+        : identifier(identifier), arguments(std::move(arguments)) {}
 };
 
 struct Program {

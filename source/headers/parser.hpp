@@ -12,6 +12,7 @@ class Parser {
     std::vector<Token> tokens;
 
     Token getCurrentToken();
+    const Token& peekNextToken();
     Token advanceToken();
 
     /// @attention
@@ -37,6 +38,7 @@ class Parser {
     Expression parseLogicalNotExpression();
     Expression parsePrimitiveExpression();
     Expression parseFunction();
+    Expression parseFunctionCall();
 
     public:
     Parser(std::vector<Token> tokens) : tokens(tokens) {};
