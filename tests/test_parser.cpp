@@ -518,7 +518,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         }
     }
 
-    SECTION("While loops are parsed properly") {
+    SECTION("'while' loops are parsed properly") {
         std::string sourceCode = R"(
             while (true) {
                 x = 0;
@@ -565,7 +565,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(intLiteral.value == 0);
     }
 
-    SECTION("For loops are parsed properly") {
+    SECTION("'for' loops are parsed properly") {
         std::string sourceCode = R"(
             for (mut int i = 0; i < 10; i = i + 1) {
                 x = i;
@@ -676,7 +676,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::get<Identifier>(blockExpr).name == "i");
     }
 
-    SECTION("BreakStatement is parsed properly") {
+    SECTION("'break' statements are parsed properly") {
         std::string sourceCode = R"(
             while (true) {
                 break;
@@ -707,7 +707,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<BreakStatement>(*breakStmtPtr));
     }
 
-    SECTION("ContinueStatement is parsed properly") {
+    SECTION("'continue' statements are parsed properly") {
         std::string sourceCode = R"(
             while (true) {
                 continue;
@@ -735,5 +735,59 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         const auto& continueStmtPtr = std::get<std::unique_ptr<Statement>>(blockElement);
         REQUIRE(std::holds_alternative<ContinueStatement>(*continueStmtPtr));
+    }
+
+    SECTION("'return' statements are parsed properly") {
+        SECTION("'return' statements without expression are parsed properly") {
+            std::string sourceCode = R"(
+                return;
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
+
+            auto& statementPtr = std::get<std::unique_ptr<Statement>>(firstElement);
+            REQUIRE(std::holds_alternative<ReturnStatement>(*statementPtr));
+
+            const ReturnStatement& returnStmt = std::get<ReturnStatement>(*statementPtr);
+            REQUIRE(!returnStmt.expression.has_value());
+        }
+
+        SECTION("'return' statements with expression are parsed properly") {
+            std::string sourceCode = R"(
+                return 69;
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
+
+            auto& statementPtr = std::get<std::unique_ptr<Statement>>(firstElement);
+            REQUIRE(std::holds_alternative<ReturnStatement>(*statementPtr));
+
+            const ReturnStatement& returnStmt = std::get<ReturnStatement>(*statementPtr);
+            REQUIRE(returnStmt.expression.has_value());
+
+            const auto& exprPtr = returnStmt.expression.value();
+            REQUIRE(std::holds_alternative<IntLiteral>(*exprPtr));
+
+            const IntLiteral& intLiteral = std::get<IntLiteral>(*exprPtr);
+            REQUIRE(intLiteral.value == 69);
+        }
     }
 }

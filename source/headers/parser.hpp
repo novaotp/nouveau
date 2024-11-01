@@ -26,6 +26,7 @@ class Parser {
     ForStatement parseForStatement();
     BreakStatement parseBreakStatement();
     ContinueStatement parseContinueStatement();
+    ReturnStatement parseReturnStatement();
 
     Expression parseExpression();
     Expression parseLogicalAndExpression();

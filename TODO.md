@@ -19,7 +19,7 @@ Tasks to complete before releasing the 0.1.0-alpha version of Nouveau.
         -   [ ] Handle multiple parameters
         -   [ ] Handle spread parameter
         -   [ ] Handle default value for non-supplied parameter
-        -   [ ] Handle return keyword
+        -   [x] Handle return keyword
     -   [ ] Handle function calls
 
 ### Semer

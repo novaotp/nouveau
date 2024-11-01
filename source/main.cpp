@@ -257,6 +257,14 @@ void printStatement(const NodeType& n, const size_t indentCount) {
         std::cout << indent << "Break Statement" << std::endl;
     } else if constexpr (std::is_same_v<NodeType, ContinueStatement>) {
         std::cout << indent << "Continue Statement" << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, ReturnStatement>) {
+        std::cout << indent << "Return Statement" << std::endl;
+
+        if (n.expression.has_value()) {
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount);
+            }, *n.expression.value())
+        }
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;
     }

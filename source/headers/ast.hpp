@@ -99,11 +99,17 @@ struct ContinueStatement {
     ContinueStatement() {}
 };
 
+struct ReturnStatement {
+    std::optional<std::unique_ptr<Expression>> expression;
+
+    ReturnStatement(std::optional<std::unique_ptr<Expression>> expression) : expression(std::move(expression)) {}
+};
+
 struct IfStatement;
 struct WhileStatement;
 struct ForStatement;
 
-using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement>;
+using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, ReturnStatement>;
 
 struct IfStatement {
     std::unique_ptr<Expression> condition;

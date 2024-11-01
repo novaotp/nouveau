@@ -48,6 +48,8 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
             return this->parseBreakStatement();
         case TokenType::CONTINUE_KEYWORD:
             return this->parseContinueStatement();
+        case TokenType::RETURN_KEYWORD:
+            return this->parseReturnStatement();
         case TokenType::SEMI_COLON:
             this->advanceToken();
             return std::monostate{};
@@ -62,14 +64,12 @@ VariableDeclaration Parser::parseVariableDeclaration() {
     std::string identifier = this->advanceToken().value;
 
     if (this->getCurrentToken().type != TokenType::ASSIGNMENT_OPERATOR) {
-        // Skip the ; token
-        this->advanceToken();
+        this->advanceToken(); // Skip the ";" token
 
         return VariableDeclaration(isMutable, type, identifier, std::nullopt);
     }
 
-    // Skip the = token
-    this->advanceToken();
+    this->advanceToken(); // Skip the "=" token
 
     Expression value = this->parseExpression();
 
@@ -87,10 +87,7 @@ VariableDeclaration Parser::parseVariableDeclaration() {
 
 VariableAssignment Parser::parseVariableAssignment() {
     std::string identifier = this->advanceToken().value;
-
-    // Skip the = token
-    std::string op = this->advanceToken().value;
-
+    std::string op = this->advanceToken().value; // * Need the operator because of compound assignments
     Expression value = this->parseExpression();
 
     // TODO : Enforce semicolons
@@ -99,7 +96,7 @@ VariableAssignment Parser::parseVariableAssignment() {
     // *                                      ~~~~~~~
     // *                                     statement
     if (this->getCurrentToken().type == TokenType::SEMI_COLON) {
-        this->advanceToken(); // Skip the ; token
+        this->advanceToken(); // Skip the ";" token
     }
 
     return VariableAssignment(identifier, op, std::make_unique<Expression>(std::move(value)));
@@ -239,7 +236,6 @@ ForStatement Parser::parseForStatement() {
 
     std::optional<std::unique_ptr<Expression>> condition;
     if (this->getCurrentToken().type != TokenType::SEMI_COLON) {
-        std::cout << this->getCurrentToken().value << std::endl;
         condition = std::make_unique<Expression>(this->parseExpression());
     }
 
@@ -284,6 +280,19 @@ ContinueStatement Parser::parseContinueStatement() {
     this->advanceToken(); // Skip the ";" token
 
     return ContinueStatement();
+}
+
+ReturnStatement Parser::parseReturnStatement() {
+    this->advanceToken(); // Skip the "return" token
+
+    std::optional<std::unique_ptr<Expression>> expression;
+    if (this->getCurrentToken().type != TokenType::SEMI_COLON) {
+        expression = std::make_unique<Expression>(this->parseExpression());
+    }
+
+    this->advanceToken(); // Skip the ";" token
+
+    return ReturnStatement(std::move(expression));
 }
 
 Expression Parser::parseExpression() {
@@ -388,8 +397,7 @@ Expression Parser::parsePrimitiveExpression() {
         case TokenType::LEFT_PARENTHESIS: {
             Expression expression = this->parseExpression();
 
-            // Skip the ) token
-            this->advanceToken();
+            this->advanceToken(); // Skip the ")" token
 
             return expression;
         }
@@ -404,13 +412,11 @@ Expression Parser::parsePrimitiveExpression() {
                 }
             }
 
-            // Skip the ]
-            this->advanceToken();
+            this->advanceToken(); // Skip the "]" token
 
             return Vector(std::move(expressions));
         }
         default:
-            std::cout << "Previous value : " << this->tokens[this->index - 2].value << std::endl;
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }
 }
