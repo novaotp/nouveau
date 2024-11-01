@@ -24,6 +24,8 @@ class Parser {
     IfStatement parseIfStatement();
     WhileStatement parseWhileStatement();
     ForStatement parseForStatement();
+    BreakStatement parseBreakStatement();
+    ContinueStatement parseContinueStatement();
 
     Expression parseExpression();
     Expression parseLogicalAndExpression();

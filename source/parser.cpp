@@ -44,6 +44,10 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
             return this->parseWhileStatement();
         case TokenType::FOR_KEYWORD:
             return this->parseForStatement();
+        case TokenType::BREAK_KEYWORD:
+            return this->parseBreakStatement();
+        case TokenType::CONTINUE_KEYWORD:
+            return this->parseContinueStatement();
         case TokenType::SEMI_COLON:
             this->advanceToken();
             return std::monostate{};
@@ -266,6 +270,20 @@ ForStatement Parser::parseForStatement() {
     this->advanceToken(); // Skip "}" token
 
     return ForStatement(std::move(initialization), std::move(condition), std::move(update), std::move(block));
+}
+
+BreakStatement Parser::parseBreakStatement() {
+    this->advanceToken(); // Skip the "break" token
+    this->advanceToken(); // Skip the ";" token
+
+    return BreakStatement();
+}
+
+ContinueStatement Parser::parseContinueStatement() {
+    this->advanceToken(); // Skip the "continue" token
+    this->advanceToken(); // Skip the ";" token
+
+    return ContinueStatement();
 }
 
 Expression Parser::parseExpression() {

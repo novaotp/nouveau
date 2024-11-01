@@ -253,6 +253,10 @@ void printStatement(const NodeType& n, const size_t indentCount) {
                 }
             }, element);
         }
+    } else if constexpr (std::is_same_v<NodeType, BreakStatement>) {
+        std::cout << indent << "Break Statement" << std::endl;
+    } else if constexpr (std::is_same_v<NodeType, ContinueStatement>) {
+        std::cout << indent << "Continue Statement" << std::endl;
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;
     }

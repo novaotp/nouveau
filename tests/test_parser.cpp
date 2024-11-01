@@ -675,4 +675,65 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<Identifier>(blockExpr));
         REQUIRE(std::get<Identifier>(blockExpr).name == "i");
     }
+
+    SECTION("BreakStatement is parsed properly") {
+        std::string sourceCode = R"(
+            while (true) {
+                break;
+            }
+        )";
+
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+
+        auto& firstElement = program.body[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
+
+        auto& statementPtr = std::get<std::unique_ptr<Statement>>(firstElement);
+        REQUIRE(std::holds_alternative<WhileStatement>(*statementPtr));
+
+        const WhileStatement& whileStmt = std::get<WhileStatement>(*statementPtr);
+        REQUIRE(whileStmt.block.size() == 1);
+
+        const auto& blockElement = whileStmt.block[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(blockElement));
+
+        const auto& breakStmtPtr = std::get<std::unique_ptr<Statement>>(blockElement);
+        REQUIRE(std::holds_alternative<BreakStatement>(*breakStmtPtr));
+    }
+
+    SECTION("ContinueStatement is parsed properly") {
+        std::string sourceCode = R"(
+            while (true) {
+                continue;
+            }
+        )";
+
+        Lexer lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
+
+        Parser parser(tokens);
+        Program program = parser.parse();
+
+        REQUIRE(program.body.size() == 1);
+        auto& firstElement = program.body[0];
+
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(firstElement));
+        auto& statementPtr = std::get<std::unique_ptr<Statement>>(firstElement);
+
+        REQUIRE(std::holds_alternative<WhileStatement>(*statementPtr));
+        const WhileStatement& whileStmt = std::get<WhileStatement>(*statementPtr);
+        REQUIRE(whileStmt.block.size() == 1);
+
+        const auto& blockElement = whileStmt.block[0];
+        REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(blockElement));
+
+        const auto& continueStmtPtr = std::get<std::unique_ptr<Statement>>(blockElement);
+        REQUIRE(std::holds_alternative<ContinueStatement>(*continueStmtPtr));
+    }
 }

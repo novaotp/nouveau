@@ -15,9 +15,9 @@ Last update : 01.11.2024
 
 ## Parser
 
--   [ ] While/For Loops
-    -   [ ] Handle `break` keyword
-    -   [ ] Handle `continue` keyword
+-   [x] While/For Loops
+    -   [x] Handle `break` keyword
+    -   [x] Handle `continue` keyword
 -   [ ] Functions
     -   [ ] Handle function declaration
         -   [ ] Handle no parameters

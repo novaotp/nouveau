@@ -91,11 +91,19 @@ struct VariableAssignment {
         : identifier(identifier), op(op), value(std::move(value)) {}
 };
 
+struct BreakStatement {
+    BreakStatement() {}
+};
+
+struct ContinueStatement {
+    ContinueStatement() {}
+};
+
 struct IfStatement;
 struct WhileStatement;
 struct ForStatement;
 
-using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement, ForStatement>;
+using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement>;
 
 struct IfStatement {
     std::unique_ptr<Expression> condition;
