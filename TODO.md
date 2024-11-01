@@ -14,11 +14,10 @@ Tasks to complete before releasing the 0.1.0-alpha version of Nouveau.
     -   [x] Handle `break` keyword
     -   [x] Handle `continue` keyword
 -   [ ] Functions
-    -   [ ] Handle function declaration
-        -   [ ] Handle no parameters
-        -   [ ] Handle multiple parameters
-        -   [ ] Handle spread parameter
-        -   [ ] Handle default value for non-supplied parameter
+    -   [x] Handle function declaration
+        -   [x] Handle no parameters
+        -   [x] Handle multiple parameters
+        -   [x] Handle default value for non-supplied parameter
         -   [x] Handle return keyword
     -   [ ] Handle function calls
 
@@ -52,6 +51,9 @@ Tasks to complete after the 0.1.0-alpha release.
 
 ### Parser
 
+-   [ ] Functions
+    -   [ ] Handle spread parameter
+    -   [ ] Handle shorthand for lambda
 -   [ ] Structs
     -   [ ] Handle empty struct
     -   [ ] Handle partial struct

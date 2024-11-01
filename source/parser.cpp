@@ -394,6 +394,8 @@ Expression Parser::parsePrimitiveExpression() {
             return NullLiteral();
         case TokenType::IDENTIFIER:
             return Identifier(currentToken.value);
+        case TokenType::FUNCTION_KEYWORD:
+            return this->parseFunction();
         case TokenType::LEFT_PARENTHESIS: {
             Expression expression = this->parseExpression();
 
@@ -419,4 +421,55 @@ Expression Parser::parsePrimitiveExpression() {
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }
+}
+
+Expression Parser::parseFunction() {
+    // * No need to skip the "fn" token because it is
+    // * already skipped inside parsePrimitive
+
+    std::string returnType = this->advanceToken().value;
+    std::string identifier = this->advanceToken().value;
+
+    this->advanceToken(); // Skip the "(" token
+
+    std::vector<std::unique_ptr<VariableDeclaration>> parameters = {};
+    while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
+        bool isMutable = this->advanceToken().type == TokenType::MUTABLE_KEYWORD;
+        std::string type = this->advanceToken().value;
+        std::string identifier = this->advanceToken().value;
+        std::optional<std::unique_ptr<Expression>> expression;
+
+        if (this->getCurrentToken().type == TokenType::ASSIGNMENT_OPERATOR) {
+            this->advanceToken(); // Skip the "=" token
+            expression = std::make_unique<Expression>(this->parseExpression());
+        }
+
+        parameters.push_back(std::make_unique<VariableDeclaration>(VariableDeclaration(isMutable, type, identifier, std::move(expression))));
+
+        if (this->getCurrentToken().type == TokenType::COMMA) {
+            this->advanceToken(); // Skip the "," token
+        }
+    }
+
+    this->advanceToken(); // Skip the ")" token
+    this->advanceToken(); // Skip the "{" token
+
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body = {};
+    while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
+        std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
+
+        if (std::holds_alternative<Statement>(statementOrExpression)) {
+            body.push_back(
+                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+            );
+        } else if (std::holds_alternative<Expression>(statementOrExpression)) {
+            body.push_back(
+                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+            );
+        }
+    }
+
+    this->advanceToken(); // Skip the "}" token
+
+    return Function(returnType, identifier, std::move(parameters), std::move(body));
 }

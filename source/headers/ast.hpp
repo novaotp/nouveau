@@ -48,8 +48,9 @@ struct Identifier {
 struct LogicalNotOperation;
 struct BinaryOperation;
 struct Vector;
+struct Function;
 
-using Expression = std::variant<BinaryOperation, LogicalNotOperation, Vector, Identifier, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
+using Expression = std::variant<Function, BinaryOperation, LogicalNotOperation, Vector, Identifier, StringLiteral, IntLiteral, FloatLiteral, BooleanLiteral, NullLiteral>;
 
 struct Vector {
     std::vector<std::unique_ptr<Expression>> values;
@@ -109,7 +110,16 @@ struct IfStatement;
 struct WhileStatement;
 struct ForStatement;
 
-using Statement = std::variant<VariableDeclaration, VariableAssignment, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, ReturnStatement>;
+using Statement = std::variant<
+    VariableDeclaration,
+    VariableAssignment,
+    IfStatement,
+    WhileStatement,
+    ForStatement,
+    BreakStatement,
+    ContinueStatement,
+    ReturnStatement
+>;
 
 struct IfStatement {
     std::unique_ptr<Expression> condition;
@@ -145,8 +155,23 @@ struct ForStatement {
         std::optional<std::unique_ptr<Statement>> initialization,
         std::optional<std::unique_ptr<Expression>> condition,
         std::optional<std::unique_ptr<Statement>> update,
-        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block)
-        : initialization(std::move(initialization)), condition(std::move(condition)), update(std::move(update)), block(std::move(block)) {}
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block
+    ) : initialization(std::move(initialization)), condition(std::move(condition)), update(std::move(update)), block(std::move(block)) {}
+};
+
+/// @attention This is an expression, such that you can assign functions to variables.
+struct Function {
+    std::string returnType;
+    std::string name;
+    std::vector<std::unique_ptr<VariableDeclaration>> parameters;
+    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body;
+
+    Function(
+        const std::string& returnType,
+        const std::string& name,
+        std::vector<std::unique_ptr<VariableDeclaration>> parameters,
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body
+    ) : returnType(returnType), name(name), parameters(std::move(parameters)), body(std::move(body)) {}
 };
 
 struct Program {

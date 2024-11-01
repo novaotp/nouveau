@@ -36,6 +36,7 @@ class Parser {
     Expression parseMultiplicativeExpression();
     Expression parseLogicalNotExpression();
     Expression parsePrimitiveExpression();
+    Expression parseFunction();
 
     public:
     Parser(std::vector<Token> tokens) : tokens(tokens) {};

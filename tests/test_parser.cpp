@@ -790,4 +790,201 @@ TEST_CASE("Parser works correctly", "[parser]") {
             REQUIRE(intLiteral.value == 69);
         }
     }
+
+    SECTION("Function definitions are parsed properly") {
+        SECTION("Function with no parameters is parsed properly") {
+            std::string sourceCode = R"(
+                fn string greet() {
+                    return "Hello, World!";
+                }
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+            auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+            REQUIRE(std::holds_alternative<Function>(*expressionPtr));
+
+            const Function& functionDef = std::get<Function>(*expressionPtr);
+            REQUIRE(functionDef.name == "greet");
+            REQUIRE(functionDef.returnType == "string");
+            REQUIRE(functionDef.parameters.size() == 0);
+
+            REQUIRE(functionDef.body.size() == 1);
+
+            const auto& returnStmt = functionDef.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(returnStmt));
+
+            const auto& returnPtr = std::get<std::unique_ptr<Statement>>(returnStmt);
+            REQUIRE(std::holds_alternative<ReturnStatement>(*returnPtr));
+
+            const ReturnStatement& retStmt = std::get<ReturnStatement>(*returnPtr);
+            REQUIRE(retStmt.expression.has_value());
+
+            const auto& exprPtr = retStmt.expression.value();
+            REQUIRE(std::holds_alternative<StringLiteral>(*exprPtr));
+
+            const StringLiteral& strLiteral = std::get<StringLiteral>(*exprPtr);
+            REQUIRE(strLiteral.value == "Hello, World!");
+        }
+
+        SECTION("Function with multiple parameters is parsed properly") {
+            std::string sourceCode = R"(
+                fn int add(const int a, const int b) {
+                    return a + b;
+                }
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+            auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+            REQUIRE(std::holds_alternative<Function>(*expressionPtr));
+
+            const Function& functionDef = std::get<Function>(*expressionPtr);
+            REQUIRE(functionDef.name == "add");
+            REQUIRE(functionDef.returnType == "int");
+
+            REQUIRE(functionDef.parameters.size() == 2);
+
+            /**
+             * FIRST PARAMETER
+             */
+
+            REQUIRE(functionDef.parameters[0]->isMutable == false);
+            REQUIRE(functionDef.parameters[0]->identifier == "a");
+            REQUIRE(functionDef.parameters[0]->type == "int");
+
+            /**
+             * SECOND PARAMETER
+             */
+
+            REQUIRE(functionDef.parameters[1]->isMutable == false);
+            REQUIRE(functionDef.parameters[1]->identifier == "b");
+            REQUIRE(functionDef.parameters[1]->type == "int");
+
+            REQUIRE(functionDef.body.size() == 1);
+
+            const auto& returnStmt = functionDef.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(returnStmt));
+
+            const auto& returnPtr = std::get<std::unique_ptr<Statement>>(returnStmt);
+            REQUIRE(std::holds_alternative<ReturnStatement>(*returnPtr));
+
+            const ReturnStatement& retStmt = std::get<ReturnStatement>(*returnPtr);
+            REQUIRE(retStmt.expression.has_value());
+
+            const auto& exprPtr = retStmt.expression.value();
+            REQUIRE(std::holds_alternative<BinaryOperation>(*exprPtr));
+
+            const BinaryOperation& binOp = std::get<BinaryOperation>(*exprPtr);
+
+            REQUIRE(std::holds_alternative<Identifier>(*binOp.lhs));
+            REQUIRE(std::get<Identifier>(*binOp.lhs).name == "a");
+
+            REQUIRE(binOp.op == "+");
+
+            REQUIRE(std::holds_alternative<Identifier>(*binOp.rhs));
+            REQUIRE(std::get<Identifier>(*binOp.rhs).name == "b");
+        }
+
+        SECTION("Function with multiple parameters and some default values is parsed properly") {
+            std::string sourceCode = R"(
+                fn int multiply(const int a = 2, const int b = 3) {
+                    return a * b;
+                }
+            )";
+
+            Lexer lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(tokens);
+            Program program = parser.parse();
+
+            REQUIRE(program.body.size() == 1);
+
+            auto& firstElement = program.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Expression>>(firstElement));
+
+            auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
+            REQUIRE(std::holds_alternative<Function>(*expressionPtr));
+
+            const Function& functionDef = std::get<Function>(*expressionPtr);
+            REQUIRE(functionDef.name == "multiply");
+            REQUIRE(functionDef.returnType == "int");
+
+            REQUIRE(functionDef.parameters.size() == 2);
+
+            /**
+             * FIRST PARAMETER
+             */
+
+            REQUIRE(functionDef.parameters[0]->isMutable == false);
+            REQUIRE(functionDef.parameters[0]->identifier == "a");
+            REQUIRE(functionDef.parameters[0]->type == "int");
+            REQUIRE(functionDef.parameters[0]->value.has_value());
+
+            const auto& defaultValueA = functionDef.parameters[0]->value.value();
+            REQUIRE(std::holds_alternative<IntLiteral>(*defaultValueA));
+
+            IntLiteral defaultIntLiteralA = std::get<IntLiteral>(*defaultValueA);
+            REQUIRE(defaultIntLiteralA.value == 2);
+
+            /**
+             * SECOND PARAMETER
+             */
+
+            REQUIRE(functionDef.parameters[1]->isMutable == false);
+            REQUIRE(functionDef.parameters[1]->identifier == "b");
+            REQUIRE(functionDef.parameters[1]->type == "int");
+            REQUIRE(functionDef.parameters[1]->value.has_value());
+
+            const auto& defaultValueB = functionDef.parameters[1]->value.value();
+            REQUIRE(std::holds_alternative<IntLiteral>(*defaultValueB));
+
+            IntLiteral defaultIntLiteralB = std::get<IntLiteral>(*defaultValueB);
+            REQUIRE(defaultIntLiteralB.value == 3);
+
+            REQUIRE(functionDef.body.size() == 1);
+
+            const auto& returnStmt = functionDef.body[0];
+            REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(returnStmt));
+
+            const auto& returnPtr = std::get<std::unique_ptr<Statement>>(returnStmt);
+            REQUIRE(std::holds_alternative<ReturnStatement>(*returnPtr));
+
+            const ReturnStatement& retStmt = std::get<ReturnStatement>(*returnPtr);
+            REQUIRE(retStmt.expression.has_value());
+
+            const auto& exprPtr = retStmt.expression.value();
+            REQUIRE(std::holds_alternative<BinaryOperation>(*exprPtr));
+
+            const BinaryOperation& binOp = std::get<BinaryOperation>(*exprPtr);
+
+            REQUIRE(std::holds_alternative<Identifier>(*binOp.lhs));
+            REQUIRE(std::get<Identifier>(*binOp.lhs).name == "a");
+
+            REQUIRE(binOp.op == "*");
+
+            REQUIRE(std::holds_alternative<Identifier>(*binOp.rhs));
+            REQUIRE(std::get<Identifier>(*binOp.rhs).name == "b");
+        }
+    }
+
 }

@@ -12,15 +12,15 @@ void printExpression(const NodeType& n, const size_t indentCount) {
     std::string indent(indentCount * SPACE_COUNT, ' ');
 
     if constexpr (std::is_same_v<NodeType, StringLiteral>) {
-        std::cout << indent << "StringLiteral: " << n.value << std::endl;
+        std::cout << indent << "String: " << n.value << std::endl;
     } else if constexpr (std::is_same_v<NodeType, IntLiteral>) {
-        std::cout << indent << "IntLiteral: " << n.value << std::endl;
+        std::cout << indent << "Int: " << n.value << std::endl;
     } else if constexpr (std::is_same_v<NodeType, FloatLiteral>) {
-        std::cout << indent << "FloatLiteral: " << n.value << std::endl;
+        std::cout << indent << "Float: " << n.value << std::endl;
     } else if constexpr (std::is_same_v<NodeType, BooleanLiteral>) {
-        std::cout << indent << "BooleanLiteral: " << (n.value ? "true" : "false") << std::endl;
+        std::cout << indent << "Boolean: " << (n.value ? "true" : "false") << std::endl;
     } else if constexpr (std::is_same_v<NodeType, NullLiteral>) {
-        std::cout << indent << "NullLiteral" << std::endl;
+        std::cout << indent << "Null" << std::endl;
     } else if constexpr (std::is_same_v<NodeType, Identifier>) {
         std::cout << indent << "Identifier: " << n.name << std::endl;
     } else if constexpr (std::is_same_v<NodeType, BinaryOperation>) {
@@ -45,6 +45,39 @@ void printExpression(const NodeType& n, const size_t indentCount) {
             std::visit([&indentCount](const auto& element) {
                 printExpression(element, indentCount + 1);
             }, *expr);
+        }
+    } else if constexpr (std::is_same_v<NodeType, Function>) {
+        std::cout << indent << "Function" << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Name: " << n.name << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Return Type: " << n.returnType << std::endl;
+
+        if (n.parameters.empty()) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Parameters: None" << std::endl;
+        } else {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Parameters" << std::endl;
+
+            for (const auto& param : n.parameters) {
+                printStatement(*param, indentCount + 2);
+            }
+        }
+
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Body" << std::endl;
+        for (const auto& element : n.body) {
+            std::visit([&indentCount](const auto& item) {
+                using ItemType = std::decay_t<decltype(*item)>;
+
+                if constexpr (std::is_same_v<ItemType, Statement>) {
+                    std::visit([&indentCount](const auto& expr) {
+                        printStatement(expr, indentCount + 2);
+                    }, *item);
+                } else if constexpr (std::is_same_v<ItemType, Expression>) {
+                    std::visit([&indentCount](const auto& expr) {
+                        printExpression(expr, indentCount + 2);
+                    }, *item);
+                } else {
+                    std::cout << "Unknown Type in Body" << std::endl;
+                }
+            }, element);
         }
     } else {
         std::cout << indent << "Unknown Expression Type" << std::endl;
@@ -254,16 +287,16 @@ void printStatement(const NodeType& n, const size_t indentCount) {
             }, element);
         }
     } else if constexpr (std::is_same_v<NodeType, BreakStatement>) {
-        std::cout << indent << "Break Statement" << std::endl;
+        std::cout << indent << "Break" << std::endl;
     } else if constexpr (std::is_same_v<NodeType, ContinueStatement>) {
-        std::cout << indent << "Continue Statement" << std::endl;
+        std::cout << indent << "Continue" << std::endl;
     } else if constexpr (std::is_same_v<NodeType, ReturnStatement>) {
-        std::cout << indent << "Return Statement" << std::endl;
+        std::cout << indent << "Return" << std::endl;
 
         if (n.expression.has_value()) {
             std::visit([&indentCount](const auto& expr) {
-                printExpression(expr, indentCount);
-            }, *n.expression.value())
+                printExpression(expr, indentCount + 1);
+            }, *n.expression.value());
         }
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;
