@@ -1,0 +1,10 @@
+const bool is_valid = false;
+
+mut int counter = 0;
+if (false) {
+    counter = 10;
+} else if (5 > 10) {
+    counter = 5;
+} else {
+    counter = 50;
+}

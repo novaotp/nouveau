@@ -1,0 +1,5 @@
+fn string greet() {
+    return "Hello World!";
+}
+
+greet();
