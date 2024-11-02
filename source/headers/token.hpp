@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "ast.hpp"
 
 enum TokenType {
     STRING,
@@ -57,6 +58,7 @@ enum TokenType {
     END_OF_FILE
 };
 
+// ! Doesn't support multi-line tokens
 struct TokenMetadata {
     size_t column;
     size_t line;
@@ -64,6 +66,14 @@ struct TokenMetadata {
 
     TokenMetadata() : column(0), line(0), length(0) {};
     TokenMetadata(size_t column, size_t line, size_t length) : column(column), line(line), length(length) {};
+
+    inline const NodePosition toStartPosition() const {
+        return NodePosition(this->column, this->line);
+    }
+
+    inline const NodePosition toEndPosition() const {
+        return NodePosition(this->column + this->length, this->line);
+    }
 };
 
 struct Token {

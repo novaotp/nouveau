@@ -12,7 +12,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer = Lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser = Parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -25,6 +25,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         StringLiteral stringLiteral = std::get<StringLiteral>(*expressionPtr);
         REQUIRE(stringLiteral.value == "Hello, World!");
+
+        REQUIRE(stringLiteral.metadata.start.column == 1);
+        REQUIRE(stringLiteral.metadata.start.line == 1);
+        REQUIRE(stringLiteral.metadata.end.column == 16);
+        REQUIRE(stringLiteral.metadata.end.line == 1);
     }
 
     SECTION("Int literals are parsed properly") {
@@ -32,7 +37,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -52,7 +57,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -72,7 +77,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -92,7 +97,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -135,7 +140,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -167,7 +172,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -218,7 +223,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -269,7 +274,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -301,7 +306,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -324,7 +329,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -355,7 +360,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -386,7 +391,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -416,7 +421,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -455,7 +460,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -528,7 +533,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -575,7 +580,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -686,7 +691,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -717,7 +722,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(sourceCode, tokens);
         Program program = parser.parse();
 
         REQUIRE(program.body.size() == 1);
@@ -746,7 +751,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
@@ -769,7 +774,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
@@ -802,7 +807,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
@@ -846,7 +851,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
@@ -914,7 +919,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
@@ -996,7 +1001,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
@@ -1021,7 +1026,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
-            Parser parser(tokens);
+            Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
             REQUIRE(program.body.size() == 1);
