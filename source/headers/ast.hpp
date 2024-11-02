@@ -199,6 +199,8 @@ struct Program {
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body;
 
     Program() : body{} {};
+
+    void prettyPrint();
 };
 
 #endif // AST_HPP
