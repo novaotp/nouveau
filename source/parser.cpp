@@ -1,7 +1,12 @@
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <algorithm>
 #include "parser.hpp"
+
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
 
 const Token& Parser::getCurrentToken() {
     return this->tokens.at(this->index);
@@ -15,11 +20,30 @@ const Token& Parser::expectToken() {
     return this->tokens.at(this->index++);
 }
 
+std::vector<std::string> splitStringByNewline(const std::string& str) {
+    std::vector<std::string> result;
+    std::istringstream stream(str);
+    std::string line;
+
+    while (std::getline(stream, line)) {
+        result.push_back(line);
+    }
+
+    return result;
+};
+
 const Token& Parser::expectToken(const TokenType& expected) {
     const Token& currentToken = this->tokens.at(this->index++);
 
     if (currentToken.type != expected) {
-        throw std::runtime_error("Syntax error\n\tExpected : " + getTokenTypeString(expected) + "\n\tReceived : " + currentToken.value);
+        throw std::runtime_error(
+            std::string("Encountered a syntax error")
+            + "\n\n\t" + std::to_string(currentToken.metadata.line) + " | " + splitStringByNewline(this->sourceCode).at(currentToken.metadata.line - 1)
+            + "\n\t" + std::string(currentToken.metadata.column + 3, ' ') + std::string(currentToken.metadata.length, '~')
+            + GREEN + "\n\n\tExpected : " + getTokenTypeString(expected)
+            + RED + "\n\tReceived : " + currentToken.value
+            + RESET
+        );
     }
 
     return currentToken;

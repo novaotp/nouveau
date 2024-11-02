@@ -8,6 +8,7 @@
 
 class Parser {
     private:
+    std::string sourceCode;
     size_t index = 0;
     std::vector<Token> tokens;
 
@@ -57,7 +58,7 @@ class Parser {
     Expression parseFunctionCall();
 
     public:
-    Parser(std::vector<Token> tokens) : tokens(tokens) {};
+    Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
     ~Parser() {};
 
     /// @brief Parses an array of tokens into an Abstract Syntax Tree (AST).

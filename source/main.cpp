@@ -14,10 +14,10 @@ int main(int argc, char* argv[]) {
     std::string filePath = argv[1];
     std::string contents = readFile(filePath);
 
-    Lexer lexer = Lexer(contents);
+    Lexer lexer(contents);
     std::vector<Token> tokens = lexer.tokenize();
 
-    Parser parser = Parser(tokens);
+    Parser parser(contents, tokens);
     Program program;
     try {
         program = parser.parse();
