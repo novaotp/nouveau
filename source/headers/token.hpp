@@ -2,6 +2,8 @@
 #define TOKEN_HPP
 
 #include <string>
+#include <map>
+#include <vector>
 
 enum TokenType {
     STRING,
@@ -72,5 +74,70 @@ struct Token {
     Token() : type(TokenType::INTEGER), value(""), metadata(TokenMetadata()) {};
     Token(TokenType type, std::string value, TokenMetadata metadata) : type(type), value(value), metadata(metadata) {};
 };
+
+const std::map<TokenType, std::string> tokenTypeToString = {
+    { TokenType::STRING, "String" },
+    { TokenType::INTEGER, "Integer" },
+    { TokenType::FLOAT, "Float" },
+    { TokenType::BOOLEAN, "Boolean" },
+    { TokenType::IDENTIFIER, "Identifier" },
+    { TokenType::TYPE, "Type" },
+    { TokenType::NULL_KEYWORD, "Null" },
+    { TokenType::FUNCTION_KEYWORD, "Function" },
+    { TokenType::RETURN_KEYWORD, "Return" },
+    { TokenType::CONST_KEYWORD, "Const" },
+    { TokenType::MUTABLE_KEYWORD, "Mutable" },
+    { TokenType::IF_KEYWORD, "If" },
+    { TokenType::ELSE_IF_KEYWORD, "Else If" },
+    { TokenType::ELSE_KEYWORD, "Else" },
+    { TokenType::WHILE_KEYWORD, "While" },
+    { TokenType::FOR_KEYWORD, "For" },
+    { TokenType::BREAK_KEYWORD, "Break" },
+    { TokenType::CONTINUE_KEYWORD, "Continue" },
+    { TokenType::ADDITION_OPERATOR, "Addition Operator" },
+    { TokenType::SUBTRACTION_OPERATOR, "Subtraction Operator" },
+    { TokenType::MULTIPLICATION_OPERATOR, "Multiplication Operator" },
+    { TokenType::DIVISION_OPERATOR, "Division Operator" },
+    { TokenType::MODULO_OPERATOR, "Modulo Operator" },
+    { TokenType::ASSIGNMENT_OPERATOR, "Assignment Operator" },
+    { TokenType::ADDITION_ASSIGNMENT_OPERATOR, "Addition Assignment Operator" },
+    { TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR, "Subtraction Assignment Operator" },
+    { TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR, "Multiplication Assignment Operator" },
+    { TokenType::DIVISION_ASSIGNMENT_OPERATOR, "Division Assignment Operator" },
+    { TokenType::MODULO_ASSIGNMENT_OPERATOR, "Modulo Assignment Operator" },
+    { TokenType::EQUAL_OPERATOR, "Equal Operator" },
+    { TokenType::NOT_EQUAL_OPERATOR, "Not Equal Operator" },
+    { TokenType::GREATER_THAN_OPERATOR, "Greater Than Operator" },
+    { TokenType::GREATER_OR_EQUAL_OPERATOR, "Greater or Equal Operator" },
+    { TokenType::LESS_THAN_OPERATOR, "Less Than Operator" },
+    { TokenType::LESS_OR_EQUAL_OPERATOR, "Less or Equal Operator" },
+    { TokenType::NOT_OPERATOR, "Not Operator" },
+    { TokenType::AND_OPERATOR, "And Operator" },
+    { TokenType::OR_OPERATOR, "Or Operator" },
+    { TokenType::LEFT_PARENTHESIS, "Left Parenthesis" },
+    { TokenType::RIGHT_PARENTHESIS, "Right Parenthesis" },
+    { TokenType::LEFT_BRACKET, "Left Bracket" },
+    { TokenType::RIGHT_BRACKET, "Right Bracket" },
+    { TokenType::LEFT_BRACE, "Left Brace" },
+    { TokenType::RIGHT_BRACE, "Right Brace" },
+    { TokenType::DOT, "Dot" },
+    { TokenType::COMMA, "Comma" },
+    { TokenType::COLON, "Colon" },
+    { TokenType::SEMI_COLON, "Semicolon" },
+    { TokenType::END_OF_FILE, "End of File" }
+};
+
+const std::vector<TokenType> tokenTypeAssignmentOperators = {
+    TokenType::ASSIGNMENT_OPERATOR,
+    TokenType::ADDITION_ASSIGNMENT_OPERATOR,
+    TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR,
+    TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR,
+    TokenType::DIVISION_ASSIGNMENT_OPERATOR,
+    TokenType::MODULO_ASSIGNMENT_OPERATOR
+};
+
+inline std::string getTokenTypeString(const TokenType& type) {
+    return tokenTypeToString.at(type);
+}
 
 #endif // TOKEN_HPP
