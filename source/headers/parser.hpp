@@ -23,14 +23,14 @@ class Parser {
     /// @param expectedType The type the current token has to match.
     /// @return The current token.
     /// @exception A `SyntaxError` if the current token doesn't match the given type.
-    const Token& expectToken(const TokenType& expected);
+    const Token& expectToken(const TokenType& expected, std::string hint);
     /// @brief Checks if the current token matches any of the given type and advances the index by 1.
     /// 
     ///        Throws a `SyntaxError` if none of the token types match.
     /// @param expectedType The types the current token has to match.
     /// @return The current token.
     /// @exception A `SyntaxError` if the none of the tokens match.
-    const Token& expectToken(const std::vector<TokenType>& expected);
+    const Token& expectToken(const std::vector<TokenType>& expected, std::string hint);
 
     /// @attention
     /// Returns a monostate if it parsed a delimiter such as a ;
