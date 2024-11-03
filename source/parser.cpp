@@ -8,6 +8,17 @@
 #define RED     "\033[31m"
 #define GREEN   "\033[32m"
 
+// ! Unsafe
+NodeMetadata getExpressionMetadata(const Expression& expr) {
+    NodeMetadata metadata;
+
+    std::visit([&metadata](const auto& node) {
+        metadata = node.metadata;
+    }, expr);
+
+    return metadata;
+}
+
 const Token& Parser::getCurrentToken() {
     return this->tokens.at(this->index);
 }
@@ -128,16 +139,27 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
 }
 
 VariableDeclaration Parser::parseVariableDeclaration() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     bool isMutable = this->expectToken(
         { TokenType::CONST_KEYWORD, TokenType::MUTABLE_KEYWORD },
-        "A variable declaration must start with either a 'const' or 'mut' keyword.").type == TokenType::MUTABLE_KEYWORD;
+        "A variable declaration must start with either a 'const' or 'mut' keyword."
+    ).type == TokenType::MUTABLE_KEYWORD;
     std::string type = this->expectToken(TokenType::TYPE, "Did you forget to define the type of your variable ?").value;
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "Did you forget to set a name for your variable ? ").value;
 
     if (this->getCurrentToken().type != TokenType::ASSIGNMENT_OPERATOR) {
+        NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
         this->expectToken(TokenType::SEMI_COLON, "A variable declaration must end with a ';'. Did you forget it ?"); // Skip the ";" token
 
-        return VariableDeclaration(isMutable, type, identifier, std::nullopt);
+        return VariableDeclaration(
+            NodeMetadata(start, end),
+            isMutable,
+            type,
+            identifier,
+            std::nullopt
+        );
     }
 
     this->expectToken(
@@ -146,6 +168,8 @@ VariableDeclaration Parser::parseVariableDeclaration() {
     ); // Skip the "=" token
 
     Expression value = this->parseExpression();
+
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
 
     // TODO : Enforce semicolons
     // ? But how to not parse semicolons in constructs like for
@@ -156,16 +180,20 @@ VariableDeclaration Parser::parseVariableDeclaration() {
         this->expectToken(TokenType::SEMI_COLON, "A variable declaration must end with a ';'. Did you forget it ?"); // Skip the ; token
     }
 
-    return VariableDeclaration(isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
+    return VariableDeclaration(NodeMetadata(start, end), isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
 }
 
 VariableAssignment Parser::parseVariableAssignment() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "Assignment only works on a variable.").value;
     std::string op = this->expectToken(
         tokenTypeAssignmentOperators,
         "Use either a simple or a compund assignment operator."
     ).value; // * Need the operator because of compound assignments
     Expression value = this->parseExpression();
+
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
 
     // TODO : Enforce semicolons
     // ? But how to not parse semicolons in constructs like for
@@ -176,10 +204,12 @@ VariableAssignment Parser::parseVariableAssignment() {
         this->expectToken(TokenType::SEMI_COLON, "A variable declaration must end with a ';'. Did you forget it ?"); // Skip the ";" token
     }
 
-    return VariableAssignment(identifier, op, std::make_unique<Expression>(std::move(value)));
+    return VariableAssignment(NodeMetadata(start, end), identifier, op, std::make_unique<Expression>(std::move(value)));
 }
 
 IfStatement Parser::parseIfStatement() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     this->expectToken(TokenType::IF_KEYWORD, "An 'if' statement must start with an 'if' keyword."); // Skip the "if" token
     this->expectToken(TokenType::LEFT_PARENTHESIS, "The 'if' keyword must be followed by a '('."); // Skip the "(" token
 
@@ -259,7 +289,10 @@ IfStatement Parser::parseIfStatement() {
         this->expectToken(TokenType::RIGHT_BRACE, "An 'else' body must end with a '}'."); // Skip the "}" token
     }
 
+    NodePosition end = this->tokens[this->index - 1].metadata.toEndPosition();
+
     return IfStatement(
+        NodeMetadata(start, end),
         std::move(condition),
         std::move(thenBlock),
         std::move(elseifClauses),
@@ -268,6 +301,8 @@ IfStatement Parser::parseIfStatement() {
 }
 
 WhileStatement Parser::parseWhileStatement() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     this->expectToken(TokenType::WHILE_KEYWORD, "A 'while' statement must start with a 'while' keyword."); // Skip "while" token
     this->expectToken(TokenType::LEFT_PARENTHESIS, "A 'while' keyword must be followed by a '('."); // Skip "(" token
 
@@ -291,12 +326,16 @@ WhileStatement Parser::parseWhileStatement() {
         }
     }
 
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::RIGHT_BRACE, "A 'while' condition must be end with a '}'."); // Skip "}" token
 
-    return WhileStatement(std::make_unique<Expression>(std::move(condition)), std::move(block));
+    return WhileStatement(NodeMetadata(start, end), std::make_unique<Expression>(std::move(condition)), std::move(block));
 }
 
 ForStatement Parser::parseForStatement() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     this->expectToken(TokenType::FOR_KEYWORD, "A 'for' statement must start with a 'for' keyword."); // Skip "for" token
     this->expectToken(TokenType::LEFT_PARENTHESIS, "A 'for' statement must be followed by a '('."); // Skip "(" token
 
@@ -340,26 +379,40 @@ ForStatement Parser::parseForStatement() {
         }
     }
 
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::RIGHT_BRACE, "A 'for' statement's body must be end with a '}'."); // Skip "}" token
 
-    return ForStatement(std::move(initialization), std::move(condition), std::move(update), std::move(block));
+    return ForStatement(NodeMetadata(start, end), std::move(initialization), std::move(condition), std::move(update), std::move(block));
 }
 
 BreakStatement Parser::parseBreakStatement() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     this->expectToken(TokenType::BREAK_KEYWORD); // Skip the "break" token
+
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::SEMI_COLON, "A 'break' keyword must be followed with a ';'."); // Skip the ";" token
 
-    return BreakStatement();
+    return BreakStatement(NodeMetadata(start, end));
 }
 
 ContinueStatement Parser::parseContinueStatement() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     this->expectToken(TokenType::CONTINUE_KEYWORD); // Skip the "continue" token
+
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::SEMI_COLON, "A 'continue' keyword must be followed with a ';'."); // Skip the ";" token
 
-    return ContinueStatement();
+    return ContinueStatement(NodeMetadata(start, end));
 }
 
 ReturnStatement Parser::parseReturnStatement() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     this->expectToken(TokenType::RETURN_KEYWORD); // Skip the "return" token
 
     std::optional<std::unique_ptr<Expression>> expression;
@@ -367,9 +420,11 @@ ReturnStatement Parser::parseReturnStatement() {
         expression = std::make_unique<Expression>(this->parseExpression());
     }
 
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::SEMI_COLON, "A 'return' keyword/expression must be followed with a ';'."); // Skip the ";" token
 
-    return ReturnStatement(std::move(expression));
+    return ReturnStatement(NodeMetadata(start, end), std::move(expression));
 }
 
 Expression Parser::parseExpression() {
@@ -382,7 +437,12 @@ Expression Parser::parseLogicalOrExpression() {
     while (this->getCurrentToken().type == TokenType::OR_OPERATOR) {
         Token op = this->expectToken(TokenType::OR_OPERATOR);
         Expression right = this->parseLogicalAndExpression();
-        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(
+            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+            std::make_unique<Expression>(std::move(left)),
+            op.value,
+            std::make_unique<Expression>(std::move(right))
+        );
     }
 
     return left;
@@ -394,7 +454,12 @@ Expression Parser::parseLogicalAndExpression() {
     while (this->getCurrentToken().type == TokenType::AND_OPERATOR) {
         Token op = this->expectToken(TokenType::AND_OPERATOR);
         Expression right = this->parseComparitiveExpression();
-        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(
+            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+            std::make_unique<Expression>(std::move(left)),
+            op.value,
+            std::make_unique<Expression>(std::move(right))
+        );
     }
 
     return left;
@@ -418,7 +483,12 @@ Expression Parser::parseComparitiveExpression() {
             TokenType::LESS_OR_EQUAL_OPERATOR
             });
         Expression right = this->parseAdditiveExpression();
-        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(
+            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+            std::make_unique<Expression>(std::move(left)),
+            op.value,
+            std::make_unique<Expression>(std::move(right))
+        );
     }
 
     return left;
@@ -431,7 +501,12 @@ Expression Parser::parseAdditiveExpression() {
         this->getCurrentToken().type == TokenType::SUBTRACTION_OPERATOR) {
         Token op = this->expectToken({ TokenType::ADDITION_OPERATOR, TokenType::SUBTRACTION_OPERATOR });
         Expression right = this->parseMultiplicativeExpression();
-        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(
+            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+            std::make_unique<Expression>(std::move(left)),
+            op.value,
+            std::make_unique<Expression>(std::move(right))
+        );
     }
 
     return left;
@@ -445,7 +520,12 @@ Expression Parser::parseMultiplicativeExpression() {
         this->getCurrentToken().type == TokenType::MODULO_OPERATOR) {
         Token op = this->expectToken({ TokenType::MULTIPLICATION_OPERATOR, TokenType::DIVISION_OPERATOR, TokenType::MODULO_OPERATOR });
         Expression right = this->parseLogicalNotExpression();
-        left = BinaryOperation(std::make_unique<Expression>(std::move(left)), op.value, std::make_unique<Expression>(std::move(right)));
+        left = BinaryOperation(
+            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+            std::make_unique<Expression>(std::move(left)),
+            op.value,
+            std::make_unique<Expression>(std::move(right))
+        );
     }
 
     return left;
@@ -453,10 +533,15 @@ Expression Parser::parseMultiplicativeExpression() {
 
 Expression Parser::parseLogicalNotExpression() {
     if (this->getCurrentToken().type == TokenType::NOT_OPERATOR) {
+        NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
         this->expectToken(TokenType::NOT_OPERATOR);
         Expression expression = this->parsePrimitiveExpression();
 
-        return LogicalNotOperation(std::make_unique<Expression>(std::move(expression)));
+        return LogicalNotOperation(
+            NodeMetadata(start, getExpressionMetadata(expression).end),
+            std::make_unique<Expression>(std::move(expression))
+        );
     }
 
     return this->parsePrimitiveExpression();
@@ -467,33 +552,62 @@ Expression Parser::parsePrimitiveExpression() {
 
     switch (currentToken.type) {
         case TokenType::STRING:
-            return StringLiteral(currentToken.value);
+            return StringLiteral(
+                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                currentToken.value
+            );
         case TokenType::INTEGER:
-            return IntLiteral(std::stoi(currentToken.value));
+            return IntLiteral(
+                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                std::stoi(currentToken.value)
+            );
         case TokenType::FLOAT:
-            return FloatLiteral(std::stof(currentToken.value));
+            return FloatLiteral(
+                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                std::stof(currentToken.value)
+            );
         case TokenType::BOOLEAN:
-            return BooleanLiteral(currentToken.value == "true");
+            return BooleanLiteral(
+                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                currentToken.value == "true"
+            );
         case TokenType::NULL_KEYWORD:
-            return NullLiteral();
+            return NullLiteral(
+                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition())
+            );
         case TokenType::IDENTIFIER: {
             if (this->getCurrentToken().type == TokenType::LEFT_PARENTHESIS) {
                 this->index -= 1; // * Go back because we skipped the identifier
                 return this->parseFunctionCall();
             } else {
-                return Identifier(currentToken.value);
+                return Identifier(
+                    NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                    currentToken.value
+                );
             }
         }
         case TokenType::FUNCTION_KEYWORD:
             return this->parseFunction();
         case TokenType::LEFT_PARENTHESIS: {
+            NodePosition start = currentToken.metadata.toStartPosition();
+
             Expression expression = this->parseExpression();
 
+            NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
             this->expectToken(TokenType::RIGHT_PARENTHESIS, "Did you forget to close the parenthesis ?"); // Skip the ")" token
+
+            // Include the parentheses in the expression's metadata
+            std::visit([&start, &end](auto& node) {
+                node.metadata.start = start;
+                node.metadata.end = end;
+            }, expression);
 
             return expression;
         }
         case TokenType::LEFT_BRACKET: {
+            NodePosition start = currentToken.metadata.toStartPosition();
+
             std::vector<std::unique_ptr<Expression>> expressions = {};
 
             while (this->getCurrentToken().type != TokenType::RIGHT_BRACKET) {
@@ -504,9 +618,11 @@ Expression Parser::parsePrimitiveExpression() {
                 }
             }
 
+            NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
             this->expectToken(TokenType::RIGHT_BRACKET, "A vector must end with a ']'."); // Skip the "]" token
 
-            return Vector(std::move(expressions));
+            return Vector(NodeMetadata(start, end), std::move(expressions));
         }
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
@@ -517,6 +633,8 @@ Expression Parser::parseFunction() {
     // * No need to skip the "fn" token because it is
     // * already skipped inside parsePrimitive
 
+    NodePosition start = this->tokens[this->index - 1].metadata.toStartPosition();
+
     std::string returnType = this->expectToken(TokenType::TYPE, "A function declaration needs a return type.").value;
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "A function declaration needs a name.").value;
 
@@ -524,20 +642,38 @@ Expression Parser::parseFunction() {
 
     std::vector<std::unique_ptr<VariableDeclaration>> parameters = {};
     while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
+        NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
         bool isMutable = this->expectToken(
             { TokenType::CONST_KEYWORD, TokenType::MUTABLE_KEYWORD },
             "A function parameter must start with either a 'const' or 'mut' keyword."
         ).type == TokenType::MUTABLE_KEYWORD;
         std::string type = this->expectToken(TokenType::TYPE, "A function parameter needs a type.").value;
         std::string identifier = this->expectToken(TokenType::IDENTIFIER, "A function parameter needs a name.").value;
-        std::optional<std::unique_ptr<Expression>> expression;
 
+        NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
+        std::optional<std::unique_ptr<Expression>> expression;
         if (this->getCurrentToken().type == TokenType::ASSIGNMENT_OPERATOR) {
             this->expectToken(TokenType::ASSIGNMENT_OPERATOR); // Skip the "=" token
-            expression = std::make_unique<Expression>(this->parseExpression());
+
+            Expression _expr = this->parseExpression();
+            expression = std::make_unique<Expression>(std::move(_expr));
+
+            std::visit([&end](const auto& node) {
+                end = node.metadata.end;
+            }, _expr);
         }
 
-        parameters.push_back(std::make_unique<VariableDeclaration>(VariableDeclaration(isMutable, type, identifier, std::move(expression))));
+        parameters.push_back(std::make_unique<VariableDeclaration>(
+            VariableDeclaration(
+                NodeMetadata(start, end),
+                isMutable,
+                type,
+                identifier,
+                std::move(expression)
+            )
+        ));
 
         if (this->getCurrentToken().type == TokenType::COMMA) {
             this->expectToken(TokenType::COMMA); // Skip the "," token
@@ -562,12 +698,16 @@ Expression Parser::parseFunction() {
         }
     }
 
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::RIGHT_BRACE, "A function declaration's body must start with a '}'."); // Skip the "}" token
 
-    return Function(returnType, identifier, std::move(parameters), std::move(body));
+    return Function(NodeMetadata(start, end), returnType, identifier, std::move(parameters), std::move(body));
 }
 
 Expression Parser::parseFunctionCall() {
+    NodePosition start = this->getCurrentToken().metadata.toStartPosition();
+
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "A function call must have a name.").value;
 
     this->expectToken(TokenType::LEFT_PARENTHESIS, "Calling a function requires parentheses."); // Skip the "(" token
@@ -581,7 +721,9 @@ Expression Parser::parseFunctionCall() {
         }
     }
 
+    NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
     this->expectToken(TokenType::RIGHT_PARENTHESIS, "Calling a function must end with parentheses."); // Skip the ")" token
 
-    return FunctionCall(identifier, std::move(arguments));
+    return FunctionCall(NodeMetadata(start, end), identifier, std::move(arguments));
 }

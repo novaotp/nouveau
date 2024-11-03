@@ -7,42 +7,60 @@
 #include <memory>
 #include <optional>
 
+struct NodePosition {
+    size_t column;
+    size_t line;
+
+    NodePosition() : column(0), line(0) {}
+    NodePosition(size_t column, size_t line) : column(column), line(line) {}
+};
+
+struct NodeMetadata {
+    NodePosition start;
+    NodePosition end;
+
+    NodeMetadata() : start(NodePosition()), end(NodePosition()) {}
+    NodeMetadata(NodePosition start, NodePosition end) : start(start), end(end) {}
+};
+
 struct StringLiteral {
+    NodeMetadata metadata;
     std::string value;
 
-    StringLiteral() : value("") {};
-    StringLiteral(std::string value) : value(value) {};
+    StringLiteral(NodeMetadata metadata, std::string value) : metadata(metadata), value(value) {};
 };
 
 struct IntLiteral {
+    NodeMetadata metadata;
     int value;
 
-    IntLiteral() : value(0) {};
-    IntLiteral(int value) : value(value) {};
+    IntLiteral(NodeMetadata metadata, int value) : metadata(metadata), value(value) {};
 };
 
 struct FloatLiteral {
+    NodeMetadata metadata;
     float value;
 
-    FloatLiteral() : value(0.0) {};
-    FloatLiteral(float value) : value(value) {};
+    FloatLiteral(NodeMetadata metadata, float value) : metadata(metadata), value(value) {};
 };
 
 struct BooleanLiteral {
+    NodeMetadata metadata;
     bool value;
 
-    BooleanLiteral() : value(false) {};
-    BooleanLiteral(bool value) : value(value) {};
+    BooleanLiteral(NodeMetadata metadata, bool value) : metadata(metadata), value(value) {};
 };
 
 struct NullLiteral {
-    NullLiteral() {};
+    NodeMetadata metadata;
+    NullLiteral(NodeMetadata metadata) : metadata(metadata) {};
 };
 
 struct Identifier {
+    NodeMetadata metadata;
     std::string name;
 
-    Identifier(std::string name) : name(name) {}
+    Identifier(NodeMetadata metadata, std::string name) : metadata(metadata), name(name) {}
 };
 
 struct LogicalNotOperation;
@@ -66,57 +84,77 @@ using Expression = std::variant<
 >;
 
 struct Vector {
+    NodeMetadata metadata;
     std::vector<std::unique_ptr<Expression>> values;
 
-    Vector(std::vector<std::unique_ptr<Expression>> values) : values(std::move(values)) {}
+    Vector(NodeMetadata metadata, std::vector<std::unique_ptr<Expression>> values)
+        : metadata(metadata), values(std::move(values)) {}
 };
 
 struct LogicalNotOperation {
+    NodeMetadata metadata;
     std::unique_ptr<Expression> expression;
 
-    LogicalNotOperation(std::unique_ptr<Expression> expression) : expression(std::move(expression)) {};
+    LogicalNotOperation(NodeMetadata metadata, std::unique_ptr<Expression> expression)
+        : metadata(metadata), expression(std::move(expression)) {};
 };
 
 struct BinaryOperation {
+    NodeMetadata metadata;
     std::unique_ptr<Expression> lhs;
     std::string op;
     std::unique_ptr<Expression> rhs;
 
-    BinaryOperation(std::unique_ptr<Expression> left, const std::string& op, std::unique_ptr<Expression> right)
-        : lhs(std::move(left)), op(op), rhs(std::move(right)) {}
+    BinaryOperation(NodeMetadata metadata, std::unique_ptr<Expression> left, const std::string& op, std::unique_ptr<Expression> right)
+        : metadata(metadata), lhs(std::move(left)), op(op), rhs(std::move(right)) {}
 };
 
 struct VariableDeclaration {
+    NodeMetadata metadata;
     bool isMutable;
     std::string type;
     std::string identifier;
     std::optional<std::unique_ptr<Expression>> value;
 
-    VariableDeclaration(bool isMutable, const std::string& type, const std::string& identifier, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
-        : isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
+    VariableDeclaration(
+        NodeMetadata metadata,
+        bool isMutable,
+        const std::string& type,
+        const std::string& identifier,
+        std::optional<std::unique_ptr<Expression>> value = std::nullopt
+    ) : metadata(metadata), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
 };
 
 struct VariableAssignment {
+    NodeMetadata metadata;
     std::string identifier;
     std::string op;
     std::optional<std::unique_ptr<Expression>> value;
 
-    VariableAssignment(const std::string& identifier, const std::string& op, std::optional<std::unique_ptr<Expression>> value = std::nullopt)
-        : identifier(identifier), op(op), value(std::move(value)) {}
+    VariableAssignment(
+        NodeMetadata metadata,
+        const std::string& identifier,
+        const std::string& op,
+        std::optional<std::unique_ptr<Expression>> value = std::nullopt
+    ) : metadata(metadata), identifier(identifier), op(op), value(std::move(value)) {}
 };
 
 struct BreakStatement {
-    BreakStatement() {}
+    NodeMetadata metadata;
+    BreakStatement(NodeMetadata metadata) : metadata(metadata) {}
 };
 
 struct ContinueStatement {
-    ContinueStatement() {}
+    NodeMetadata metadata;
+    ContinueStatement(NodeMetadata metadata) : metadata(metadata) {}
 };
 
 struct ReturnStatement {
+    NodeMetadata metadata;
     std::optional<std::unique_ptr<Expression>> expression;
 
-    ReturnStatement(std::optional<std::unique_ptr<Expression>> expression) : expression(std::move(expression)) {}
+    ReturnStatement(NodeMetadata metadata, std::optional<std::unique_ptr<Expression>> expression)
+        : metadata(metadata), expression(std::move(expression)) {}
 };
 
 struct IfStatement;
@@ -135,64 +173,79 @@ using Statement = std::variant<
 >;
 
 struct IfStatement {
+    NodeMetadata metadata;
     std::unique_ptr<Expression> condition;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock;
     std::vector<std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock;
 
-    IfStatement(std::unique_ptr<Expression> condition,
+    IfStatement(
+        NodeMetadata metadata, std::unique_ptr<Expression> condition,
         std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock,
         std::vector<std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses = {},
-        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock = {})
-        : condition(std::move(condition)),
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock = {}
+    ) : metadata(metadata),
+        condition(std::move(condition)),
         thenBlock(std::move(thenBlock)),
         elseifClauses(std::move(elseifClauses)),
         elseBlock(std::move(elseBlock)) {}
 };
 
 struct WhileStatement {
+    NodeMetadata metadata;
     std::unique_ptr<Expression> condition;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block;
 
-    WhileStatement(std::unique_ptr<Expression> condition, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block)
-        : condition(std::move(condition)), block(std::move(block)) {}
+    WhileStatement(
+        NodeMetadata metadata,
+        std::unique_ptr<Expression> condition,
+        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block
+    ) : metadata(metadata), condition(std::move(condition)), block(std::move(block)) {}
 };
 
 struct ForStatement {
+    NodeMetadata metadata;
     std::optional<std::unique_ptr<Statement>> initialization;
     std::optional<std::unique_ptr<Expression>> condition;
     std::optional<std::unique_ptr<Statement>> update;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block;
 
     ForStatement(
+        NodeMetadata metadata,
         std::optional<std::unique_ptr<Statement>> initialization,
         std::optional<std::unique_ptr<Expression>> condition,
         std::optional<std::unique_ptr<Statement>> update,
         std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block
-    ) : initialization(std::move(initialization)), condition(std::move(condition)), update(std::move(update)), block(std::move(block)) {}
+    ) : metadata(metadata),
+        initialization(std::move(initialization)),
+        condition(std::move(condition)),
+        update(std::move(update)),
+        block(std::move(block)) {}
 };
 
 /// @attention This is an expression, such that you can assign functions to variables.
 struct Function {
+    NodeMetadata metadata;
     std::string returnType;
     std::string name;
     std::vector<std::unique_ptr<VariableDeclaration>> parameters;
     std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body;
 
     Function(
-        const std::string& returnType,
+        NodeMetadata metadata, const std::string& returnType,
         const std::string& name,
         std::vector<std::unique_ptr<VariableDeclaration>> parameters,
         std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body
-    ) : returnType(returnType), name(name), parameters(std::move(parameters)), body(std::move(body)) {}
+    ) : metadata(metadata), returnType(returnType), name(name), parameters(std::move(parameters)), body(std::move(body)) {}
 };
 
 struct FunctionCall {
+    NodeMetadata metadata;
     std::string identifier;
     std::vector<std::unique_ptr<Expression>> arguments;
 
-    FunctionCall(const std::string& identifier, std::vector<std::unique_ptr<Expression>> arguments)
-        : identifier(identifier), arguments(std::move(arguments)) {}
+    FunctionCall(NodeMetadata metadata, const std::string& identifier, std::vector<std::unique_ptr<Expression>> arguments)
+        : metadata(metadata), identifier(identifier), arguments(std::move(arguments)) {}
 };
 
 struct Program {
