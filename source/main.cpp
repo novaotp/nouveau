@@ -1,9 +1,11 @@
 #include <iostream>
 #include <variant>
 #include <string>
-#include "file.hpp"
+#include <vector>
+#include "utils.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "semer.hpp"
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -12,12 +14,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filePath = argv[1];
-    std::string contents = readFile(filePath);
+    std::string sourceCode = readFile(filePath);
 
-    Lexer lexer(contents);
+    Lexer lexer(sourceCode);
     std::vector<Token> tokens = lexer.tokenize();
 
-    Parser parser(contents, tokens);
+    Parser parser(sourceCode, tokens);
     Program program;
     try {
         program = parser.parse();
@@ -26,7 +28,20 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    program.prettyPrint();
+    // program.prettyPrint();
+
+    Semer semer(sourceCode, program);
+    const std::vector<SemerError>& errors = semer.analyze();
+
+    if (!errors.empty()) {
+        for (const auto& error : errors) {
+            error.print();
+        }
+    } else {
+        std::cout << std::endl;
+        std::cout << GREEN << "\tAnalyzed source code, no errors found" << RESET << std::endl;
+        std::cout << std::endl;
+    }
 
     return 0;
 }

@@ -2,11 +2,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include "utils.hpp"
 #include "parser.hpp"
-
-#define RESET   "\033[0m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
 
 // ! Unsafe
 NodeMetadata getExpressionMetadata(const Expression& expr) {
@@ -30,18 +27,6 @@ const Token& Parser::peekNextToken() {
 const Token& Parser::expectToken() {
     return this->tokens.at(this->index++);
 }
-
-std::vector<std::string> splitStringByNewline(const std::string& str) {
-    std::vector<std::string> result;
-    std::istringstream stream(str);
-    std::string line;
-
-    while (std::getline(stream, line)) {
-        result.push_back(line);
-    }
-
-    return result;
-};
 
 const Token& Parser::expectToken(const TokenType& expected, std::string hint = "") {
     const Token& currentToken = this->tokens.at(this->index++);
