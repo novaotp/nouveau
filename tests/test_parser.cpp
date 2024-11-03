@@ -593,10 +593,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
     }
 
     SECTION("'while' loops are parsed properly") {
-        std::string sourceCode = R"(
-            while (true) {
-                x = 0;
-            }
+        std::string sourceCode = R"(while (true) {
+    x = 0;
+}
         )";
 
         Lexer lexer(sourceCode);
@@ -614,6 +613,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<WhileStatement>(*statementPtr));
 
         const WhileStatement& whileStatement = std::get<WhileStatement>(*statementPtr);
+
+        REQUIRE(whileStatement.metadata.start.column == 1);
+        REQUIRE(whileStatement.metadata.start.line == 1);
+        REQUIRE(whileStatement.metadata.end.column == 2);
+        REQUIRE(whileStatement.metadata.end.line == 3);
 
         const Expression& condition = *whileStatement.condition;
         REQUIRE(std::holds_alternative<BooleanLiteral>(condition));
@@ -640,10 +644,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
     }
 
     SECTION("'for' loops are parsed properly") {
-        std::string sourceCode = R"(
-            for (mut int i = 0; i < 10; i = i + 1) {
-                x = i;
-            }
+        std::string sourceCode = R"(for (mut int i = 0; i < 10; i = i + 1) {
+    x = i;
+}
         )";
 
         Lexer lexer(sourceCode);
@@ -661,6 +664,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<ForStatement>(*statementPtr));
 
         const ForStatement& forStmt = std::get<ForStatement>(*statementPtr);
+
+        REQUIRE(forStmt.metadata.start.column == 1);
+        REQUIRE(forStmt.metadata.start.line == 1);
+        REQUIRE(forStmt.metadata.end.column == 2);
+        REQUIRE(forStmt.metadata.end.line == 3);
 
         /**
          * VARIABLE DECLARATION
@@ -751,10 +759,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
     }
 
     SECTION("'break' statements are parsed properly") {
-        std::string sourceCode = R"(
-            while (true) {
-                break;
-            }
+        std::string sourceCode = R"(while (true) {
+    break;
+}
         )";
 
         Lexer lexer(sourceCode);
@@ -773,6 +780,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         const WhileStatement& whileStmt = std::get<WhileStatement>(*statementPtr);
         REQUIRE(whileStmt.block.size() == 1);
+
+        REQUIRE(whileStmt.metadata.start.column == 1);
+        REQUIRE(whileStmt.metadata.start.line == 1);
+        REQUIRE(whileStmt.metadata.end.column == 2);
+        REQUIRE(whileStmt.metadata.end.line == 3);
 
         const auto& blockElement = whileStmt.block[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(blockElement));
@@ -782,10 +794,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
     }
 
     SECTION("'continue' statements are parsed properly") {
-        std::string sourceCode = R"(
-            while (true) {
-                continue;
-            }
+        std::string sourceCode = R"(while (true) {
+    continue;
+}
         )";
 
         Lexer lexer(sourceCode);
@@ -803,6 +814,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<WhileStatement>(*statementPtr));
         const WhileStatement& whileStmt = std::get<WhileStatement>(*statementPtr);
         REQUIRE(whileStmt.block.size() == 1);
+
+        REQUIRE(whileStmt.metadata.start.column == 1);
+        REQUIRE(whileStmt.metadata.start.line == 1);
+        REQUIRE(whileStmt.metadata.end.column == 2);
+        REQUIRE(whileStmt.metadata.end.line == 3);
 
         const auto& blockElement = whileStmt.block[0];
         REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(blockElement));
@@ -813,9 +829,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
     SECTION("'return' statements are parsed properly") {
         SECTION("'return' statements without expression are parsed properly") {
-            std::string sourceCode = R"(
-                return;
-            )";
+            std::string sourceCode = "return;";
 
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
@@ -833,12 +847,15 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             const ReturnStatement& returnStmt = std::get<ReturnStatement>(*statementPtr);
             REQUIRE(!returnStmt.expression.has_value());
+
+            REQUIRE(returnStmt.metadata.start.column == 1);
+            REQUIRE(returnStmt.metadata.start.line == 1);
+            REQUIRE(returnStmt.metadata.end.column == 8);
+            REQUIRE(returnStmt.metadata.end.line == 1);
         }
 
         SECTION("'return' statements with expression are parsed properly") {
-            std::string sourceCode = R"(
-                return 69;
-            )";
+            std::string sourceCode = "return 69;";
 
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
@@ -857,6 +874,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
             const ReturnStatement& returnStmt = std::get<ReturnStatement>(*statementPtr);
             REQUIRE(returnStmt.expression.has_value());
 
+            REQUIRE(returnStmt.metadata.start.column == 1);
+            REQUIRE(returnStmt.metadata.start.line == 1);
+            REQUIRE(returnStmt.metadata.end.column == 11);
+            REQUIRE(returnStmt.metadata.end.line == 1);
+
             const auto& exprPtr = returnStmt.expression.value();
             REQUIRE(std::holds_alternative<IntLiteral>(*exprPtr));
 
@@ -867,10 +889,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
     SECTION("Function definitions are parsed properly") {
         SECTION("Function with no parameters is parsed properly") {
-            std::string sourceCode = R"(
-                fn string greet() {
-                    return "Hello, World!";
-                }
+            std::string sourceCode = R"(fn string greet() {
+    return "Hello, World!";
+}
             )";
 
             Lexer lexer(sourceCode);
@@ -894,6 +915,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             REQUIRE(functionDef.body.size() == 1);
 
+            REQUIRE(functionDef.metadata.start.column == 1);
+            REQUIRE(functionDef.metadata.start.line == 1);
+            REQUIRE(functionDef.metadata.end.column == 2);
+            REQUIRE(functionDef.metadata.end.line == 3);
+
             const auto& returnStmt = functionDef.body[0];
             REQUIRE(std::holds_alternative<std::unique_ptr<Statement>>(returnStmt));
 
@@ -911,10 +937,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         }
 
         SECTION("Function with multiple parameters is parsed properly") {
-            std::string sourceCode = R"(
-                fn int add(const int a, const int b) {
-                    return a + b;
-                }
+            std::string sourceCode = R"(fn int add(const int a, const int b) {
+    return a + b;
+}
             )";
 
             Lexer lexer(sourceCode);
@@ -936,6 +961,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
             REQUIRE(functionDef.returnType == "int");
 
             REQUIRE(functionDef.parameters.size() == 2);
+
+            REQUIRE(functionDef.metadata.start.column == 1);
+            REQUIRE(functionDef.metadata.start.line == 1);
+            REQUIRE(functionDef.metadata.end.column == 2);
+            REQUIRE(functionDef.metadata.end.line == 3);
 
             /**
              * FIRST PARAMETER
@@ -979,10 +1009,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         }
 
         SECTION("Function with multiple parameters and some default values is parsed properly") {
-            std::string sourceCode = R"(
-                fn int multiply(const int a = 2, const int b = 3) {
-                    return a * b;
-                }
+            std::string sourceCode = R"(fn int multiply(const int a = 2, const int b = 3) {
+    return a * b;
+}
             )";
 
             Lexer lexer(sourceCode);
@@ -1004,6 +1033,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
             REQUIRE(functionDef.returnType == "int");
 
             REQUIRE(functionDef.parameters.size() == 2);
+
+            REQUIRE(functionDef.metadata.start.column == 1);
+            REQUIRE(functionDef.metadata.start.line == 1);
+            REQUIRE(functionDef.metadata.end.column == 2);
+            REQUIRE(functionDef.metadata.end.line == 3);
 
             /**
              * FIRST PARAMETER
@@ -1063,9 +1097,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
     SECTION("Function calls are parsed properly") {
         SECTION("Function call with no arguments is parsed properly") {
-            std::string sourceCode = R"(
-                greet();
-            )";
+            std::string sourceCode = "greet()";
 
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
@@ -1085,12 +1117,15 @@ TEST_CASE("Parser works correctly", "[parser]") {
             REQUIRE(functionCall.identifier == "greet");
 
             REQUIRE(functionCall.arguments.empty() == true);
+
+            REQUIRE(functionCall.metadata.start.column == 1);
+            REQUIRE(functionCall.metadata.start.line == 1);
+            REQUIRE(functionCall.metadata.end.column == 8);
+            REQUIRE(functionCall.metadata.end.line == 1);
         }
 
         SECTION("Function call with multiple arguments is parsed properly") {
-            std::string sourceCode = R"(
-                add(69, 3.14, "hello");
-            )";
+            std::string sourceCode = "add(69, 3.14, \"hello\")";
 
             Lexer lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
@@ -1110,6 +1145,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
             REQUIRE(functionCall.identifier == "add");
 
             REQUIRE(functionCall.arguments.size() == 3);
+
+            REQUIRE(functionCall.metadata.start.column == 1);
+            REQUIRE(functionCall.metadata.start.line == 1);
+            REQUIRE(functionCall.metadata.end.column == 23);
+            REQUIRE(functionCall.metadata.end.line == 1);
 
             REQUIRE(std::holds_alternative<IntLiteral>(*functionCall.arguments[0]));
             REQUIRE(std::get<IntLiteral>(*functionCall.arguments[0]).value == 69);
