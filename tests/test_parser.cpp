@@ -50,6 +50,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         IntLiteral intLiteral = std::get<IntLiteral>(*expressionPtr);
         REQUIRE(intLiteral.value == 69);
+
+        REQUIRE(intLiteral.metadata.start.column == 1);
+        REQUIRE(intLiteral.metadata.start.line == 1);
+        REQUIRE(intLiteral.metadata.end.column == 3);
+        REQUIRE(intLiteral.metadata.end.line == 1);
     }
 
     SECTION("Float literals are parsed properly") {
@@ -70,6 +75,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         FloatLiteral floatLiteral = std::get<FloatLiteral>(*expressionPtr);
         REQUIRE(floatLiteral.value == 3.14f);
+
+        REQUIRE(floatLiteral.metadata.start.column == 1);
+        REQUIRE(floatLiteral.metadata.start.line == 1);
+        REQUIRE(floatLiteral.metadata.end.column == 5);
+        REQUIRE(floatLiteral.metadata.end.line == 1);
     }
 
     SECTION("Boolean literals are parsed properly") {
@@ -90,6 +100,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         BooleanLiteral booleanLiteral = std::get<BooleanLiteral>(*expressionPtr);
         REQUIRE(booleanLiteral.value == true);
+
+        REQUIRE(booleanLiteral.metadata.start.column == 1);
+        REQUIRE(booleanLiteral.metadata.start.line == 1);
+        REQUIRE(booleanLiteral.metadata.end.column == 5);
+        REQUIRE(booleanLiteral.metadata.end.line == 1);
     }
 
     SECTION("Vectors are parsed properly") {
@@ -109,6 +124,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<Vector>(*expressionPtr));
 
         const Vector& vector = std::get<Vector>(*expressionPtr);
+
+        REQUIRE(vector.metadata.start.column == 1);
+        REQUIRE(vector.metadata.start.line == 1);
+        REQUIRE(vector.metadata.end.column == 27);
+        REQUIRE(vector.metadata.end.line == 1);
 
         const Expression& expr1 = *vector.values[0];
         REQUIRE(std::holds_alternative<IntLiteral>(expr1));
@@ -152,6 +172,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
         BinaryOperation arithmeticOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
 
+        REQUIRE(arithmeticOperation.metadata.start.column == 1);
+        REQUIRE(arithmeticOperation.metadata.start.line == 1);
+        REQUIRE(arithmeticOperation.metadata.end.column == 10);
+        REQUIRE(arithmeticOperation.metadata.end.line == 1);
+
         auto& lhs = arithmeticOperation.lhs;
         REQUIRE(std::holds_alternative<IntLiteral>(*lhs));
 
@@ -186,6 +211,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         // Top-level ((420 + (69 * 3.14)) - 7)
         BinaryOperation topLevelOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
         REQUIRE(topLevelOperation.op == "-");
+
+        REQUIRE(topLevelOperation.metadata.start.column == 1);
+        REQUIRE(topLevelOperation.metadata.start.line == 1);
+        REQUIRE(topLevelOperation.metadata.end.column == 20);
+        REQUIRE(topLevelOperation.metadata.end.line == 1);
 
         // Left side should (420 + (69 * 3.14))
         REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.lhs));
@@ -238,6 +268,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         BinaryOperation topLevelOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
         REQUIRE(topLevelOperation.op == "*");
 
+        REQUIRE(topLevelOperation.metadata.start.column == 1);
+        REQUIRE(topLevelOperation.metadata.start.line == 1);
+        REQUIRE(topLevelOperation.metadata.end.column == 24);
+        REQUIRE(topLevelOperation.metadata.end.line == 1);
+
         // Left side should be (420 + 69)
         REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.lhs));
         BinaryOperation additiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.lhs));
@@ -286,6 +321,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
         BinaryOperation comparisonOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
 
+        REQUIRE(comparisonOperation.metadata.start.column == 1);
+        REQUIRE(comparisonOperation.metadata.start.line == 1);
+        REQUIRE(comparisonOperation.metadata.end.column == 10);
+        REQUIRE(comparisonOperation.metadata.end.line == 1);
+
         auto& lhs = comparisonOperation.lhs;
         REQUIRE(std::holds_alternative<IntLiteral>(*lhs));
 
@@ -320,6 +360,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         LogicalNotOperation notOperation = std::move(std::get<LogicalNotOperation>(*expressionPtr));
         REQUIRE(std::holds_alternative<BooleanLiteral>(*notOperation.expression));
 
+        REQUIRE(notOperation.metadata.start.column == 1);
+        REQUIRE(notOperation.metadata.start.line == 1);
+        REQUIRE(notOperation.metadata.end.column == 7);
+        REQUIRE(notOperation.metadata.end.line == 1);
+
         BooleanLiteral boolLiteral = std::get<BooleanLiteral>(*notOperation.expression);
         REQUIRE(boolLiteral.value == false);
     }
@@ -342,6 +387,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
         REQUIRE(std::holds_alternative<BooleanLiteral>(*andOperation.lhs));
+
+        REQUIRE(andOperation.metadata.start.column == 1);
+        REQUIRE(andOperation.metadata.start.line == 1);
+        REQUIRE(andOperation.metadata.end.column == 14);
+        REQUIRE(andOperation.metadata.end.line == 1);
 
         BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*andOperation.lhs);
         REQUIRE(lhsBooleanLiteral.value == true);
@@ -371,15 +421,20 @@ TEST_CASE("Parser works correctly", "[parser]") {
         auto& expressionPtr = std::get<std::unique_ptr<Expression>>(firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
-        BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
-        REQUIRE(std::holds_alternative<BooleanLiteral>(*andOperation.lhs));
+        BinaryOperation orOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
+        REQUIRE(std::holds_alternative<BooleanLiteral>(*orOperation.lhs));
 
-        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*andOperation.lhs);
+        REQUIRE(orOperation.metadata.start.column == 1);
+        REQUIRE(orOperation.metadata.start.line == 1);
+        REQUIRE(orOperation.metadata.end.column == 14);
+        REQUIRE(orOperation.metadata.end.line == 1);
+
+        BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*orOperation.lhs);
         REQUIRE(lhsBooleanLiteral.value == false);
 
-        REQUIRE(andOperation.op == "||");
+        REQUIRE(orOperation.op == "||");
 
-        auto& rhs = andOperation.rhs;
+        auto& rhs = orOperation.rhs;
         REQUIRE(std::holds_alternative<BooleanLiteral>(*rhs));
 
         BooleanLiteral rhsBooleanLiteral = std::get<BooleanLiteral>(*rhs);
@@ -402,14 +457,19 @@ TEST_CASE("Parser works correctly", "[parser]") {
         auto& statement = std::get<std::unique_ptr<Statement>>(firstElement);
         REQUIRE(std::holds_alternative<VariableDeclaration>(*statement));
 
-        VariableDeclaration variableAssignment = std::move(std::get<VariableDeclaration>(*statement));
+        VariableDeclaration variableDeclaration = std::move(std::get<VariableDeclaration>(*statement));
 
-        REQUIRE(variableAssignment.isMutable == false);
-        REQUIRE(variableAssignment.type == "string");
-        REQUIRE(variableAssignment.identifier == "message");
-        REQUIRE(variableAssignment.value.has_value() == true);
+        REQUIRE(variableDeclaration.isMutable == false);
+        REQUIRE(variableDeclaration.type == "string");
+        REQUIRE(variableDeclaration.identifier == "message");
+        REQUIRE(variableDeclaration.value.has_value() == true);
 
-        auto& valueExpressionPtr = variableAssignment.value.value();
+        REQUIRE(variableDeclaration.metadata.start.column == 1);
+        REQUIRE(variableDeclaration.metadata.start.line == 1);
+        REQUIRE(variableDeclaration.metadata.end.column == 41);
+        REQUIRE(variableDeclaration.metadata.end.line == 1);
+
+        auto& valueExpressionPtr = variableDeclaration.value.value();
         REQUIRE(std::holds_alternative<StringLiteral>(*valueExpressionPtr));
 
         StringLiteral stringLiteral = std::get<StringLiteral>(*valueExpressionPtr);
@@ -434,6 +494,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         VariableAssignment variableAssignment = std::move(std::get<VariableAssignment>(*statement));
 
+        REQUIRE(variableAssignment.metadata.start.column == 1);
+        REQUIRE(variableAssignment.metadata.start.line == 1);
+        REQUIRE(variableAssignment.metadata.end.column == 28);
+        REQUIRE(variableAssignment.metadata.end.line == 1);
+
         REQUIRE(variableAssignment.identifier == "message");
         REQUIRE(variableAssignment.value.has_value() == true);
 
@@ -445,16 +510,15 @@ TEST_CASE("Parser works correctly", "[parser]") {
     }
 
     SECTION("If-else conditions are parsed properly") {
-        std::string sourceCode = R"(
-            if (true) {
-                x = 10;
-                "hello";
-            } else if (false) {
-                y = 3.14;
-            } else {
-                const int z = 20;
-                null;
-            }
+        std::string sourceCode = R"(if (true) {
+    x = 10;
+    "hello";
+} else if (false) {
+    y = 3.14;
+} else {
+    const int z = 20;
+    null;
+}
         )";
 
         Lexer lexer(sourceCode);
@@ -470,6 +534,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         REQUIRE(std::holds_alternative<IfStatement>(*mainStatement));
         const IfStatement& ifStatement = std::get<IfStatement>(*mainStatement);
+
+        REQUIRE(ifStatement.metadata.start.column == 1);
+        REQUIRE(ifStatement.metadata.start.line == 1);
+        REQUIRE(ifStatement.metadata.end.column == 2);
+        REQUIRE(ifStatement.metadata.end.line == 9);
 
         SECTION("Validate the main if condition") {
             REQUIRE(std::holds_alternative<BooleanLiteral>(*ifStatement.condition));
