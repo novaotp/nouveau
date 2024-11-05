@@ -7,7 +7,7 @@
 #include "token.hpp"
 
 class Parser {
-    private:
+private:
     std::string sourceCode;
     size_t index = 0;
     std::vector<Token> tokens;
@@ -57,7 +57,7 @@ class Parser {
     Expression parseFunction();
     Expression parseFunctionCall();
 
-    public:
+public:
     Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
     ~Parser() {};
 

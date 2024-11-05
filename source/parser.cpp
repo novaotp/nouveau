@@ -79,11 +79,11 @@ Program Parser::parse() {
 
         if (std::holds_alternative<Statement>(statementOrExpression)) {
             program.body.push_back(
-                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
             );
         } else if (std::holds_alternative<Expression>(statementOrExpression)) {
             program.body.push_back(
-                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
             );
         }
     }
@@ -165,7 +165,7 @@ VariableDeclaration Parser::parseVariableDeclaration() {
         this->expectToken(TokenType::SEMI_COLON, "A variable declaration must end with a ';'. Did you forget it ?"); // Skip the ; token
     }
 
-    return VariableDeclaration(NodeMetadata(start, end), isMutable, type, identifier, std::make_unique<Expression>(std::move(value)));
+    return VariableDeclaration(NodeMetadata(start, end), isMutable, type, identifier, std::make_shared<Expression>(std::move(value)));
 }
 
 VariableAssignment Parser::parseVariableAssignment() {
@@ -189,7 +189,7 @@ VariableAssignment Parser::parseVariableAssignment() {
         this->expectToken(TokenType::SEMI_COLON, "A variable declaration must end with a ';'. Did you forget it ?"); // Skip the ";" token
     }
 
-    return VariableAssignment(NodeMetadata(start, end), identifier, op, std::make_unique<Expression>(std::move(value)));
+    return VariableAssignment(NodeMetadata(start, end), identifier, op, std::make_shared<Expression>(std::move(value)));
 }
 
 IfStatement Parser::parseIfStatement() {
@@ -199,50 +199,50 @@ IfStatement Parser::parseIfStatement() {
     this->expectToken(TokenType::LEFT_PARENTHESIS, "The 'if' keyword must be followed by a '('."); // Skip the "(" token
 
     // Parse the condition expression inside the parentheses
-    std::unique_ptr<Expression> condition = std::make_unique<Expression>(this->parseExpression());
+    std::shared_ptr<Expression> condition = std::make_shared<Expression>(this->parseExpression());
 
     this->expectToken(TokenType::RIGHT_PARENTHESIS, "The 'if' condition must end with a ')'."); // Skip the ")" token
     this->expectToken(TokenType::LEFT_BRACE, "An 'if' condition must be followed by a '{'."); // Skip the "{" token
 
-    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> thenBlock;
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> thenBlock;
     while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
         std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
 
         if (std::holds_alternative<Statement>(statementOrExpression)) {
             thenBlock.push_back(
-                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
             );
         } else if (std::holds_alternative<Expression>(statementOrExpression)) {
             thenBlock.push_back(
-                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
             );
         }
     }
 
     this->expectToken(TokenType::RIGHT_BRACE, "An 'if' body must be end with a '}'."); // Skip the "}" token
 
-    std::vector<std::pair<std::unique_ptr<Expression>, std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>>>> elseifClauses = {};
+    std::vector<std::pair<std::shared_ptr<Expression>, std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>>>> elseifClauses = {};
     while (this->getCurrentToken().type == TokenType::ELSE_IF_KEYWORD) {
         this->expectToken(TokenType::ELSE_IF_KEYWORD, "An 'else if' statement must start with an 'else if' keyword."); // Skip the "else if" token
         this->expectToken(TokenType::LEFT_PARENTHESIS, "An 'else if' condition must be enclosed between parentheses."); // Skip the "(" token
 
-        std::unique_ptr<Expression> elseifCondition = std::make_unique<Expression>(this->parseExpression());
+        std::shared_ptr<Expression> elseifCondition = std::make_shared<Expression>(this->parseExpression());
 
         this->expectToken(TokenType::RIGHT_PARENTHESIS, "An 'else if' condition must end with a parenthesis."); // Skip the ")" token
         this->expectToken(TokenType::LEFT_BRACE, "An 'else if' body must start with a '{'."); // Skip the "{" token
 
         // Parse the "else if" block
-        std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseifBlock;
+        std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> elseifBlock;
         while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
             std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
 
             if (std::holds_alternative<Statement>(statementOrExpression)) {
                 elseifBlock.push_back(
-                    std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                    std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
                 );
             } else if (std::holds_alternative<Expression>(statementOrExpression)) {
                 elseifBlock.push_back(
-                    std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                    std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
                 );
             }
         }
@@ -252,7 +252,7 @@ IfStatement Parser::parseIfStatement() {
         elseifClauses.push_back(std::make_pair(std::move(elseifCondition), std::move(elseifBlock)));
     }
 
-    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> elseBlock;
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> elseBlock;
     if (this->getCurrentToken().type == TokenType::ELSE_KEYWORD) {
         this->expectToken(TokenType::ELSE_KEYWORD, "An 'else' statement must start with an 'else' keyword."); // Skip the "else" token
         this->expectToken(TokenType::LEFT_BRACE, "An 'else' keyword followed by a '{'."); // Skip the "{" token
@@ -262,11 +262,11 @@ IfStatement Parser::parseIfStatement() {
 
             if (std::holds_alternative<Statement>(statementOrExpression)) {
                 elseBlock.push_back(
-                    std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                    std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
                 );
             } else if (std::holds_alternative<Expression>(statementOrExpression)) {
                 elseBlock.push_back(
-                    std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                    std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
                 );
             }
         }
@@ -296,17 +296,17 @@ WhileStatement Parser::parseWhileStatement() {
     this->expectToken(TokenType::RIGHT_PARENTHESIS, "A 'while' condition must be end with a ')'."); // Skip ")" token
     this->expectToken(TokenType::LEFT_BRACE, "A 'while' condition must be followed by a '{'."); // Skip "{" token
 
-    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block = {};
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block = {};
     while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
         std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
 
         if (std::holds_alternative<Statement>(statementOrExpression)) {
             block.push_back(
-                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
             );
         } else if (std::holds_alternative<Expression>(statementOrExpression)) {
             block.push_back(
-                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
             );
         }
     }
@@ -315,7 +315,7 @@ WhileStatement Parser::parseWhileStatement() {
 
     this->expectToken(TokenType::RIGHT_BRACE, "A 'while' condition must be end with a '}'."); // Skip "}" token
 
-    return WhileStatement(NodeMetadata(start, end), std::make_unique<Expression>(std::move(condition)), std::move(block));
+    return WhileStatement(NodeMetadata(start, end), std::make_shared<Expression>(std::move(condition)), std::move(block));
 }
 
 ForStatement Parser::parseForStatement() {
@@ -324,43 +324,43 @@ ForStatement Parser::parseForStatement() {
     this->expectToken(TokenType::FOR_KEYWORD, "A 'for' statement must start with a 'for' keyword."); // Skip "for" token
     this->expectToken(TokenType::LEFT_PARENTHESIS, "A 'for' statement must be followed by a '('."); // Skip "(" token
 
-    std::optional<std::unique_ptr<Statement>> initialization;
+    std::optional<std::shared_ptr<Statement>> initialization;
     if (getCurrentToken().type != TokenType::SEMI_COLON) {
         std::variant<Statement, Expression, std::monostate> initializationStatement = this->parseStatementOrExpression();
 
         if (std::holds_alternative<Statement>(initializationStatement)) {
-            initialization = std::make_unique<Statement>(std::move(std::get<Statement>(initializationStatement)));
+            initialization = std::make_shared<Statement>(std::move(std::get<Statement>(initializationStatement)));
         }
     } else {
         this->expectToken(TokenType::SEMI_COLON); // Skip ";" token
     }
 
-    std::optional<std::unique_ptr<Expression>> condition;
+    std::optional<std::shared_ptr<Expression>> condition;
     if (this->getCurrentToken().type != TokenType::SEMI_COLON) {
-        condition = std::make_unique<Expression>(this->parseExpression());
+        condition = std::make_shared<Expression>(this->parseExpression());
     }
 
     this->expectToken(TokenType::SEMI_COLON); // Skip ";" token
 
-    std::optional<std::unique_ptr<Statement>> update;
+    std::optional<std::shared_ptr<Statement>> update;
     if (getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
         std::variant<Statement, Expression, std::monostate> updateStmt = this->parseStatementOrExpression();
 
         if (std::holds_alternative<Statement>(updateStmt)) {
-            update = std::make_unique<Statement>(std::move(std::get<Statement>(updateStmt)));
+            update = std::make_shared<Statement>(std::move(std::get<Statement>(updateStmt)));
         }
     }
 
     this->expectToken(TokenType::RIGHT_PARENTHESIS, "A 'for' statement must be enclosed within parentheses."); // Skip ")" token
     this->expectToken(TokenType::LEFT_BRACE, "A 'for' statement must be followed by a '{'."); // Skip "{" token
 
-    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> block;
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block;
     while (getCurrentToken().type != TokenType::RIGHT_BRACE) {
         std::variant<Statement, Expression, std::monostate> element = this->parseStatementOrExpression();
         if (std::holds_alternative<Statement>(element)) {
-            block.push_back(std::make_unique<Statement>(std::move(std::get<Statement>(element))));
+            block.push_back(std::make_shared<Statement>(std::move(std::get<Statement>(element))));
         } else if (std::holds_alternative<Expression>(element)) {
-            block.push_back(std::make_unique<Expression>(std::move(std::get<Expression>(element))));
+            block.push_back(std::make_shared<Expression>(std::move(std::get<Expression>(element))));
         }
     }
 
@@ -400,9 +400,9 @@ ReturnStatement Parser::parseReturnStatement() {
 
     this->expectToken(TokenType::RETURN_KEYWORD); // Skip the "return" token
 
-    std::optional<std::unique_ptr<Expression>> expression;
+    std::optional<std::shared_ptr<Expression>> expression;
     if (this->getCurrentToken().type != TokenType::SEMI_COLON) {
-        expression = std::make_unique<Expression>(this->parseExpression());
+        expression = std::make_shared<Expression>(this->parseExpression());
     }
 
     NodePosition end = this->getCurrentToken().metadata.toEndPosition();
@@ -424,9 +424,9 @@ Expression Parser::parseLogicalOrExpression() {
         Expression right = this->parseLogicalAndExpression();
         left = BinaryOperation(
             NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_unique<Expression>(std::move(left)),
+            std::make_shared<Expression>(std::move(left)),
             op.value,
-            std::make_unique<Expression>(std::move(right))
+            std::make_shared<Expression>(std::move(right))
         );
     }
 
@@ -441,9 +441,9 @@ Expression Parser::parseLogicalAndExpression() {
         Expression right = this->parseComparitiveExpression();
         left = BinaryOperation(
             NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_unique<Expression>(std::move(left)),
+            std::make_shared<Expression>(std::move(left)),
             op.value,
-            std::make_unique<Expression>(std::move(right))
+            std::make_shared<Expression>(std::move(right))
         );
     }
 
@@ -470,9 +470,9 @@ Expression Parser::parseComparitiveExpression() {
         Expression right = this->parseAdditiveExpression();
         left = BinaryOperation(
             NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_unique<Expression>(std::move(left)),
+            std::make_shared<Expression>(std::move(left)),
             op.value,
-            std::make_unique<Expression>(std::move(right))
+            std::make_shared<Expression>(std::move(right))
         );
     }
 
@@ -488,9 +488,9 @@ Expression Parser::parseAdditiveExpression() {
         Expression right = this->parseMultiplicativeExpression();
         left = BinaryOperation(
             NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_unique<Expression>(std::move(left)),
+            std::make_shared<Expression>(std::move(left)),
             op.value,
-            std::make_unique<Expression>(std::move(right))
+            std::make_shared<Expression>(std::move(right))
         );
     }
 
@@ -507,9 +507,9 @@ Expression Parser::parseMultiplicativeExpression() {
         Expression right = this->parseLogicalNotExpression();
         left = BinaryOperation(
             NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_unique<Expression>(std::move(left)),
+            std::make_shared<Expression>(std::move(left)),
             op.value,
-            std::make_unique<Expression>(std::move(right))
+            std::make_shared<Expression>(std::move(right))
         );
     }
 
@@ -525,7 +525,7 @@ Expression Parser::parseLogicalNotExpression() {
 
         return LogicalNotOperation(
             NodeMetadata(start, getExpressionMetadata(expression).end),
-            std::make_unique<Expression>(std::move(expression))
+            std::make_shared<Expression>(std::move(expression))
         );
     }
 
@@ -593,10 +593,10 @@ Expression Parser::parsePrimitiveExpression() {
         case TokenType::LEFT_BRACKET: {
             NodePosition start = currentToken.metadata.toStartPosition();
 
-            std::vector<std::unique_ptr<Expression>> expressions = {};
+            std::vector<std::shared_ptr<Expression>> expressions = {};
 
             while (this->getCurrentToken().type != TokenType::RIGHT_BRACKET) {
-                expressions.push_back(std::make_unique<Expression>(this->parseExpression()));
+                expressions.push_back(std::make_shared<Expression>(this->parseExpression()));
 
                 if (this->getCurrentToken().type == TokenType::COMMA) {
                     this->expectToken(TokenType::COMMA);
@@ -625,7 +625,7 @@ Expression Parser::parseFunction() {
 
     this->expectToken(TokenType::LEFT_PARENTHESIS, "A function name must be followed by a '('."); // Skip the "(" token
 
-    std::vector<std::unique_ptr<VariableDeclaration>> parameters = {};
+    std::vector<std::shared_ptr<VariableDeclaration>> parameters = {};
     while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
         NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
@@ -638,19 +638,19 @@ Expression Parser::parseFunction() {
 
         NodePosition end = this->getCurrentToken().metadata.toEndPosition();
 
-        std::optional<std::unique_ptr<Expression>> expression;
+        std::optional<std::shared_ptr<Expression>> expression;
         if (this->getCurrentToken().type == TokenType::ASSIGNMENT_OPERATOR) {
             this->expectToken(TokenType::ASSIGNMENT_OPERATOR); // Skip the "=" token
 
             Expression _expr = this->parseExpression();
-            expression = std::make_unique<Expression>(std::move(_expr));
+            expression = std::make_shared<Expression>(std::move(_expr));
 
             std::visit([&end](const auto& node) {
                 end = node.metadata.end;
             }, _expr);
         }
 
-        parameters.push_back(std::make_unique<VariableDeclaration>(
+        parameters.push_back(std::make_shared<VariableDeclaration>(
             VariableDeclaration(
                 NodeMetadata(start, end),
                 isMutable,
@@ -668,17 +668,17 @@ Expression Parser::parseFunction() {
     this->expectToken(TokenType::RIGHT_PARENTHESIS, "A function declaration requires to close the parentheses after the parameters."); // Skip the ")" token
     this->expectToken(TokenType::LEFT_BRACE, "A function declaration's body must start with a '{'."); // Skip the "{" token
 
-    std::vector<std::variant<std::unique_ptr<Expression>, std::unique_ptr<Statement>>> body = {};
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body = {};
     while (this->getCurrentToken().type != TokenType::RIGHT_BRACE) {
         std::variant<Statement, Expression, std::monostate> statementOrExpression = this->parseStatementOrExpression();
 
         if (std::holds_alternative<Statement>(statementOrExpression)) {
             body.push_back(
-                std::make_unique<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
             );
         } else if (std::holds_alternative<Expression>(statementOrExpression)) {
             body.push_back(
-                std::make_unique<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
             );
         }
     }
@@ -697,9 +697,9 @@ Expression Parser::parseFunctionCall() {
 
     this->expectToken(TokenType::LEFT_PARENTHESIS, "Calling a function requires parentheses."); // Skip the "(" token
 
-    std::vector<std::unique_ptr<Expression>> arguments = {};
+    std::vector<std::shared_ptr<Expression>> arguments = {};
     while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
-        arguments.push_back(std::make_unique<Expression>(this->parseExpression()));
+        arguments.push_back(std::make_shared<Expression>(this->parseExpression()));
 
         if (this->getCurrentToken().type == TokenType::COMMA) {
             this->expectToken(TokenType::COMMA);
