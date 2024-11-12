@@ -28,9 +28,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // program.prettyPrint();
+    program.prettyPrint();
 
-    Semer semer(sourceCode, program);
+    /* Semer semer(sourceCode, program);
     const std::vector<SemerError>& errors = semer.analyze();
 
     if (!errors.empty()) {
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
         std::cout << GREEN << "\tAnalyzed source code, no errors found" << RESET << std::endl;
         std::cout << std::endl;
-    }
+    } */
 
     return 0;
 }

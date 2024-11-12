@@ -119,22 +119,17 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         REQUIRE(identifierToken.metadata.length == sourceCode.size());
     }
 
-    SECTION("Const and Mut are tokenized properly") {
-        std::map<std::string, TokenType> keywordCases = {
-            { "const", TokenType::CONST_KEYWORD },
-            { "mut", TokenType::MUTABLE_KEYWORD } };
+    SECTION("'mut' keyword is tokenized properly") {
+        std::string sourceCode = "mut";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
 
-        for (const auto& [sourceCode, expectedType] : keywordCases) {
-            Lexer lexer = Lexer(sourceCode);
-            std::vector<Token> tokens = lexer.tokenize();
+        REQUIRE(tokens.size() == 2);
 
-            REQUIRE(tokens.size() == 2);
-
-            Token keywordToken = tokens.at(0);
-            REQUIRE(keywordToken.type == expectedType);
-            REQUIRE(keywordToken.value == sourceCode);
-            REQUIRE(keywordToken.metadata.length == sourceCode.size());
-        }
+        Token keywordToken = tokens.at(0);
+        REQUIRE(keywordToken.type == TokenType::MUTABLE_KEYWORD);
+        REQUIRE(keywordToken.value == sourceCode);
+        REQUIRE(keywordToken.metadata.length == sourceCode.size());
     }
 
     SECTION("Data types (string, int, float, bool) are tokenized properly") {

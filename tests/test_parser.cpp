@@ -442,7 +442,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
     }
 
     SECTION("Variable declarations are handled properly") {
-        std::string sourceCode = "const string message = \"Hello, World !\";";
+        std::string sourceCode = "string message = \"Hello, World !\";";
         Lexer lexer(sourceCode);
         std::vector<Token> tokens = lexer.tokenize();
 
@@ -889,7 +889,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
     SECTION("Function definitions are parsed properly") {
         SECTION("Function with no parameters is parsed properly") {
-            std::string sourceCode = R"(fn string greet() {
+            std::string sourceCode = R"(string greet() {
     return "Hello, World!";
 }
             )";
@@ -937,7 +937,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         }
 
         SECTION("Function with multiple parameters is parsed properly") {
-            std::string sourceCode = R"(fn int add(const int a, const int b) {
+            std::string sourceCode = R"(int add(int a, int b) {
     return a + b;
 }
             )";
@@ -1009,7 +1009,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         }
 
         SECTION("Function with multiple parameters and some default values is parsed properly") {
-            std::string sourceCode = R"(fn int multiply(const int a = 2, const int b = 3) {
+            std::string sourceCode = R"(int multiply(int a = 2, int b = 3) {
     return a * b;
 }
             )";

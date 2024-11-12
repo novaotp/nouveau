@@ -227,13 +227,15 @@ struct ForStatement {
 struct Function {
     NodeMetadata metadata;
     std::string returnType;
-    std::string name;
+    /// Is `null` if the function is an anonymous function.
+    std::optional<std::string> name;
     std::vector<std::shared_ptr<VariableDeclaration>> parameters;
     std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;
 
+
     Function(
         NodeMetadata metadata, const std::string& returnType,
-        const std::string& name,
+        std::optional<std::string> name,
         std::vector<std::shared_ptr<VariableDeclaration>> parameters,
         std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body
     ) : metadata(metadata), returnType(returnType), name(name), parameters(std::move(parameters)), body(std::move(body)) {}

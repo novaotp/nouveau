@@ -44,7 +44,7 @@ void printExpression(const NodeType& n, const size_t indentCount) {
         }
     } else if constexpr (std::is_same_v<NodeType, Function>) {
         std::cout << indent << "Function" << std::endl;
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Name: " << n.name << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Name: " << (n.name.has_value() ? n.name.value() : "Anonymous Function") << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Return Type: " << n.returnType << std::endl;
 
         if (n.parameters.empty()) {
