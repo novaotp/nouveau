@@ -323,20 +323,6 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         REQUIRE(nullToken.metadata.length == sourceCode.size());
     }
 
-    SECTION("Function keyword are tokenized properly") {
-        std::string sourceCode = "fn";
-        Lexer lexer = Lexer(sourceCode);
-        std::vector<Token> tokens = lexer.tokenize();
-
-        REQUIRE(tokens.size() == 2);
-
-        Token fnToken = tokens.at(0);
-
-        REQUIRE(fnToken.type == TokenType::FUNCTION_KEYWORD);
-        REQUIRE(fnToken.value == sourceCode);
-        REQUIRE(fnToken.metadata.length == sourceCode.size());
-    }
-
     SECTION("Triple-slash comments are ignored properly") {
         std::string sourceCode = "/// This is a comment\nmut int x = 10;";
         Lexer lexer = Lexer(sourceCode);

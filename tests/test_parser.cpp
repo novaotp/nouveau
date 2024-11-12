@@ -466,7 +466,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         REQUIRE(variableDeclaration.metadata.start.column == 1);
         REQUIRE(variableDeclaration.metadata.start.line == 1);
-        REQUIRE(variableDeclaration.metadata.end.column == 41);
+        REQUIRE(variableDeclaration.metadata.end.column == 35);
         REQUIRE(variableDeclaration.metadata.end.line == 1);
 
         auto& valueExpressionPtr = variableDeclaration.value.value();
@@ -516,7 +516,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 } else if (false) {
     y = 3.14;
 } else {
-    const int z = 20;
+    int z = 20;
     null;
 }
         )";

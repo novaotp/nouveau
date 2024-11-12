@@ -20,8 +20,8 @@ const Token& Parser::getCurrentToken() {
     return this->tokens.at(this->index);
 }
 
-const Token& Parser::peekNextToken() {
-    return this->tokens.at(this->index + 1);
+const Token& Parser::peekNextToken(size_t n = 1) {
+    return this->tokens.at(this->index + n);
 }
 
 const Token& Parser::expectToken() {
@@ -92,12 +92,25 @@ Program Parser::parse() {
 }
 
 std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpression() {
-    // ! Note that functions are not handled here.
+    // ? Note that functions are not handled here.
     // * Since they can be assigned to variables, they are expressions.
     // * See `parsePrimitive` function for function handling.
 
     switch (this->getCurrentToken().type) {
         case TokenType::MUTABLE_KEYWORD:
+        case TokenType::TYPE:
+            // ? This is to handle constant variable declarations and function declarations.
+            // * Because the syntax starts the same : <type> <identifier>
+
+            // ! This doesn't handle the case for anonymous functions.
+            // ! Nor does it handle variable declarations with big types, such as int[], string? etc.
+
+            if (this->peekNextToken().type == TokenType::IDENTIFIER && this->peekNextToken(2).type == TokenType::LEFT_PARENTHESIS) {
+                // Function declaration
+                return this->parseExpression();
+            }
+
+            // Variable declaration
             return this->parseVariableDeclaration();
         case TokenType::IDENTIFIER: {
             if (this->peekNextToken().type == TokenType::LEFT_PARENTHESIS) {
@@ -129,10 +142,16 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
 VariableDeclaration Parser::parseVariableDeclaration() {
     NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
-    bool isMutable = this->expectToken(
-        { TokenType::CONST_KEYWORD, TokenType::MUTABLE_KEYWORD },
-        "A variable declaration must start with either a 'const' or 'mut' keyword."
-    ).type == TokenType::MUTABLE_KEYWORD;
+    const Token& currentToken = this->expectToken(
+        { TokenType::TYPE, TokenType::MUTABLE_KEYWORD },
+        "A function parameter must start with either the 'mut' keyword or a type."
+    );
+    bool isMutable = currentToken.type == TokenType::MUTABLE_KEYWORD;
+
+    if (currentToken.type == TokenType::TYPE) {
+        this->index -= 1;
+    }
+
     std::string type = this->expectToken(TokenType::TYPE, "Did you forget to define the type of your variable ?").value;
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "Did you forget to set a name for your variable ? ").value;
 
@@ -618,9 +637,9 @@ Expression Parser::parsePrimitiveExpression() {
 }
 
 Expression Parser::parseFunction() {
-    this->index--; // * Go back because we skipped the type inside `parsePrimitive`
+    this->index -= 1; // * Go back because we skipped the type inside `parsePrimitive`
 
-    NodePosition start = this->tokens[this->index - 1].metadata.toStartPosition();
+    NodePosition start = this->tokens[this->index].metadata.toStartPosition();
 
     std::string returnType = this->expectToken(TokenType::TYPE, "A function declaration needs a return type.").value;
 
@@ -635,10 +654,16 @@ Expression Parser::parseFunction() {
     while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
         NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
-        bool isMutable = this->expectToken(
+        const Token& currentToken = this->expectToken(
             { TokenType::TYPE, TokenType::MUTABLE_KEYWORD },
             "A function parameter must start with either the 'mut' keyword or a type."
-        ).type == TokenType::MUTABLE_KEYWORD;
+        );
+        bool isMutable = currentToken.type == TokenType::MUTABLE_KEYWORD;
+
+        if (currentToken.type == TokenType::TYPE) {
+            this->index -= 1;
+        }
+
         std::string type = this->expectToken(TokenType::TYPE, "A function parameter needs a type.").value;
         std::string identifier = this->expectToken(TokenType::IDENTIFIER, "A function parameter needs a name.").value;
 

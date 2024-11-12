@@ -13,7 +13,7 @@ private:
     std::vector<Token> tokens;
 
     const Token& getCurrentToken();
-    const Token& peekNextToken();
+    const Token& peekNextToken(size_t n);
     /// @brief Advances the index by 1.
     /// @return The current token.
     const Token& expectToken();
