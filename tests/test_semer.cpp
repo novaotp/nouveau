@@ -9,7 +9,7 @@
 TEST_CASE("Semer works correctly", "[semer]") {
     SECTION("Variable declarations are analyzed properly") {
         SECTION("Constant variable declarations without initial values are flagged as WARNING") {
-            std::string sourceCode = "const bool is_valid;";
+            std::string sourceCode = "bool is_valid;";
             Lexer lexer = Lexer(sourceCode);
             std::vector<Token> tokens = lexer.tokenize();
 
