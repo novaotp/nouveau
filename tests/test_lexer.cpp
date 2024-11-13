@@ -272,7 +272,8 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             { ":", TokenType::COLON },
             { ";", TokenType::SEMI_COLON },
             { ".", TokenType::DOT },
-            { ",", TokenType::COMMA } };
+            { ",", TokenType::COMMA },
+            { "?", TokenType::QUESTION_MARK } };
 
         for (const auto& [sourceCode, expectedType] : punctuationCases) {
             Lexer lexer = Lexer(sourceCode);

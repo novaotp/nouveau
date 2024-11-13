@@ -31,7 +31,8 @@ const std::map<char, TokenType> punctuationToTokenType = {
     { ',', TokenType::COMMA },
     { '.', TokenType::DOT },
     { ':', TokenType::COLON },
-    { ';', TokenType::SEMI_COLON } };
+    { ';', TokenType::SEMI_COLON },
+    { '?', TokenType::QUESTION_MARK } };
 
 const std::map<std::string, TokenType> comparisonOperatorToTokenType = {
     { "==", TokenType::EQUAL_OPERATOR },
