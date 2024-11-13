@@ -54,6 +54,9 @@ enum TokenType {
     COLON,
     SEMI_COLON,
     QUESTION_MARK,
+    EXCLAMATION_MARK,
+    AMPERSAND,
+    PIPE,
     END_OF_FILE
 };
 
@@ -132,6 +135,9 @@ const std::map<TokenType, std::string> tokenTypeToString = {
     { TokenType::COLON, "Colon" },
     { TokenType::SEMI_COLON, "Semicolon" },
     { TokenType::QUESTION_MARK, "Question mark" },
+    { TokenType::EXCLAMATION_MARK, "Exclamation mark" },
+    { TokenType::AMPERSAND, "Ampersand" },
+    { TokenType::PIPE, "Pipe" },
     { TokenType::END_OF_FILE, "End of File" }
 };
 

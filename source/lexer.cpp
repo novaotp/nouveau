@@ -32,7 +32,10 @@ const std::map<char, TokenType> punctuationToTokenType = {
     { '.', TokenType::DOT },
     { ':', TokenType::COLON },
     { ';', TokenType::SEMI_COLON },
-    { '?', TokenType::QUESTION_MARK } };
+    { '?', TokenType::QUESTION_MARK },
+    { '!', TokenType::EXCLAMATION_MARK },
+    { '&', TokenType::AMPERSAND },
+    { '|', TokenType::PIPE } };
 
 const std::map<std::string, TokenType> comparisonOperatorToTokenType = {
     { "==", TokenType::EQUAL_OPERATOR },
@@ -122,7 +125,10 @@ std::vector<Token> Lexer::tokenize() {
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
 
             this->advanceIndex();
-        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end()) {
+        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end() &&
+            (this->getCurrentChar() != '|' || this->getNextChar() != '|') && // Handling || operator in a later if branch
+            (this->getCurrentChar() != '&' || this->getNextChar() != '&') // Handling && operator in a later if branch
+            ) {
             token.type = parenthesisToTokenType.at(currentChar);
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
