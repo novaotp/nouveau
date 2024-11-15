@@ -1,2 +1,2 @@
-const string message = "world";
-mut vector numbers = [1, 9 * 5, (4 - 1) * 2];
+string message = "world";
+mut int[] numbers = [1, 9 * 5, (4 - 1) * 2];

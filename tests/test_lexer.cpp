@@ -119,22 +119,17 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         REQUIRE(identifierToken.metadata.length == sourceCode.size());
     }
 
-    SECTION("Const and Mut are tokenized properly") {
-        std::map<std::string, TokenType> keywordCases = {
-            { "const", TokenType::CONST_KEYWORD },
-            { "mut", TokenType::MUTABLE_KEYWORD } };
+    SECTION("'mut' keyword is tokenized properly") {
+        std::string sourceCode = "mut";
+        Lexer lexer = Lexer(sourceCode);
+        std::vector<Token> tokens = lexer.tokenize();
 
-        for (const auto& [sourceCode, expectedType] : keywordCases) {
-            Lexer lexer = Lexer(sourceCode);
-            std::vector<Token> tokens = lexer.tokenize();
+        REQUIRE(tokens.size() == 2);
 
-            REQUIRE(tokens.size() == 2);
-
-            Token keywordToken = tokens.at(0);
-            REQUIRE(keywordToken.type == expectedType);
-            REQUIRE(keywordToken.value == sourceCode);
-            REQUIRE(keywordToken.metadata.length == sourceCode.size());
-        }
+        Token keywordToken = tokens.at(0);
+        REQUIRE(keywordToken.type == TokenType::MUTABLE_KEYWORD);
+        REQUIRE(keywordToken.value == sourceCode);
+        REQUIRE(keywordToken.metadata.length == sourceCode.size());
     }
 
     SECTION("Data types (string, int, float, bool) are tokenized properly") {
@@ -160,7 +155,8 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             { ">=", TokenType::GREATER_OR_EQUAL_OPERATOR },
             { ">", TokenType::GREATER_THAN_OPERATOR },
             { "<=", TokenType::LESS_OR_EQUAL_OPERATOR },
-            { "<", TokenType::LESS_THAN_OPERATOR } };
+            { "<", TokenType::LESS_THAN_OPERATOR }
+        };
 
         for (const auto& [sourceCode, expectedType] : comparisonCases) {
             Lexer lexer = Lexer(sourceCode);
@@ -178,9 +174,9 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
 
     SECTION("Logical operators are tokenized properly") {
         std::map<std::string, TokenType> logicalCases = {
-            { "!", TokenType::NOT_OPERATOR },
             { "||", TokenType::OR_OPERATOR },
-            { "&&", TokenType::AND_OPERATOR } };
+            { "&&", TokenType::AND_OPERATOR }
+        };
 
         for (const auto& [sourceCode, expectedType] : logicalCases) {
             Lexer lexer = Lexer(sourceCode);
@@ -277,7 +273,12 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             { ":", TokenType::COLON },
             { ";", TokenType::SEMI_COLON },
             { ".", TokenType::DOT },
-            { ",", TokenType::COMMA } };
+            { ",", TokenType::COMMA },
+            { "?", TokenType::QUESTION_MARK },
+            { "!", TokenType::EXCLAMATION_MARK },
+            { "&", TokenType::AMPERSAND },
+            { "|", TokenType::PIPE }
+        };
 
         for (const auto& [sourceCode, expectedType] : punctuationCases) {
             Lexer lexer = Lexer(sourceCode);
@@ -326,20 +327,6 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         REQUIRE(nullToken.type == TokenType::NULL_KEYWORD);
         REQUIRE(nullToken.value == sourceCode);
         REQUIRE(nullToken.metadata.length == sourceCode.size());
-    }
-
-    SECTION("Function keyword are tokenized properly") {
-        std::string sourceCode = "fn";
-        Lexer lexer = Lexer(sourceCode);
-        std::vector<Token> tokens = lexer.tokenize();
-
-        REQUIRE(tokens.size() == 2);
-
-        Token fnToken = tokens.at(0);
-
-        REQUIRE(fnToken.type == TokenType::FUNCTION_KEYWORD);
-        REQUIRE(fnToken.value == sourceCode);
-        REQUIRE(fnToken.metadata.length == sourceCode.size());
     }
 
     SECTION("Triple-slash comments are ignored properly") {

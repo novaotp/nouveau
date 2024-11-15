@@ -7,13 +7,13 @@
 #include "token.hpp"
 
 class Parser {
-    private:
+private:
     std::string sourceCode;
     size_t index = 0;
     std::vector<Token> tokens;
 
     const Token& getCurrentToken();
-    const Token& peekNextToken();
+    const Token& peekNextToken(size_t n);
     /// @brief Advances the index by 1.
     /// @return The current token.
     const Token& expectToken();
@@ -31,6 +31,13 @@ class Parser {
     /// @return The current token.
     /// @exception A `SyntaxError` if the none of the tokens match.
     const Token& expectToken(const std::vector<TokenType>& expected, std::string hint);
+
+    NodeType parseType();
+    NodeType parseFunctionType();
+    NodeType parseUnionType();
+    NodeType parseVectorType();
+    NodeType parseOptionalType();
+    NodeType parsePrimitiveType();
 
     /// @attention
     /// Returns a monostate if it parsed a delimiter such as a ;
@@ -57,7 +64,7 @@ class Parser {
     Expression parseFunction();
     Expression parseFunctionCall();
 
-    public:
+public:
     Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
     ~Parser() {};
 

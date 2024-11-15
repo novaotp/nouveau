@@ -1,4 +1,4 @@
-fn string greet() {
+string () {
     return "Hello World!";
 }
 

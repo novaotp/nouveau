@@ -14,9 +14,7 @@ enum TokenType {
     IDENTIFIER,
     TYPE,
     NULL_KEYWORD,
-    FUNCTION_KEYWORD,
     RETURN_KEYWORD,
-    CONST_KEYWORD,
     MUTABLE_KEYWORD,
     IF_KEYWORD,
     ELSE_IF_KEYWORD,
@@ -42,7 +40,6 @@ enum TokenType {
     GREATER_OR_EQUAL_OPERATOR,
     LESS_THAN_OPERATOR,
     LESS_OR_EQUAL_OPERATOR,
-    NOT_OPERATOR,
     AND_OPERATOR,
     OR_OPERATOR,
     LEFT_PARENTHESIS,
@@ -55,6 +52,10 @@ enum TokenType {
     COMMA,
     COLON,
     SEMI_COLON,
+    QUESTION_MARK,
+    EXCLAMATION_MARK,
+    AMPERSAND,
+    PIPE,
     END_OF_FILE
 };
 
@@ -93,9 +94,7 @@ const std::map<TokenType, std::string> tokenTypeToString = {
     { TokenType::IDENTIFIER, "Identifier" },
     { TokenType::TYPE, "Type" },
     { TokenType::NULL_KEYWORD, "Null" },
-    { TokenType::FUNCTION_KEYWORD, "Function" },
     { TokenType::RETURN_KEYWORD, "Return" },
-    { TokenType::CONST_KEYWORD, "Const" },
     { TokenType::MUTABLE_KEYWORD, "Mutable" },
     { TokenType::IF_KEYWORD, "If" },
     { TokenType::ELSE_IF_KEYWORD, "Else If" },
@@ -121,7 +120,6 @@ const std::map<TokenType, std::string> tokenTypeToString = {
     { TokenType::GREATER_OR_EQUAL_OPERATOR, "Greater or Equal Operator" },
     { TokenType::LESS_THAN_OPERATOR, "Less Than Operator" },
     { TokenType::LESS_OR_EQUAL_OPERATOR, "Less or Equal Operator" },
-    { TokenType::NOT_OPERATOR, "Not Operator" },
     { TokenType::AND_OPERATOR, "And Operator" },
     { TokenType::OR_OPERATOR, "Or Operator" },
     { TokenType::LEFT_PARENTHESIS, "Left Parenthesis" },
@@ -134,6 +132,10 @@ const std::map<TokenType, std::string> tokenTypeToString = {
     { TokenType::COMMA, "Comma" },
     { TokenType::COLON, "Colon" },
     { TokenType::SEMI_COLON, "Semicolon" },
+    { TokenType::QUESTION_MARK, "Question mark" },
+    { TokenType::EXCLAMATION_MARK, "Exclamation mark" },
+    { TokenType::AMPERSAND, "Ampersand" },
+    { TokenType::PIPE, "Pipe" },
     { TokenType::END_OF_FILE, "End of File" }
 };
 

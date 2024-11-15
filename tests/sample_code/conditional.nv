@@ -1,4 +1,4 @@
-const bool is_valid = false;
+bool is_valid = false;
 
 mut int counter = 0;
 if s(false) {
