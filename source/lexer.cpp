@@ -16,7 +16,8 @@ const std::map<std::string, TokenType> arithmeticOperatorToTokenType = {
     { "-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR },
     { "*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR },
     { "/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR },
-    { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR } };
+    { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR }
+};
 
 // ? Better naming
 const std::map<char, TokenType> parenthesisToTokenType = {
@@ -25,7 +26,8 @@ const std::map<char, TokenType> parenthesisToTokenType = {
     { '[', TokenType::LEFT_BRACKET },
     { ']', TokenType::RIGHT_BRACKET },
     { '{', TokenType::LEFT_BRACE },
-    { '}', TokenType::RIGHT_BRACE } };
+    { '}', TokenType::RIGHT_BRACE }
+};
 
 const std::map<char, TokenType> punctuationToTokenType = {
     { ',', TokenType::COMMA },
@@ -35,7 +37,8 @@ const std::map<char, TokenType> punctuationToTokenType = {
     { '?', TokenType::QUESTION_MARK },
     { '!', TokenType::EXCLAMATION_MARK },
     { '&', TokenType::AMPERSAND },
-    { '|', TokenType::PIPE } };
+    { '|', TokenType::PIPE }
+};
 
 const std::map<std::string, TokenType> comparisonOperatorToTokenType = {
     { "==", TokenType::EQUAL_OPERATOR },
@@ -43,7 +46,8 @@ const std::map<std::string, TokenType> comparisonOperatorToTokenType = {
     { ">=", TokenType::GREATER_OR_EQUAL_OPERATOR },
     { ">", TokenType::GREATER_THAN_OPERATOR },
     { "<=", TokenType::LESS_OR_EQUAL_OPERATOR },
-    { "<", TokenType::LESS_THAN_OPERATOR } };
+    { "<", TokenType::LESS_THAN_OPERATOR }
+};
 
 const std::map<std::string, TokenType> keywordToTokenType = {
     { "true", TokenType::BOOLEAN },
@@ -52,6 +56,7 @@ const std::map<std::string, TokenType> keywordToTokenType = {
     { "int", TokenType::TYPE },
     { "float", TokenType::TYPE },
     { "bool", TokenType::TYPE },
+    { "void", TokenType::TYPE },
     { "null", TokenType::NULL_KEYWORD },
     { "mut", TokenType::MUTABLE_KEYWORD },
     { "if", TokenType::IF_KEYWORD },
@@ -60,7 +65,8 @@ const std::map<std::string, TokenType> keywordToTokenType = {
     { "while", TokenType::WHILE_KEYWORD },
     { "break", TokenType::BREAK_KEYWORD },
     { "continue", TokenType::CONTINUE_KEYWORD },
-    { "return", TokenType::RETURN_KEYWORD } };
+    { "return", TokenType::RETURN_KEYWORD }
+};
 
 size_t Lexer::advanceColumn(size_t n = 1) {
     this->column += n;
@@ -119,21 +125,6 @@ std::vector<Token> Lexer::tokenize() {
             }
 
             continue;
-        } else if (punctuationToTokenType.find(currentChar) != punctuationToTokenType.end()) {
-            token.type = punctuationToTokenType.at(currentChar);
-            token.value = currentChar;
-            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
-
-            this->advanceIndex();
-        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end() &&
-            (this->getCurrentChar() != '|' || this->getNextChar() != '|') && // Handling || operator in a later if branch
-            (this->getCurrentChar() != '&' || this->getNextChar() != '&') // Handling && operator in a later if branch
-            ) {
-            token.type = parenthesisToTokenType.at(currentChar);
-            token.value = currentChar;
-            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
-
-            this->advanceIndex();
         } else if ((((currentChar == '=') || (currentChar == '!')) && (this->getNextChar() == '=')) || currentChar == '>' || currentChar == '<') {
             std::string op = std::string(1, this->getCurrentChar()) + std::string(1, this->getNextChar());
 
@@ -149,13 +140,8 @@ std::vector<Token> Lexer::tokenize() {
                 token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
                 this->advanceIndex();
             }
-        } else if (currentChar == '!' || (currentChar == '&' && this->getNextChar() == '&') || (currentChar == '|' && this->getNextChar() == '|')) {
-            if (currentChar == '!') {
-                token.type = TokenType::NOT_OPERATOR;
-                token.value = "!";
-                token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
-                this->advanceIndex();
-            } else if (currentChar == '&') {
+        } else if ((currentChar == '&' && this->getNextChar() == '&') || (currentChar == '|' && this->getNextChar() == '|')) {
+            if (currentChar == '&') {
                 token.type = TokenType::AND_OPERATOR;
                 token.value = "&&";
                 token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
@@ -168,10 +154,22 @@ std::vector<Token> Lexer::tokenize() {
                 this->advanceColumn();
                 this->advanceIndex(2);
             }
+        } else if (punctuationToTokenType.find(currentChar) != punctuationToTokenType.end()) {
+            token.type = punctuationToTokenType.at(currentChar);
+            token.value = currentChar;
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+
+            this->advanceIndex();
         } else if (currentChar == '=') {
             token.type = TokenType::ASSIGNMENT_OPERATOR;
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+            this->advanceIndex();
+        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end()) {
+            token.type = parenthesisToTokenType.at(currentChar);
+            token.value = currentChar;
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+
             this->advanceIndex();
         } else if (this->isArithmeticOperator(currentChar)) {
             if (this->getNextChar() == '=') {

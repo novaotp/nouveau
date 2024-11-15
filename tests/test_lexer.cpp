@@ -155,7 +155,8 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             { ">=", TokenType::GREATER_OR_EQUAL_OPERATOR },
             { ">", TokenType::GREATER_THAN_OPERATOR },
             { "<=", TokenType::LESS_OR_EQUAL_OPERATOR },
-            { "<", TokenType::LESS_THAN_OPERATOR } };
+            { "<", TokenType::LESS_THAN_OPERATOR }
+        };
 
         for (const auto& [sourceCode, expectedType] : comparisonCases) {
             Lexer lexer = Lexer(sourceCode);
@@ -173,9 +174,9 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
 
     SECTION("Logical operators are tokenized properly") {
         std::map<std::string, TokenType> logicalCases = {
-            { "!", TokenType::NOT_OPERATOR },
             { "||", TokenType::OR_OPERATOR },
-            { "&&", TokenType::AND_OPERATOR } };
+            { "&&", TokenType::AND_OPERATOR }
+        };
 
         for (const auto& [sourceCode, expectedType] : logicalCases) {
             Lexer lexer = Lexer(sourceCode);
