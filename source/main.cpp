@@ -28,12 +28,26 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    program.prettyPrint();
+    // program.prettyPrint();
 
-    /* Semer semer(sourceCode, program);
+    Semer semer(sourceCode, program);
     const std::vector<SemerError>& errors = semer.analyze();
 
     if (!errors.empty()) {
+        size_t warningCount = 0;
+        size_t errorCount = 0;
+
+        for (const auto& error : errors) {
+            if (error.level == SemerErrorLevel::WARNING) {
+                warningCount++;
+            } else if (error.level == SemerErrorLevel::ERROR) {
+                errorCount++;
+            }
+        }
+
+        std::cout << std::endl;
+        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s) and " + RED + std::to_string(errorCount) + " error(s)" + RESET + "." << std::endl;
+
         for (const auto& error : errors) {
             error.print();
         }
@@ -41,7 +55,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
         std::cout << GREEN << "\tAnalyzed source code, no errors found" << RESET << std::endl;
         std::cout << std::endl;
-    } */
+    }
 
     return 0;
 }
