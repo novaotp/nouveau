@@ -71,6 +71,106 @@ const Token& Parser::expectToken(const std::vector<TokenType>& expected, std::st
     return currentToken;
 }
 
+NodeType Parser::parseType() {
+    return this->parseFunctionType();
+}
+
+NodeType Parser::parseFunctionType() {
+    NodeType unionType = this->parseUnionType();
+
+    if (this->getCurrentToken().type == TokenType::LEFT_PARENTHESIS) {
+        this->expectToken();
+
+        std::vector<NodeType> parameters = {};
+        while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
+            parameters.push_back(this->parseUnionType());
+
+            if (this->getCurrentToken().type == TokenType::COMMA) {
+                this->expectToken();
+            }
+        }
+
+        this->expectToken();
+
+        return std::make_shared<FunctionType>(FunctionType(parameters, unionType));
+    }
+
+    return unionType;
+}
+
+NodeType Parser::parseUnionType() {
+    NodeType vectorType = this->parseVectorType();
+
+    if (this->getCurrentToken().type == TokenType::PIPE) {
+        std::vector<NodeType> types = { vectorType };
+
+        while (this->getCurrentToken().type == TokenType::PIPE) {
+            this->expectToken();
+            types.push_back(this->parseVectorType());
+        }
+
+        return std::make_shared<UnionType>(UnionType(types));
+    }
+
+    return vectorType;
+}
+
+NodeType Parser::parseVectorType() {
+    NodeType optionalType = this->parseOptionalType();
+
+    if (this->getCurrentToken().type == TokenType::LEFT_BRACKET) {
+        this->expectToken();
+        this->expectToken(TokenType::RIGHT_BRACKET, "Expected a right bracket, received : " + this->getCurrentToken().value);
+        return std::make_shared<VectorType>(VectorType(optionalType));
+    }
+
+    return optionalType;
+}
+
+NodeType Parser::parseOptionalType() {
+    NodeType primitiveType = this->parsePrimitiveType();
+
+    if (this->getCurrentToken().type == TokenType::QUESTION_MARK) {
+        this->expectToken();
+        return std::make_shared<OptionalType>(OptionalType(primitiveType));
+    }
+
+    return primitiveType;
+}
+
+NodeType Parser::parsePrimitiveType() {
+    Token currentToken = this->expectToken();
+
+    if (currentToken.value == "int") {
+        return std::make_shared<IntegerType>(IntegerType());
+    } else if (currentToken.value == "float") {
+        return std::make_shared<FloatType>(FloatType());
+    } else if (currentToken.value == "string") {
+        return std::make_shared<StringType>(StringType());
+    } else if (currentToken.value == "bool") {
+        return std::make_shared<BooleanType>(BooleanType());
+    } else if (currentToken.value == "void") {
+        return std::make_shared<VoidType>(VoidType());
+    } else if (currentToken.value == "(") {
+        NodeType type = this->parseType();
+
+        this->expectToken(TokenType::RIGHT_PARENTHESIS, "Expected a right parenthesis, received : " + this->getCurrentToken().value);
+
+        return type;
+    } else {
+        throw std::runtime_error(
+            std::string("\n\tEncountered a syntax error")
+            + "\n\n\t" + std::to_string(currentToken.metadata.line) + " | " + splitStringByNewline(this->sourceCode).at(currentToken.metadata.line - 1)
+            + "\n\t" + std::string(currentToken.metadata.column + 3, ' ') + std::string(currentToken.metadata.length, '~')
+            + GREEN + "\n\n\tExpected : " + "int, float, string, bool, (<type>)"
+            + RED + "\n\tReceived : " + currentToken.value
+            + RESET
+            + "\n\n\tHint : Did you mean to use a type ?"
+            + "\n"
+        );
+    }
+}
+
 Program Parser::parse() {
     Program program;
 
@@ -92,26 +192,41 @@ Program Parser::parse() {
 }
 
 std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpression() {
-    // ? Note that functions are not handled here.
-    // * Since they can be assigned to variables, they are expressions.
-    // * See `parsePrimitive` function for function handling.
-
     switch (this->getCurrentToken().type) {
         case TokenType::MUTABLE_KEYWORD:
         case TokenType::TYPE:
-            // ? This is to handle constant variable declarations and function declarations.
+        case TokenType::LEFT_PARENTHESIS: { // Can be a type surrounded by parentheses
+            // ? This is to handle variable/function declarations.
             // * Because the syntax starts the same : <type> <identifier>
 
-            // ! This doesn't handle the case for anonymous functions.
-            // ! Nor does it handle variable declarations with big types, such as int[], string? etc.
+            if (this->getCurrentToken().type == TokenType::MUTABLE_KEYWORD) {
+                return this->parseVariableDeclaration();
+            }
 
-            if (this->peekNextToken().type == TokenType::IDENTIFIER && this->peekNextToken(2).type == TokenType::LEFT_PARENTHESIS) {
-                // Function declaration
+            size_t index = this->index;
+
+            // ? Attempts to parse a type
+            // * If it succeeds, it means that it is a type, so either a variable or a function declaration.
+            // ! If it fails, it means that it is not a type
+            try {
+                this->parseType();
+            } catch (const std::exception& e) {
+                this->index = index;
+
                 return this->parseExpression();
             }
 
-            // Variable declaration
-            return this->parseVariableDeclaration();
+            // ! This doesn't handle the case for anonymous functions.
+
+            if (this->getCurrentToken().type == TokenType::IDENTIFIER && this->peekNextToken().type == TokenType::LEFT_PARENTHESIS) {
+                this->index = index;
+                return this->parseFunction(); // Function declaration
+            }
+
+            this->index = index;
+
+            return this->parseVariableDeclaration(); // Variable declaration
+        }
         case TokenType::IDENTIFIER: {
             if (this->peekNextToken().type == TokenType::LEFT_PARENTHESIS) {
                 return this->parseFunctionCall();
@@ -119,40 +234,44 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
                 return this->parseVariableAssignment();
             }
         }
-        case TokenType::IF_KEYWORD:
+        case TokenType::IF_KEYWORD: {
             return this->parseIfStatement();
-        case TokenType::WHILE_KEYWORD:
+        }
+        case TokenType::WHILE_KEYWORD: {
             return this->parseWhileStatement();
-        case TokenType::FOR_KEYWORD:
+        }
+        case TokenType::FOR_KEYWORD: {
             return this->parseForStatement();
-        case TokenType::BREAK_KEYWORD:
+        }
+        case TokenType::BREAK_KEYWORD: {
             return this->parseBreakStatement();
-        case TokenType::CONTINUE_KEYWORD:
+        }
+        case TokenType::CONTINUE_KEYWORD: {
             return this->parseContinueStatement();
-        case TokenType::RETURN_KEYWORD:
+        }
+        case TokenType::RETURN_KEYWORD: {
             return this->parseReturnStatement();
-        case TokenType::SEMI_COLON:
+        }
+        case TokenType::SEMI_COLON: {
             this->expectToken(TokenType::SEMI_COLON);
             return std::monostate{};
-        default:
+        }
+        default: {
             return this->parseExpression();
+        }
     }
 }
 
 VariableDeclaration Parser::parseVariableDeclaration() {
     NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
-    const Token& currentToken = this->expectToken(
-        { TokenType::TYPE, TokenType::MUTABLE_KEYWORD },
-        "A function parameter must start with either the 'mut' keyword or a type."
-    );
-    bool isMutable = currentToken.type == TokenType::MUTABLE_KEYWORD;
-
-    if (currentToken.type == TokenType::TYPE) {
-        this->index -= 1;
+    bool isMutable = false;
+    if (this->getCurrentToken().type == TokenType::MUTABLE_KEYWORD) {
+        isMutable = true;
+        this->expectToken(); // Skip the "mut" token
     }
 
-    std::string type = this->expectToken(TokenType::TYPE, "Did you forget to define the type of your variable ?").value;
+    NodeType type = this->parseType();
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "Did you forget to set a name for your variable ? ").value;
 
     if (this->getCurrentToken().type != TokenType::ASSIGNMENT_OPERATOR) {
@@ -346,7 +465,7 @@ ForStatement Parser::parseForStatement() {
     this->expectToken(TokenType::FOR_KEYWORD, "A 'for' statement must start with a 'for' keyword."); // Skip "for" token
     this->expectToken(TokenType::LEFT_PARENTHESIS, "A 'for' statement must be followed by a '('."); // Skip "(" token
 
-    std::optional<std::shared_ptr<Statement>> initialization;
+    std::optional<std::shared_ptr<Statement>> initialization = std::nullopt;
     if (getCurrentToken().type != TokenType::SEMI_COLON) {
         std::variant<Statement, Expression, std::monostate> initializationStatement = this->parseStatementOrExpression();
 
@@ -357,14 +476,14 @@ ForStatement Parser::parseForStatement() {
         this->expectToken(TokenType::SEMI_COLON); // Skip ";" token
     }
 
-    std::optional<std::shared_ptr<Expression>> condition;
+    std::optional<std::shared_ptr<Expression>> condition = std::nullopt;
     if (this->getCurrentToken().type != TokenType::SEMI_COLON) {
         condition = std::make_shared<Expression>(this->parseExpression());
     }
 
     this->expectToken(TokenType::SEMI_COLON); // Skip ";" token
 
-    std::optional<std::shared_ptr<Statement>> update;
+    std::optional<std::shared_ptr<Statement>> update = std::nullopt;
     if (getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
         std::variant<Statement, Expression, std::monostate> updateStmt = this->parseStatementOrExpression();
 
@@ -379,6 +498,7 @@ ForStatement Parser::parseForStatement() {
     std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block;
     while (getCurrentToken().type != TokenType::RIGHT_BRACE) {
         std::variant<Statement, Expression, std::monostate> element = this->parseStatementOrExpression();
+
         if (std::holds_alternative<Statement>(element)) {
             block.push_back(std::make_shared<Statement>(std::move(std::get<Statement>(element))));
         } else if (std::holds_alternative<Expression>(element)) {
@@ -539,10 +659,10 @@ Expression Parser::parseMultiplicativeExpression() {
 }
 
 Expression Parser::parseLogicalNotExpression() {
-    if (this->getCurrentToken().type == TokenType::NOT_OPERATOR) {
+    if (this->getCurrentToken().type == TokenType::EXCLAMATION_MARK) {
         NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
-        this->expectToken(TokenType::NOT_OPERATOR);
+        this->expectToken(TokenType::EXCLAMATION_MARK);
         Expression expression = this->parsePrimitiveExpression();
 
         return LogicalNotOperation(
@@ -593,8 +713,10 @@ Expression Parser::parsePrimitiveExpression() {
                 );
             }
         }
-        case TokenType::TYPE:
+        case TokenType::TYPE: {
+            this->index -= 1; // * Go back because we skipped the type
             return this->parseFunction();
+        }
         case TokenType::LEFT_PARENTHESIS: {
             NodePosition start = currentToken.metadata.toStartPosition();
 
@@ -637,11 +759,9 @@ Expression Parser::parsePrimitiveExpression() {
 }
 
 Expression Parser::parseFunction() {
-    this->index -= 1; // * Go back because we skipped the type inside `parsePrimitive`
-
     NodePosition start = this->tokens[this->index].metadata.toStartPosition();
 
-    std::string returnType = this->expectToken(TokenType::TYPE, "A function declaration needs a return type.").value;
+    NodeType returnType = this->parseType();
 
     std::optional<std::string> identifier = std::nullopt;
     if (this->getCurrentToken().type == TokenType::IDENTIFIER) {
@@ -654,22 +774,18 @@ Expression Parser::parseFunction() {
     while (this->getCurrentToken().type != TokenType::RIGHT_PARENTHESIS) {
         NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
-        const Token& currentToken = this->expectToken(
-            { TokenType::TYPE, TokenType::MUTABLE_KEYWORD },
-            "A function parameter must start with either the 'mut' keyword or a type."
-        );
-        bool isMutable = currentToken.type == TokenType::MUTABLE_KEYWORD;
-
-        if (currentToken.type == TokenType::TYPE) {
-            this->index -= 1;
+        bool isMutable = false;
+        if (this->getCurrentToken().type == TokenType::MUTABLE_KEYWORD) {
+            isMutable = true;
+            this->expectToken(); // Skip the "mut" token
         }
 
-        std::string type = this->expectToken(TokenType::TYPE, "A function parameter needs a type.").value;
+        NodeType type = this->parseType();
         std::string identifier = this->expectToken(TokenType::IDENTIFIER, "A function parameter needs a name.").value;
 
         NodePosition end = this->getCurrentToken().metadata.toEndPosition();
 
-        std::optional<std::shared_ptr<Expression>> expression;
+        std::optional<std::shared_ptr<Expression>> expression = std::nullopt;
         if (this->getCurrentToken().type == TokenType::ASSIGNMENT_OPERATOR) {
             this->expectToken(TokenType::ASSIGNMENT_OPERATOR); // Skip the "=" token
 

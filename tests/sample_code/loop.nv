@@ -4,7 +4,7 @@ while (counter > 0) {
     counter -= 1;
 }
 
-/// println("Take off !");
+println("Take off !");
 
 mut bool is_valid = false;
 for (mut int i = 0; i < 10; i += 1) {

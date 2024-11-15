@@ -7,6 +7,150 @@
 #include <memory>
 #include <optional>
 
+struct StringType;
+struct IntegerType;
+struct FloatType;
+struct BooleanType;
+struct VectorType;
+struct FunctionType;
+struct OptionalType;
+struct UnionType;
+struct VoidType;
+
+// ? Might want to find a better name
+using NodeType = std::variant<
+    std::shared_ptr<StringType>,
+    std::shared_ptr<IntegerType>,
+    std::shared_ptr<FloatType>,
+    std::shared_ptr<BooleanType>,
+    std::shared_ptr<VectorType>,
+    std::shared_ptr<FunctionType>,
+    std::shared_ptr<OptionalType>,
+    std::shared_ptr<UnionType>,
+    std::shared_ptr<VoidType>
+>;
+
+/** The base type for a type. */
+struct Type {
+    virtual ~Type() = default;
+    virtual std::string toString() const = 0;
+    virtual bool compare(const NodeType& other) const = 0;
+};
+
+struct StringType : public Type {
+    StringType();
+
+    std::string toString() const override;
+
+    /// @brief Compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    bool compare(const NodeType& other) const override;
+};
+
+struct IntegerType : public Type {
+    IntegerType();
+
+    std::string toString() const override;
+
+    /// @brief Compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    bool compare(const NodeType& other) const override;
+};
+
+struct FloatType : public Type {
+    FloatType();
+
+    std::string toString() const override;
+
+    /// @brief Compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    bool compare(const NodeType& other) const override;
+};
+
+struct BooleanType : public Type {
+    BooleanType();
+
+    std::string toString() const override;
+
+    /// @brief Compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    bool compare(const NodeType& other) const override;
+};
+
+struct VoidType : public Type {
+    VoidType();
+
+    std::string toString() const override;
+
+    /// @brief Compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    bool compare(const NodeType& other) const override;
+};
+
+struct VectorType : public Type {
+    NodeType valueType;
+
+    VectorType(NodeType valueType);
+
+    std::string toString() const override;
+
+    /// @brief Deeply compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    /// @note This implementation also compares the underlying type of the vectors.
+    bool compare(const NodeType& other) const override;
+};
+
+struct FunctionType : public Type {
+    std::vector<NodeType> parameterTypes;
+    NodeType returnType;
+
+    /// @brief A shorthand constructor for creating a function type with no parameters.
+    FunctionType(NodeType returnType);
+    FunctionType(std::vector<NodeType> parameterTypes, NodeType returnType);
+
+    std::string toString() const override;
+
+    /// @brief Deeply compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    /// @note This implementation also compares the return type and parameter types of the functions.
+    bool compare(const NodeType& other) const override;
+};
+
+struct OptionalType : public Type {
+    NodeType containedType;
+
+    OptionalType(NodeType containedType);
+
+    std::string toString() const override;
+
+    /// @brief Deeply compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    /// @note This implementation also compares the underlying type of the optionals.
+    bool compare(const NodeType& other) const override;
+};
+
+struct UnionType : public Type {
+    std::vector<NodeType> containedTypes;
+
+    UnionType(std::vector<NodeType> containedTypes);
+
+    std::string toString() const override;
+
+    /// @brief Deeply compares the type between `this` and `other`.
+    /// @param other The type to compare with.
+    /// @return `true` if the types are equal, `false` otherwise.
+    /// @note This implementation also compares the underlying types of the unions.
+    bool compare(const NodeType& other) const override;
+};
+
 struct NodePosition {
     size_t column;
     size_t line;
@@ -112,14 +256,14 @@ struct BinaryOperation {
 struct VariableDeclaration {
     NodeMetadata metadata;
     bool isMutable;
-    std::string type;
+    NodeType type;
     std::string identifier;
     std::optional<std::shared_ptr<Expression>> value;
 
     VariableDeclaration(
         NodeMetadata metadata,
         bool isMutable,
-        const std::string& type,
+        NodeType type,
         const std::string& identifier,
         std::optional<std::shared_ptr<Expression>> value = std::nullopt
     ) : metadata(metadata), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {}
@@ -226,15 +370,14 @@ struct ForStatement {
 /// @attention This is an expression, such that you can assign functions to variables.
 struct Function {
     NodeMetadata metadata;
-    std::string returnType;
+    NodeType returnType;
     /// Is `null` if the function is an anonymous function.
     std::optional<std::string> name;
     std::vector<std::shared_ptr<VariableDeclaration>> parameters;
     std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;
 
-
     Function(
-        NodeMetadata metadata, const std::string& returnType,
+        NodeMetadata metadata, NodeType returnType,
         std::optional<std::string> name,
         std::vector<std::shared_ptr<VariableDeclaration>> parameters,
         std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body

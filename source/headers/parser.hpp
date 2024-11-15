@@ -32,6 +32,13 @@ private:
     /// @exception A `SyntaxError` if the none of the tokens match.
     const Token& expectToken(const std::vector<TokenType>& expected, std::string hint);
 
+    NodeType parseType();
+    NodeType parseFunctionType();
+    NodeType parseUnionType();
+    NodeType parseVectorType();
+    NodeType parseOptionalType();
+    NodeType parsePrimitiveType();
+
     /// @attention
     /// Returns a monostate if it parsed a delimiter such as a ;
     ///             

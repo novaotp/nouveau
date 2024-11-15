@@ -460,7 +460,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
         VariableDeclaration variableDeclaration = std::move(std::get<VariableDeclaration>(*statement));
 
         REQUIRE(variableDeclaration.isMutable == false);
-        REQUIRE(variableDeclaration.type == "string");
+
+        std::visit([](const auto& typePtr) {
+            REQUIRE(typePtr->compare(std::make_shared<StringType>()) == true);
+        }, variableDeclaration.type);
+
         REQUIRE(variableDeclaration.identifier == "message");
         REQUIRE(variableDeclaration.value.has_value() == true);
 
@@ -682,9 +686,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         REQUIRE(variableDeclaration.isMutable == true);
         REQUIRE(variableDeclaration.identifier == "i");
-        REQUIRE(variableDeclaration.type == "int");
 
-        REQUIRE(variableDeclaration.value.has_value());
+        std::visit([](const auto& typePtr) {
+            REQUIRE(typePtr->compare(std::make_shared<IntegerType>()) == true);
+        }, variableDeclaration.type);
+
         const Expression& initExpr = *variableDeclaration.value.value();
 
         REQUIRE(std::holds_alternative<IntLiteral>(initExpr));
@@ -910,7 +916,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             const Function& functionDef = std::get<Function>(*expressionPtr);
             REQUIRE(functionDef.name == "greet");
-            REQUIRE(functionDef.returnType == "string");
+
+            std::visit([](const auto& returnTypePtr) {
+                REQUIRE(returnTypePtr->compare(std::make_shared<StringType>()) == true);
+            }, functionDef.returnType);
+
             REQUIRE(functionDef.parameters.size() == 0);
 
             REQUIRE(functionDef.body.size() == 1);
@@ -958,7 +968,10 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             const Function& functionDef = std::get<Function>(*expressionPtr);
             REQUIRE(functionDef.name == "add");
-            REQUIRE(functionDef.returnType == "int");
+
+            std::visit([](const auto& returnTypePtr) {
+                REQUIRE(returnTypePtr->compare(std::make_shared<IntegerType>()) == true);
+            }, functionDef.returnType);
 
             REQUIRE(functionDef.parameters.size() == 2);
 
@@ -973,7 +986,10 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             REQUIRE(functionDef.parameters[0]->isMutable == false);
             REQUIRE(functionDef.parameters[0]->identifier == "a");
-            REQUIRE(functionDef.parameters[0]->type == "int");
+
+            std::visit([](const auto& paramTypePtr) {
+                REQUIRE(paramTypePtr->compare(std::make_shared<IntegerType>()) == true);
+            }, functionDef.parameters[0]->type);
 
             /**
              * SECOND PARAMETER
@@ -981,7 +997,10 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             REQUIRE(functionDef.parameters[1]->isMutable == false);
             REQUIRE(functionDef.parameters[1]->identifier == "b");
-            REQUIRE(functionDef.parameters[1]->type == "int");
+
+            std::visit([](const auto& paramTypePtr) {
+                REQUIRE(paramTypePtr->compare(std::make_shared<IntegerType>()) == true);
+            }, functionDef.parameters[1]->type);
 
             REQUIRE(functionDef.body.size() == 1);
 
@@ -1030,7 +1049,10 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             const Function& functionDef = std::get<Function>(*expressionPtr);
             REQUIRE(functionDef.name == "multiply");
-            REQUIRE(functionDef.returnType == "int");
+
+            std::visit([](const auto& returnTypePtr) {
+                REQUIRE(returnTypePtr->compare(std::make_shared<IntegerType>()) == true);
+            }, functionDef.returnType);
 
             REQUIRE(functionDef.parameters.size() == 2);
 
@@ -1045,7 +1067,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             REQUIRE(functionDef.parameters[0]->isMutable == false);
             REQUIRE(functionDef.parameters[0]->identifier == "a");
-            REQUIRE(functionDef.parameters[0]->type == "int");
+
+            std::visit([](const auto& paramTypePtr) {
+                REQUIRE(paramTypePtr->compare(std::make_shared<IntegerType>()) == true);
+            }, functionDef.parameters[0]->type);
+
             REQUIRE(functionDef.parameters[0]->value.has_value());
 
             const auto& defaultValueA = functionDef.parameters[0]->value.value();
@@ -1060,7 +1086,11 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
             REQUIRE(functionDef.parameters[1]->isMutable == false);
             REQUIRE(functionDef.parameters[1]->identifier == "b");
-            REQUIRE(functionDef.parameters[1]->type == "int");
+
+            std::visit([](const auto& paramTypePtr) {
+                REQUIRE(paramTypePtr->compare(std::make_shared<IntegerType>()) == true);
+            }, functionDef.parameters[1]->type);
+
             REQUIRE(functionDef.parameters[1]->value.has_value());
 
             const auto& defaultValueB = functionDef.parameters[1]->value.value();
