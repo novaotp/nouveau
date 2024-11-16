@@ -3,38 +3,63 @@
 #include "utils.hpp"
 #include "semer.hpp"
 
-void SemerError::print() const {
+std::string getSemerErrorTypeString(SemerErrorType type) {
+    switch (type) {
+        case SemerErrorType::SEMANTIC_ERROR:
+            return "Semantic Error";
+        default:
+            return "Unknown Error Type";
+    }
+}
+
+SemerError::SemerError(
+    SemerErrorType type,
+    SemerErrorLevel level,
+    NodeMetadata metadata,
+    const std::string& sourceCode,
+    std::string message,
+    std::string hint
+) : type(type), level(level), metadata(metadata), sourceCode(sourceCode), message(std::move(message)), hint(std::move(hint)) {};
+
+const std::string SemerError::toString() const {
+    std::string result = "";
+
     auto COLOR = (this->level == SemerErrorLevel::WARNING ? YELLOW : RED);
 
-    std::cout << std::endl;
-    std::cout << "\tEncountered a " << getSemerErrorTypeString(this->type) << std::endl;
+    result += "\n\tEncountered a " + getSemerErrorTypeString(this->type) + "\n";
 
     std::vector<std::string> lines = splitStringByNewline(this->sourceCode);
     for (size_t line = this->metadata.start.line; line <= this->metadata.end.line; ++line) {
-        std::cout << "\n\t" << line << " | " << lines.at(line - 1) << "\n\t";
+        result += "\n\t" + std::to_string(line) + " | " + lines.at(line - 1) + "\n\t";
 
         if (line == this->metadata.start.line) {
-            std::cout << std::string(this->metadata.start.column + 3, ' ')
-                << COLOR << std::string(line == this->metadata.end.line
-                    ? this->metadata.end.column - this->metadata.start.column
-                    : lines[line - 1].size() - this->metadata.start.column, '~') << RESET;
+            size_t length = line == this->metadata.end.line
+                ? this->metadata.end.column - this->metadata.start.column
+                : lines[line - 1].size() - this->metadata.start.column;
+
+            result += std::string(this->metadata.start.column + 3, ' ') + COLOR + std::string(length, '~') + RESET;
         } else if (line == this->metadata.end.line) {
-            std::cout << std::string(3, ' ') << COLOR << std::string(this->metadata.end.column, '~') << RESET;
+            result += std::string(3, ' ') + COLOR + std::string(this->metadata.end.column, '~') + RESET;
         } else {
-            std::cout << std::string(3, ' ') << COLOR << std::string(lines[line - 1].size(), '~') << RESET;
+            result += std::string(3, ' ') + COLOR + std::string(lines[line - 1].size(), '~') + RESET;
         }
 
-        std::cout << std::endl;
+        result += "\n";
     }
 
-    std::cout << COLOR << "\n\tError: " << message << RESET << std::endl;
+    result += std::string(COLOR) + "\n\tError: " + message + RESET + "\n";
 
     if (!hint.empty()) {
-        std::cout << "\n\tHint: " << hint << std::endl;
+        result += "\n\tHint: " + hint + "\n";
     }
 
-    std::cout << std::endl;
+    result += "\n";
+
+    return result;
 }
+
+Semer::Semer(const std::string& sourceCode, const Program& program) : sourceCode(sourceCode), program(program) {};
+Semer::~Semer() {};
 
 template <typename NodeType>
 void Semer::analyzeExpression(const NodeType& n) {

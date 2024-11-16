@@ -46,10 +46,10 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << std::endl;
-        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s) and " + RED + std::to_string(errorCount) + " error(s)" + RESET + "." << std::endl;
+        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s)" + RESET + " and " + RED + std::to_string(errorCount) + " error(s)" + RESET + "." << std::endl;
 
         for (const auto& error : errors) {
-            error.print();
+            std::cout << error.toString() << std::flush;
         }
     } else {
         std::cout << std::endl;

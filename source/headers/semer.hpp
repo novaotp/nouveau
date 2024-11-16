@@ -9,15 +9,6 @@ enum SemerErrorType {
     SEMANTIC_ERROR
 };
 
-inline constexpr std::string_view getSemerErrorTypeString(SemerErrorType type) {
-    switch (type) {
-        case SemerErrorType::SEMANTIC_ERROR:
-            return "Semantic Error";
-        default:
-            return "Unknown Error Type";
-    }
-}
-
 enum SemerErrorLevel {
     WARNING,
     ERROR
@@ -31,10 +22,9 @@ struct SemerError {
     std::string message;
     std::string hint;
 
-    SemerError(SemerErrorType type, SemerErrorLevel level, NodeMetadata metadata, const std::string& sourceCode, std::string message, std::string hint)
-        : type(type), level(level), metadata(metadata), sourceCode(sourceCode), message(message), hint(hint) {}
+    SemerError(SemerErrorType type, SemerErrorLevel level, NodeMetadata metadata, const std::string& sourceCode, std::string message, std::string hint);
 
-    void print() const;
+    const std::string toString() const;
 };
 
 class Semer {
@@ -49,8 +39,8 @@ private:
     template <typename NodeType>
     void analyzeStatement(const NodeType& n);
 public:
-    Semer(const std::string& sourceCode, const Program& program) : sourceCode(sourceCode), program(program) {};
-    ~Semer() {};
+    Semer(const std::string& sourceCode, const Program& program);
+    ~Semer();
 
     const std::vector<SemerError>& analyze();
 };
