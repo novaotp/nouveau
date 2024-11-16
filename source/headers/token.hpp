@@ -65,16 +65,11 @@ struct TokenMetadata {
     size_t line;
     size_t length;
 
-    TokenMetadata() : column(0), line(0), length(0) {};
-    TokenMetadata(size_t column, size_t line, size_t length) : column(column), line(line), length(length) {};
+    TokenMetadata();
+    TokenMetadata(size_t column, size_t line, size_t length);
 
-    inline const NodePosition toStartPosition() const {
-        return NodePosition(this->column, this->line);
-    }
-
-    inline const NodePosition toEndPosition() const {
-        return NodePosition(this->column + this->length, this->line);
-    }
+    const NodePosition toStartPosition() const;
+    const NodePosition toEndPosition() const;
 };
 
 struct Token {
@@ -82,8 +77,8 @@ struct Token {
     std::string value;
     TokenMetadata metadata;
 
-    Token() : type(TokenType::INTEGER), value(""), metadata(TokenMetadata()) {};
-    Token(TokenType type, std::string value, TokenMetadata metadata) : type(type), value(value), metadata(metadata) {};
+    Token();
+    Token(TokenType type, std::string value, TokenMetadata metadata);
 };
 
 const std::map<TokenType, std::string> tokenTypeToString = {
@@ -148,8 +143,6 @@ const std::vector<TokenType> tokenTypeAssignmentOperators = {
     TokenType::MODULO_ASSIGNMENT_OPERATOR
 };
 
-inline std::string getTokenTypeString(const TokenType& type) {
-    return tokenTypeToString.at(type);
-}
+std::string getTokenTypeString(const TokenType& type);
 
 #endif // TOKEN_HPP
