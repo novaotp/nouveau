@@ -177,6 +177,78 @@ bool UnionType::compare(const NodeType& other) const {
     return false;
 }
 
+NodePosition::NodePosition() : column(0), line(0) {};
+NodePosition::NodePosition(size_t column, size_t line) : column(column), line(line) {};
+
+NodeMetadata::NodeMetadata() : start(NodePosition()), end(NodePosition()) {};
+NodeMetadata::NodeMetadata(NodePosition start, NodePosition end) : start(start), end(end) {};
+
+StringLiteral::StringLiteral(NodeMetadata metadata, std::string value) : metadata(metadata), value(value) {};
+IntLiteral::IntLiteral(NodeMetadata metadata, int value) : metadata(metadata), value(value) {};
+FloatLiteral::FloatLiteral(NodeMetadata metadata, float value) : metadata(metadata), value(value) {};
+BooleanLiteral::BooleanLiteral(NodeMetadata metadata, bool value) : metadata(metadata), value(value) {};
+NullLiteral::NullLiteral(NodeMetadata metadata) : metadata(metadata) {};
+Identifier::Identifier(NodeMetadata metadata, std::string name) : metadata(metadata), name(name) {};
+Vector::Vector(NodeMetadata metadata, std::vector<std::shared_ptr<Expression>> values)
+    : metadata(metadata), values(std::move(values)) {}
+LogicalNotOperation::LogicalNotOperation(NodeMetadata metadata, std::shared_ptr<Expression> expression)
+    : metadata(metadata), expression(std::move(expression)) {};
+BinaryOperation::BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right)
+    : metadata(metadata), lhs(std::move(left)), op(op), rhs(std::move(right)) {}
+VariableDeclaration::VariableDeclaration(
+    NodeMetadata metadata,
+    bool isMutable,
+    NodeType type,
+    const std::string& identifier,
+    std::optional<std::shared_ptr<Expression>> value = std::nullopt
+) : metadata(metadata), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {};
+VariableAssignment::VariableAssignment(
+    NodeMetadata metadata,
+    const std::string& identifier,
+    const std::string& op,
+    std::optional<std::shared_ptr<Expression>> value = std::nullopt
+) : metadata(metadata), identifier(identifier), op(op), value(std::move(value)) {}
+BreakStatement::BreakStatement(NodeMetadata metadata) : metadata(metadata) {};
+ContinueStatement::ContinueStatement(NodeMetadata metadata) : metadata(metadata) {};
+ReturnStatement::ReturnStatement(NodeMetadata metadata) : metadata(metadata), expression(std::nullopt) {};
+ReturnStatement::ReturnStatement(NodeMetadata metadata, std::optional<std::shared_ptr<Expression>> expression)
+    : metadata(metadata), expression(std::move(expression)) {}
+IfStatement::IfStatement(
+    NodeMetadata metadata, std::shared_ptr<Expression> condition,
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> thenBlock,
+    std::vector<std::pair<std::shared_ptr<Expression>, std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>>>> elseifClauses = {},
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> elseBlock = {}
+) : metadata(metadata),
+condition(std::move(condition)),
+thenBlock(std::move(thenBlock)),
+elseifClauses(std::move(elseifClauses)),
+elseBlock(std::move(elseBlock)) {};
+WhileStatement::WhileStatement(
+    NodeMetadata metadata,
+    std::shared_ptr<Expression> condition,
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block
+) : metadata(metadata), condition(std::move(condition)), block(std::move(block)) {};
+ForStatement::ForStatement(
+    NodeMetadata metadata,
+    std::optional<std::shared_ptr<Statement>> initialization,
+    std::optional<std::shared_ptr<Expression>> condition,
+    std::optional<std::shared_ptr<Statement>> update,
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block
+) : metadata(metadata),
+initialization(std::move(initialization)),
+condition(std::move(condition)),
+update(std::move(update)),
+block(std::move(block)) {};
+Function::Function(
+    NodeMetadata metadata, NodeType returnType,
+    std::optional<std::string> name,
+    std::vector<std::shared_ptr<VariableDeclaration>> parameters,
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body
+) : metadata(metadata), returnType(returnType), name(name), parameters(std::move(parameters)), body(std::move(body)) {};
+FunctionCall::FunctionCall(NodeMetadata metadata, const std::string& identifier, std::vector<std::shared_ptr<Expression>> arguments)
+    : metadata(metadata), identifier(identifier), arguments(std::move(arguments)) {};
+Program::Program() : body{} {};
+
 constexpr int SPACE_COUNT = 4;
 
 template <typename NodeType>
