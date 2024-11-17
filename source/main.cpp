@@ -34,6 +34,10 @@ int main(int argc, char* argv[]) {
     const std::vector<SemerError>& errors = semer.analyze();
 
     if (!errors.empty()) {
+        for (const auto& error : errors) {
+            std::cout << error.toString() << std::flush;
+        }
+
         size_t warningCount = 0;
         size_t errorCount = 0;
 
@@ -45,16 +49,10 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        std::cout << std::endl;
-        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s)" + RESET + " and " + RED + std::to_string(errorCount) + " error(s)" + RESET + "." << std::endl;
-
-        for (const auto& error : errors) {
-            std::cout << error.toString() << std::flush;
-        }
+        std::cout << std::string(8, ' ') << std::string(45, '-') << "\n" << std::endl;
+        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s)" + RESET + " and " + RED + std::to_string(errorCount) + " error(s)" + RESET + ".\n" << std::endl;
     } else {
-        std::cout << std::endl;
-        std::cout << GREEN << "\tAnalyzed source code, no errors found" << RESET << std::endl;
-        std::cout << std::endl;
+        std::cout << GREEN << "\n\tAnalyzed source code, no errors found.\n" << RESET << std::endl;
     }
 
     return 0;
