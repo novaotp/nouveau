@@ -2,22 +2,26 @@
 #include <variant>
 #include <string>
 #include <vector>
+#include <chrono>
 #include "utils.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "semer.hpp"
 
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Error: Please provide the path to the source file." << std::endl;
-        return 1;
-    }
-
-    std::string filePath = argv[1];
+int compile(std::map<std::string, std::string> commandLineArguments) {
+    std::string filePath = commandLineArguments["filename"];
     std::string sourceCode = readFile(filePath);
+
+    std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
 
     Lexer lexer(sourceCode);
     std::vector<Token> tokens = lexer.tokenize();
+
+    std::chrono::milliseconds lexerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
 
     Parser parser(sourceCode, tokens);
     Program program;
@@ -28,10 +32,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    std::chrono::milliseconds parserEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+
     // program.prettyPrint();
 
     Semer semer(sourceCode, program);
     const std::vector<SemerError>& errors = semer.analyze();
+
+    std::chrono::milliseconds semerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
 
     if (!errors.empty()) {
         for (const auto& error : errors) {
@@ -55,5 +67,58 @@ int main(int argc, char* argv[]) {
         std::cout << GREEN << "\n\tAnalyzed source code, no errors found.\n" << RESET << std::endl;
     }
 
+    std::chrono::milliseconds end = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+
+    if (commandLineArguments.find("--timings") != commandLineArguments.end() && commandLineArguments["--timings"] == "true") {
+        std::cout << std::string(8, ' ') << std::string(45, '-') << "\n" << std::endl;
+        std::cout << "Timing Reports\n" << std::endl;
+        std::cout << "\tLexer took " << std::to_string((lexerEnd - start).count()) << " ms\n" << std::flush;
+        std::cout << "\tParser took " << std::to_string((parserEnd - lexerEnd).count()) << " ms\n" << std::flush;
+        std::cout << "\tSemer took " << std::to_string((semerEnd - parserEnd).count()) << " ms\n" << std::flush;
+        std::cout << "\tTotal took " << std::to_string((end - start).count()) << " ms\n" << std::flush;
+    }
+
     return 0;
+}
+
+int help() {
+    std::cout << "\n\tNouveau Compiler v0.0.1a" << std::endl;
+
+    std::cout << "\n\tUsage:\n" << std::endl;
+    std::cout << "\tnv [options] [filename]\n" << std::endl;
+
+    std::cout << "\t" << padRight("nv --help", 27) << "Prints this help." << std::endl;
+    std::cout << "\t" << padRight("nv --version", 27) << "Prints the version of the compiler." << std::endl;
+    std::cout << "\t" << padRight("nv <filename>", 27) << "Compiles the specified file." << std::endl;
+    std::cout << "\t" << padRight("nv --timings <filename>", 27) << "Compiles the specified file and prints the time it took to compile." << std::endl;
+
+    std::cout << std::endl;
+
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    std::map<std::string, std::string> commandLineArguments = parseCommandLineArguments(argc, argv);
+
+    if (commandLineArguments.empty()) {
+        std::cerr << RED << "\n\tError: No arguments or specified.\n" << RESET << std::endl;
+        return 1;
+    }
+
+    if (commandLineArguments.find("--version") != commandLineArguments.end()) {
+        std::cout << "\n\tNouveau Compiler v0.0.1a" << std::endl;
+        std::cout << YELLOW << "\n\tAdditional arguments have been detected, but they are ignored.\n" << RESET << std::endl;
+
+        return 0;
+    }
+
+    if (commandLineArguments.find("--help") != commandLineArguments.end()) {
+        return help();
+    }
+
+    if (commandLineArguments.find("filename") != commandLineArguments.end()) {
+        return compile(commandLineArguments);
+    }
 }
