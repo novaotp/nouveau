@@ -114,7 +114,7 @@ std::string OptionalType::toString() const {
     std::string result = "";
 
     result += std::visit([](const auto& typePtr) -> std::string {
-        using TypePtr = std::decay_t<decltype(typePtr)>;
+        using TypePtr = std::decay_t<decltype(*typePtr)>;
 
         if constexpr (std::is_same_v<TypePtr, StringType> ||
             std::is_same_v<TypePtr, IntegerType> ||
