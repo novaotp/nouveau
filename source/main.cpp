@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include "config.h"
 #include "utils.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
@@ -108,7 +109,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (commandLineArguments.find("--version") != commandLineArguments.end()) {
-        std::cout << "\n\tNouveau Compiler v0.0.1a" << std::endl;
+        std::cout << "\n\tNouveau Compiler v" << Nouveau_VERSION_MAJOR << "." << Nouveau_VERSION_MINOR << "." << Nouveau_VERSION_PATCH << std::endl;
         std::cout << YELLOW << "\n\tAdditional arguments have been detected, but they are ignored.\n" << RESET << std::endl;
 
         return 0;
