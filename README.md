@@ -1,27 +1,50 @@
 # Nouveau
 
-A general-purpose compiled programming language.
+A statically-typed general-purpose compiled programming language.
 
 ## Getting Started
 
-> You must have `make` and `g++` installed on your device.
+Step-by-step instructions to get the compiler up and running.
+
+### Prerequisites
+
+> You must have `g++` installed on your device for any OS.
+
+Linux / MacOS :
+
+-   make
+
+### Installation
+
+1. Clone the repository
+
+    ```bash
+    git clone https://github.com/novaotp/nouveau
+    ```
 
 1. Build the compiler
 
     ```bash
-    make -s build
+    cd ./build
+    cmake ..
+
+    # Linux
+    make
+
+    # Windows
+    cmake --build . --config Debug
     ```
 
 1. Execute a file
 
     ```bash
-    ./bin/nouveau.exe ./path/to/your/file.nv
+    ./bin/Debug/nouveau ../path/to/your/file.nv
     ```
 
-## Testing
+### Testing
 
 1. Run the test suite
 
-```bash
-make -s test
-```
+    ```bash
+    make -s test
+    ```
