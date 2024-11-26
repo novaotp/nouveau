@@ -1,12 +1,12 @@
+#include <catch2/catch_test_macros.hpp>
 #include <stdexcept>
 #include <string>
 #include "utils.hpp"
-#include "catch_amalgamated.hpp"
 
 TEST_CASE("Files can be read", "[file]") {
     SECTION("Reading files") {
         SECTION("Reading the contents of an existing file") {
-            std::string contents = readFile("./tests/sample_code/arithmetic.nv");
+            std::string contents = readFile("../tests/sample_code/arithmetic.nv");
 
             REQUIRE(contents == "1 + 2;\n");
         }

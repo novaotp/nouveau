@@ -1,10 +1,10 @@
+#include <catch2/catch_test_macros.hpp>
 #include <vector>
 #include <string>
 #include "token.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "semer.hpp"
-#include "catch_amalgamated.hpp"
 
 TEST_CASE("Semer works correctly", "[semer]") {
     SECTION("Variable declarations are analyzed properly") {

@@ -1,4 +1,4 @@
-#include "catch_amalgamated.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include "ast.hpp"
 
 TEST_CASE("AST works properly", "[ast]") {
