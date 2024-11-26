@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include "config.h"
 #include "utils.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
@@ -83,8 +84,14 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     return 0;
 }
 
+int version() {
+    std::cout << "\n\tNouveau Compiler v" << Nouveau_VERSION_MAJOR << "." << Nouveau_VERSION_MINOR << "." << Nouveau_VERSION_PATCH << std::endl;
+
+    return 0;
+}
+
 int help() {
-    std::cout << "\n\tNouveau Compiler v0.0.1a" << std::endl;
+    version();
 
     std::cout << "\n\tUsage:\n" << std::endl;
     std::cout << "\tnv [options] [filename]\n" << std::endl;
@@ -108,10 +115,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (commandLineArguments.find("--version") != commandLineArguments.end()) {
-        std::cout << "\n\tNouveau Compiler v0.0.1a" << std::endl;
-        std::cout << YELLOW << "\n\tAdditional arguments have been detected, but they are ignored.\n" << RESET << std::endl;
-
-        return 0;
+        return version();
     }
 
     if (commandLineArguments.find("--help") != commandLineArguments.end()) {

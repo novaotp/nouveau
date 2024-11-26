@@ -1,10 +1,10 @@
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
 #include <vector>
 #include <map>
 #include "token.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-#include "catch_amalgamated.hpp"
 
 TEST_CASE("Parser works correctly", "[parser]") {
     SECTION("String literals are parsed properly") {
