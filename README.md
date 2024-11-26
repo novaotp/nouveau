@@ -14,6 +14,10 @@ Linux / MacOS :
 
 - make
 
+Windows :
+
+- Visual Studio with the "Desktop Development in C++" extension
+
 ### Installation
 
 1. Clone the repository
