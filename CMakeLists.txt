@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(nouveau VERSION 0.0.4 DESCRIPTION "A statically-typed general-purpose compiled programming language." LANGUAGES CXX)
+project(nouveau VERSION 0.0.5 DESCRIPTION "A statically-typed general-purpose compiled programming language." LANGUAGES CXX)
 cmake_policy(SET CMP0048 NEW)
 
 add_executable(nouveau

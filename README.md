@@ -38,7 +38,7 @@ Linux / MacOS :
 1. Execute a file
 
     ```bash
-    ./bin/Debug/nouveau ../path/to/your/file.nv
+    ./Debug/nouveau ../path/to/your/file.nv
     ```
 
 ### Testing
