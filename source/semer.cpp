@@ -89,13 +89,13 @@ const std::vector<SemerError>& Semer::analyze() {
         const auto& node = this->program.body[i];
 
         std::visit([&](const auto& ptr) {
-            using NodeType = std::decay_t<decltype(*ptr)>;
+            using PNodeType = std::decay_t<decltype(*ptr)>;
 
-            if constexpr (std::is_same_v<NodeType, Expression>) {
+            if constexpr (std::is_same_v<PNodeType, Expression>) {
                 std::visit([&](const auto& expr) {
                     this->analyzeExpression(expr);
                 }, *ptr);
-            } else if constexpr (std::is_same_v<NodeType, Statement>) {
+            } else if constexpr (std::is_same_v<PNodeType, Statement>) {
                 std::visit([&](const auto& expr) {
                     this->analyzeStatement(expr);
                 }, *ptr);
