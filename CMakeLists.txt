@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-project(nouveau VERSION 0.0.2 DESCRIPTION "A statically-typed general-purpose compiled programming language." LANGUAGES CXX)
+project(nouveau VERSION 0.0.3 DESCRIPTION "A statically-typed general-purpose compiled programming language." LANGUAGES CXX)
 cmake_policy(SET CMP0048 NEW)
 
 add_executable(nouveau
