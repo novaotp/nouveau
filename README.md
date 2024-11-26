@@ -1,5 +1,10 @@
 # Nouveau
 
+> ⚠️ I realized I worked on way too many features in the parser before even
+> having a working compiler.  
+> This archive is meant to keep the code I've
+> developed for features I'll work on incrementally.
+
 A statically-typed general-purpose compiled programming language.
 
 ## Getting Started
