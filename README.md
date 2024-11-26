@@ -26,7 +26,7 @@ Linux / MacOS :
 
     ```bash
     cd ./build
-    cmake ..
+    cmake .. -DBUILD_TESTS=ON
 
     # Linux
     make
@@ -46,5 +46,5 @@ Linux / MacOS :
 1. Run the test suite
 
     ```bash
-    make -s test
+    ./Debug/nouveau_tests
     ```
