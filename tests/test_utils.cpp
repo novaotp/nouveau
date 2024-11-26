@@ -15,7 +15,7 @@ TEST_CASE("Files can be read", "[file]") {
             bool hasSucceeded = true;
             try {
                 std::string contents = readFile("./tests/sample_code/arithmetic1.nv");
-            } catch (const std::runtime_error& e) {
+            } catch (...) {
                 hasSucceeded = false;
             }
 
@@ -67,6 +67,12 @@ TEST_CASE("Files can be read", "[file]") {
          * ? Convert std::vector<std::string> to char**
          * * See https://stackoverflow.com/a/26032303
          */
+
+         /**
+          * ? Why static_cast<int>
+          * * Because parseCommandLineArguments expects an int (argc), but cstrings.size() returns a size_t.
+          */
+
         SECTION("No arguments returns an empty map") {
             std::vector<std::string> strings = { "nv" };
             std::vector<char*> cstrings;
@@ -76,7 +82,7 @@ TEST_CASE("Files can be read", "[file]") {
                 cstrings.push_back(const_cast<char*>(str.c_str()));
             }
 
-            auto args = parseCommandLineArguments(cstrings.size(), &cstrings[0]);
+            auto args = parseCommandLineArguments(static_cast<int>(cstrings.size()), &cstrings[0]);
 
             REQUIRE(args.empty());
         }
@@ -90,7 +96,7 @@ TEST_CASE("Files can be read", "[file]") {
                 cstrings.push_back(const_cast<char*>(str.c_str()));
             }
 
-            auto args = parseCommandLineArguments(cstrings.size(), &cstrings[0]);
+            auto args = parseCommandLineArguments(static_cast<int>(cstrings.size()), &cstrings[0]);
 
             REQUIRE(args.size() == 2);
 
@@ -107,7 +113,7 @@ TEST_CASE("Files can be read", "[file]") {
                 cstrings.push_back(const_cast<char*>(str.c_str()));
             }
 
-            auto args = parseCommandLineArguments(cstrings.size(), &cstrings[0]);
+            auto args = parseCommandLineArguments(static_cast<int>(cstrings.size()), &cstrings[0]);
 
             REQUIRE(args.size() == 3);
 
@@ -125,7 +131,7 @@ TEST_CASE("Files can be read", "[file]") {
                 cstrings.push_back(const_cast<char*>(str.c_str()));
             }
 
-            auto args = parseCommandLineArguments(cstrings.size(), &cstrings[0]);
+            auto args = parseCommandLineArguments(static_cast<int>(cstrings.size()), &cstrings[0]);
 
             REQUIRE(args.size() == 2);
 
