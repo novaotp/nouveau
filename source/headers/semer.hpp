@@ -42,6 +42,9 @@ public:
     Semer(const std::string& sourceCode, const Program& program);
     ~Semer();
 
+    Semer(const Semer&) = delete;
+    Semer& operator=(const Semer&) = delete;
+
     const std::vector<SemerError>& analyze();
 };
 
