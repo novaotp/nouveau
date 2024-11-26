@@ -38,6 +38,10 @@ Linux / MacOS :
 1. Execute a file
 
    ```bash
+   # Linux
+   ./nouveau ../path/to/your/file.nv
+
+   # Windows
    ./Debug/nouveau ../path/to/your/file.nv
    ```
 
@@ -46,5 +50,9 @@ Linux / MacOS :
 1. Run the test suite
 
    ```bash
+   # Linux
+   ./nouveau_tests
+
+   # Windows
    ./Debug/nouveau_tests
    ```
