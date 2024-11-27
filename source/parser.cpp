@@ -210,7 +210,7 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
             // ! If it fails, it means that it is not a type
             try {
                 this->parseType();
-            } catch (const std::exception& e) {
+            } catch (...) {
                 this->index = index;
 
                 return this->parseExpression();
