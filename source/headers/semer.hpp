@@ -33,11 +33,11 @@ private:
     const std::string& sourceCode;
     const Program& program;
 
-    template <typename NodeType>
-    void analyzeExpression(const NodeType& n);
+    template <typename T>
+    void analyzeExpression(const T& n);
 
-    template <typename NodeType>
-    void analyzeStatement(const NodeType& n);
+    template <typename T>
+    void analyzeStatement(const T& n);
 public:
     Semer(const std::string& sourceCode, const Program& program);
     ~Semer();

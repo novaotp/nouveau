@@ -61,14 +61,14 @@ const std::string SemerError::toString() const {
 Semer::Semer(const std::string& sourceCode, const Program& program) : sourceCode(sourceCode), program(program) {};
 Semer::~Semer() {};
 
-template <typename NodeType>
-void Semer::analyzeExpression(const NodeType& n) {
-    throw std::runtime_error("Unknown expression");
+template <typename T>
+void Semer::analyzeExpression(const T& n) {
+    throw std::runtime_error("Unknown expression of type : " + std::string(typeid(n).name()));
 }
 
-template <typename NodeType>
-void Semer::analyzeStatement(const NodeType& n) {
-    if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
+template <typename T>
+void Semer::analyzeStatement(const T& n) {
+    if constexpr (std::is_same_v<T, VariableDeclaration>) {
         if (!n.isMutable && !n.value.has_value()) {
             this->errors.push_back(SemerError(
                 SemerErrorType::SEMANTIC_ERROR,
