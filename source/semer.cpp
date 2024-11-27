@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include "ast.hpp"
 #include "utils.hpp"
 #include "semer.hpp"
 

@@ -33,10 +33,6 @@ private:
     const Token& expectToken(const std::vector<TokenType>& expected, std::string hint);
 
     NodeType parseType();
-    NodeType parseFunctionType();
-    NodeType parseUnionType();
-    NodeType parseVectorType();
-    NodeType parseOptionalType();
     NodeType parsePrimitiveType();
 
     /// @attention
@@ -46,12 +42,6 @@ private:
     std::variant<Statement, Expression, std::monostate> parseStatementOrExpression();
     VariableDeclaration parseVariableDeclaration();
     VariableAssignment parseVariableAssignment();
-    IfStatement parseIfStatement();
-    WhileStatement parseWhileStatement();
-    ForStatement parseForStatement();
-    BreakStatement parseBreakStatement();
-    ContinueStatement parseContinueStatement();
-    ReturnStatement parseReturnStatement();
 
     Expression parseExpression();
     Expression parseLogicalAndExpression();
@@ -61,8 +51,6 @@ private:
     Expression parseMultiplicativeExpression();
     Expression parseLogicalNotExpression();
     Expression parsePrimitiveExpression();
-    Expression parseFunction();
-    Expression parseFunctionCall();
 
 public:
     Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
