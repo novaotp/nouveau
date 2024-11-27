@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(nouveau VERSION 0.0.11 DESCRIPTION "A statically-typed general-purpose compiled programming language." LANGUAGES CXX)
+project(nouveau VERSION 0.0.12 DESCRIPTION "A statically-typed general-purpose compiled programming language." LANGUAGES CXX)
 cmake_policy(SET CMP0048 NEW)
 
 add_executable(nouveau
@@ -20,9 +20,6 @@ target_include_directories(nouveau PRIVATE "${PROJECT_BINARY_DIR}")
 
 target_compile_features(nouveau PRIVATE cxx_std_17)
 target_compile_options(nouveau PRIVATE -Wall)
-
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 option(BUILD_TESTS "Build tests" ON)
 
