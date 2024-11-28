@@ -19,25 +19,9 @@ const std::map<std::string, TokenType> arithmeticOperatorToTokenType = {
     { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR }
 };
 
-// ? Better naming
-const std::map<char, TokenType> parenthesisToTokenType = {
-    { '(', TokenType::LEFT_PARENTHESIS },
-    { ')', TokenType::RIGHT_PARENTHESIS },
-    { '[', TokenType::LEFT_BRACKET },
-    { ']', TokenType::RIGHT_BRACKET },
-    { '{', TokenType::LEFT_BRACE },
-    { '}', TokenType::RIGHT_BRACE }
-};
-
 const std::map<char, TokenType> punctuationToTokenType = {
-    { ',', TokenType::COMMA },
-    { '.', TokenType::DOT },
-    { ':', TokenType::COLON },
     { ';', TokenType::SEMI_COLON },
-    { '?', TokenType::QUESTION_MARK },
-    { '!', TokenType::EXCLAMATION_MARK },
-    { '&', TokenType::AMPERSAND },
-    { '|', TokenType::PIPE }
+    { '!', TokenType::EXCLAMATION_MARK }
 };
 
 const std::map<std::string, TokenType> comparisonOperatorToTokenType = {
@@ -57,15 +41,7 @@ const std::map<std::string, TokenType> keywordToTokenType = {
     { "float", TokenType::TYPE },
     { "bool", TokenType::TYPE },
     { "void", TokenType::TYPE },
-    { "null", TokenType::NULL_KEYWORD },
-    { "mut", TokenType::MUTABLE_KEYWORD },
-    { "if", TokenType::IF_KEYWORD },
-    { "else", TokenType::ELSE_KEYWORD },
-    { "for", TokenType::FOR_KEYWORD },
-    { "while", TokenType::WHILE_KEYWORD },
-    { "break", TokenType::BREAK_KEYWORD },
-    { "continue", TokenType::CONTINUE_KEYWORD },
-    { "return", TokenType::RETURN_KEYWORD }
+    { "mut", TokenType::MUTABLE_KEYWORD }
 };
 
 size_t Lexer::advanceColumn(size_t n = 1) {
@@ -165,12 +141,6 @@ std::vector<Token> Lexer::tokenize() {
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
             this->advanceIndex();
-        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end()) {
-            token.type = parenthesisToTokenType.at(currentChar);
-            token.value = currentChar;
-            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
-
-            this->advanceIndex();
         } else if (this->isArithmeticOperator(currentChar)) {
             if (this->getNextChar() == '=') {
                 std::string op = std::string(1, currentChar) + std::string(1, this->getNextChar());
@@ -242,18 +212,9 @@ std::vector<Token> Lexer::tokenize() {
 
             token.value = value;
             token.metadata = TokenMetadata(columnStart, this->line, value.size());
+
             if (keywordToTokenType.find(value) != keywordToTokenType.end()) {
                 token.type = keywordToTokenType.at(value);
-
-                // ? There could be more spaces between the else and the if
-                if (value == "else" && this->getCurrentChar() == ' ' && this->getNextChar() == 'i' && this->sourceCode[this->index + 2] == 'f') {
-                    token.value += " if";
-                    token.type = TokenType::ELSE_IF_KEYWORD;
-                    token.metadata.length += 3;
-
-                    this->advanceColumn(3);
-                    this->advanceIndex(3);
-                }
             } else {
                 token.type = TokenType::IDENTIFIER;
             }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include "ast.hpp"
 #include "utils.hpp"
 #include "semer.hpp"
 
@@ -63,7 +64,7 @@ Semer::~Semer() {};
 
 template <typename T>
 void Semer::analyzeExpression(const T& n) {
-    throw std::runtime_error("Unknown expression of type : " + std::string(typeid(n).name()));
+    std::cout << RED << "Expressions are not analyzed yet" << RESET << std::endl;
 }
 
 template <typename T>

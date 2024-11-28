@@ -11,23 +11,13 @@ struct StringType;
 struct IntegerType;
 struct FloatType;
 struct BooleanType;
-struct VectorType;
-struct FunctionType;
-struct OptionalType;
-struct UnionType;
-struct VoidType;
 
 // ? Might want to find a better name
 using NodeType = std::variant<
     std::shared_ptr<StringType>,
     std::shared_ptr<IntegerType>,
     std::shared_ptr<FloatType>,
-    std::shared_ptr<BooleanType>,
-    std::shared_ptr<VectorType>,
-    std::shared_ptr<FunctionType>,
-    std::shared_ptr<OptionalType>,
-    std::shared_ptr<UnionType>,
-    std::shared_ptr<VoidType>
+    std::shared_ptr<BooleanType>
 >;
 
 /** The base type for a type. */
@@ -81,76 +71,6 @@ struct BooleanType : public Type {
     bool compare(const NodeType& other) const override;
 };
 
-struct VoidType : public Type {
-    VoidType();
-
-    std::string toString() const override;
-
-    /// @brief Compares the type between `this` and `other`.
-    /// @param other The type to compare with.
-    /// @return `true` if the types are equal, `false` otherwise.
-    bool compare(const NodeType& other) const override;
-};
-
-struct VectorType : public Type {
-    NodeType valueType;
-
-    VectorType(NodeType valueType);
-
-    std::string toString() const override;
-
-    /// @brief Deeply compares the type between `this` and `other`.
-    /// @param other The type to compare with.
-    /// @return `true` if the types are equal, `false` otherwise.
-    /// @note This implementation also compares the underlying type of the vectors.
-    bool compare(const NodeType& other) const override;
-};
-
-struct FunctionType : public Type {
-    std::vector<NodeType> parameterTypes;
-    NodeType returnType;
-
-    /// @brief A shorthand constructor for creating a function type with no parameters.
-    FunctionType(NodeType returnType);
-    FunctionType(std::vector<NodeType> parameterTypes, NodeType returnType);
-
-    std::string toString() const override;
-
-    /// @brief Deeply compares the type between `this` and `other`.
-    /// @param other The type to compare with.
-    /// @return `true` if the types are equal, `false` otherwise.
-    /// @note This implementation also compares the return type and parameter types of the functions.
-    bool compare(const NodeType& other) const override;
-};
-
-struct OptionalType : public Type {
-    NodeType containedType;
-
-    OptionalType(NodeType containedType);
-
-    std::string toString() const override;
-
-    /// @brief Deeply compares the type between `this` and `other`.
-    /// @param other The type to compare with.
-    /// @return `true` if the types are equal, `false` otherwise.
-    /// @note This implementation also compares the underlying type of the optionals.
-    bool compare(const NodeType& other) const override;
-};
-
-struct UnionType : public Type {
-    std::vector<NodeType> containedTypes;
-
-    UnionType(std::vector<NodeType> containedTypes);
-
-    std::string toString() const override;
-
-    /// @brief Deeply compares the type between `this` and `other`.
-    /// @param other The type to compare with.
-    /// @return `true` if the types are equal, `false` otherwise.
-    /// @note This implementation also compares the underlying types of the unions.
-    bool compare(const NodeType& other) const override;
-};
-
 struct NodePosition {
     size_t column;
     size_t line;
@@ -195,12 +115,6 @@ struct BooleanLiteral {
     BooleanLiteral(NodeMetadata metadata, bool value);
 };
 
-struct NullLiteral {
-    NodeMetadata metadata;
-
-    NullLiteral(NodeMetadata metadata);
-};
-
 struct Identifier {
     NodeMetadata metadata;
     std::string name;
@@ -210,30 +124,16 @@ struct Identifier {
 
 struct LogicalNotOperation;
 struct BinaryOperation;
-struct Vector;
-struct Function;
-struct FunctionCall;
 
 using Expression = std::variant<
-    Function,
-    FunctionCall,
     BinaryOperation,
     LogicalNotOperation,
-    Vector,
     Identifier,
     StringLiteral,
     IntLiteral,
     FloatLiteral,
-    BooleanLiteral,
-    NullLiteral
+    BooleanLiteral
 >;
-
-struct Vector {
-    NodeMetadata metadata;
-    std::vector<std::shared_ptr<Expression>> values;
-
-    Vector(NodeMetadata metadata, std::vector<std::shared_ptr<Expression>> values);
-};
 
 struct LogicalNotOperation {
     NodeMetadata metadata;
@@ -281,108 +181,10 @@ struct VariableAssignment {
     );
 };
 
-struct BreakStatement {
-    NodeMetadata metadata;
-
-    BreakStatement(NodeMetadata metadata);
-};
-
-struct ContinueStatement {
-    NodeMetadata metadata;
-
-    ContinueStatement(NodeMetadata metadata);
-};
-
-struct ReturnStatement {
-    NodeMetadata metadata;
-    std::optional<std::shared_ptr<Expression>> expression;
-
-    ReturnStatement(NodeMetadata metadata);
-    ReturnStatement(NodeMetadata metadata, std::optional<std::shared_ptr<Expression>> expression);
-};
-
-struct IfStatement;
-struct WhileStatement;
-struct ForStatement;
-
 using Statement = std::variant<
     VariableDeclaration,
-    VariableAssignment,
-    IfStatement,
-    WhileStatement,
-    ForStatement,
-    BreakStatement,
-    ContinueStatement,
-    ReturnStatement
+    VariableAssignment
 >;
-
-struct IfStatement {
-    NodeMetadata metadata;
-    std::shared_ptr<Expression> condition;
-    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> thenBlock;
-    std::vector<std::pair<std::shared_ptr<Expression>, std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>>>> elseifClauses;
-    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> elseBlock;
-
-    IfStatement(
-        NodeMetadata metadata, std::shared_ptr<Expression> condition,
-        std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> thenBlock,
-        std::vector<std::pair<std::shared_ptr<Expression>, std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>>>> elseifClauses,
-        std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> elseBlock
-    );
-};
-
-struct WhileStatement {
-    NodeMetadata metadata;
-    std::shared_ptr<Expression> condition;
-    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block;
-
-    WhileStatement(
-        NodeMetadata metadata,
-        std::shared_ptr<Expression> condition,
-        std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block
-    );
-};
-
-struct ForStatement {
-    NodeMetadata metadata;
-    std::optional<std::shared_ptr<Statement>> initialization;
-    std::optional<std::shared_ptr<Expression>> condition;
-    std::optional<std::shared_ptr<Statement>> update;
-    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block;
-
-    ForStatement(
-        NodeMetadata metadata,
-        std::optional<std::shared_ptr<Statement>> initialization,
-        std::optional<std::shared_ptr<Expression>> condition,
-        std::optional<std::shared_ptr<Statement>> update,
-        std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> block
-    );
-};
-
-/// @attention This is an expression, such that you can assign functions to variables.
-struct Function {
-    NodeMetadata metadata;
-    NodeType returnType;
-    /// Is `null` if the function is an anonymous function.
-    std::optional<std::string> name;
-    std::vector<std::shared_ptr<VariableDeclaration>> parameters;
-    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;
-
-    Function(
-        NodeMetadata metadata, NodeType returnType,
-        std::optional<std::string> name,
-        std::vector<std::shared_ptr<VariableDeclaration>> parameters,
-        std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body
-    );
-};
-
-struct FunctionCall {
-    NodeMetadata metadata;
-    std::string identifier;
-    std::vector<std::shared_ptr<Expression>> arguments;
-
-    FunctionCall(NodeMetadata metadata, const std::string& identifier, std::vector<std::shared_ptr<Expression>> arguments);
-};
 
 struct Program {
     std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;

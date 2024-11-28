@@ -206,78 +206,10 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         REQUIRE(assignmentToken.metadata.length == 1);
     }
 
-    SECTION("Conditionals are tokenized properly") {
-        std::map<std::string, TokenType> conditionalCases = {
-            { "if", TokenType::IF_KEYWORD },
-            { "else", TokenType::ELSE_KEYWORD },
-            { "else if", TokenType::ELSE_IF_KEYWORD } };
-
-        for (const auto& [sourceCode, expectedType] : conditionalCases) {
-            Lexer lexer = Lexer(sourceCode);
-            std::vector<Token> tokens = lexer.tokenize();
-
-            REQUIRE(tokens.size() == 2);
-
-            Token conditionalToken = tokens.at(0);
-
-            REQUIRE(conditionalToken.type == expectedType);
-            REQUIRE(conditionalToken.value == sourceCode);
-            REQUIRE(conditionalToken.metadata.length == sourceCode.size());
-        }
-    }
-
-    SECTION("Loop keywords are tokenized properly") {
-        std::map<std::string, TokenType> loopCases = {
-            { "while", TokenType::WHILE_KEYWORD },
-            { "for", TokenType::FOR_KEYWORD } };
-
-        for (const auto& [sourceCode, expectedType] : loopCases) {
-            Lexer lexer = Lexer(sourceCode);
-            std::vector<Token> tokens = lexer.tokenize();
-
-            REQUIRE(tokens.size() == 2);
-
-            Token loopToken = tokens.at(0);
-
-            REQUIRE(loopToken.type == expectedType);
-            REQUIRE(loopToken.value == sourceCode);
-            REQUIRE(loopToken.metadata.length == sourceCode.size());
-        }
-    }
-
-    SECTION("Parentheses are tokenized properly") {
-        std::map<std::string, TokenType> parenthesesCases = {
-            { "(", TokenType::LEFT_PARENTHESIS },
-            { ")", TokenType::RIGHT_PARENTHESIS },
-            { "[", TokenType::LEFT_BRACKET },
-            { "]", TokenType::RIGHT_BRACKET },
-            { "{", TokenType::LEFT_BRACE },
-            { "}", TokenType::RIGHT_BRACE } };
-
-        for (const auto& [sourceCode, expectedType] : parenthesesCases) {
-            Lexer lexer = Lexer(sourceCode);
-            std::vector<Token> tokens = lexer.tokenize();
-
-            REQUIRE(tokens.size() == 2);
-
-            Token parenToken = tokens.at(0);
-
-            REQUIRE(parenToken.type == expectedType);
-            REQUIRE(parenToken.value == sourceCode);
-            REQUIRE(parenToken.metadata.length == 1);
-        }
-    }
-
     SECTION("Punctuations are tokenized properly") {
         std::map<std::string, TokenType> punctuationCases = {
-            { ":", TokenType::COLON },
             { ";", TokenType::SEMI_COLON },
-            { ".", TokenType::DOT },
-            { ",", TokenType::COMMA },
-            { "?", TokenType::QUESTION_MARK },
-            { "!", TokenType::EXCLAMATION_MARK },
-            { "&", TokenType::AMPERSAND },
-            { "|", TokenType::PIPE }
+            { "!", TokenType::EXCLAMATION_MARK }
         };
 
         for (const auto& [sourceCode, expectedType] : punctuationCases) {
@@ -315,20 +247,6 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         }
     }
 
-    SECTION("Null keyword are tokenized properly") {
-        std::string sourceCode = "null";
-        Lexer lexer = Lexer(sourceCode);
-        std::vector<Token> tokens = lexer.tokenize();
-
-        REQUIRE(tokens.size() == 2);
-
-        Token nullToken = tokens.at(0);
-
-        REQUIRE(nullToken.type == TokenType::NULL_KEYWORD);
-        REQUIRE(nullToken.value == sourceCode);
-        REQUIRE(nullToken.metadata.length == sourceCode.size());
-    }
-
     SECTION("Triple-slash comments are ignored properly") {
         std::string sourceCode = "/// This is a comment\nmut int x = 10;";
         Lexer lexer = Lexer(sourceCode);
@@ -359,47 +277,5 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
         Token semicolonToken = tokens.at(5);
         REQUIRE(semicolonToken.type == TokenType::SEMI_COLON);
         REQUIRE(semicolonToken.value == ";");
-    }
-
-    SECTION("Break keyword is tokenized properly") {
-        std::string sourceCode = "break";
-        Lexer lexer = Lexer(sourceCode);
-        std::vector<Token> tokens = lexer.tokenize();
-
-        REQUIRE(tokens.size() == 2);
-
-        Token breakToken = tokens.at(0);
-
-        REQUIRE(breakToken.type == TokenType::BREAK_KEYWORD);
-        REQUIRE(breakToken.value == "break");
-        REQUIRE(breakToken.metadata.length == 5);
-    }
-
-    SECTION("Continue keyword is tokenized properly") {
-        std::string sourceCode = "continue";
-        Lexer lexer = Lexer(sourceCode);
-        std::vector<Token> tokens = lexer.tokenize();
-
-        REQUIRE(tokens.size() == 2);
-
-        Token continueToken = tokens.at(0);
-
-        REQUIRE(continueToken.type == TokenType::CONTINUE_KEYWORD);
-        REQUIRE(continueToken.value == "continue");
-        REQUIRE(continueToken.metadata.length == 8);
-    }
-
-    SECTION("Return keyword is tokenized properly") {
-        std::string sourceCode = "return";
-        Lexer lexer = Lexer(sourceCode);
-        std::vector<Token> tokens = lexer.tokenize();
-
-        REQUIRE(tokens.size() == 2);
-
-        Token returnToken = tokens.at(0);
-
-        REQUIRE(returnToken.type == TokenType::RETURN_KEYWORD);
-        REQUIRE(returnToken.value == "return");
-        REQUIRE(returnToken.metadata.length == 6);
     }
 }
