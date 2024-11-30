@@ -126,7 +126,16 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
         case TokenType::TYPE:
             return this->parseVariableDeclaration();
         case TokenType::IDENTIFIER:
-            return this->parseVariableAssignment();
+            if (std::find(
+                tokenTypeAssignmentOperators.begin(),
+                tokenTypeAssignmentOperators.end(),
+                this->getCurrentToken().type
+            ) != tokenTypeAssignmentOperators.end()) {
+                return this->parseVariableAssignment();
+            }
+
+            // * Identifier is not a variable assignment, so it must be an expression
+            return this->parseExpression();
         case TokenType::SEMI_COLON: {
             this->expectToken(TokenType::SEMI_COLON);
             return std::monostate{};
