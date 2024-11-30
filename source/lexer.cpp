@@ -44,6 +44,9 @@ const std::map<std::string, TokenType> keywordToTokenType = {
     { "mut", TokenType::MUTABLE_KEYWORD }
 };
 
+Lexer::Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
+Lexer::~Lexer() {};
+
 size_t Lexer::advanceColumn(size_t n = 1) {
     this->column += n;
     return this->column - n;

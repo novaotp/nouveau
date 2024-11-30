@@ -5,6 +5,9 @@
 #include "utils.hpp"
 #include "parser.hpp"
 
+Parser::Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
+Parser::~Parser() {};
+
 // ! Unsafe
 NodeMetadata getExpressionMetadata(const Expression& expr) {
     NodeMetadata metadata;
@@ -140,6 +143,34 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
             this->expectToken(TokenType::SEMI_COLON);
             return std::monostate{};
         }
+
+                                  // ? Explicitly handle cases to avoid C4061 warnings
+
+        case TokenType::STRING:
+        case TokenType::INTEGER:
+        case TokenType::FLOAT:
+        case TokenType::BOOLEAN:
+        case TokenType::ADDITION_OPERATOR:
+        case TokenType::SUBTRACTION_OPERATOR:
+        case TokenType::MULTIPLICATION_OPERATOR:
+        case TokenType::DIVISION_OPERATOR:
+        case TokenType::MODULO_OPERATOR:
+        case TokenType::ASSIGNMENT_OPERATOR:
+        case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
+        case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
+        case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
+        case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
+        case TokenType::MODULO_ASSIGNMENT_OPERATOR:
+        case TokenType::EQUAL_OPERATOR:
+        case TokenType::NOT_EQUAL_OPERATOR:
+        case TokenType::GREATER_THAN_OPERATOR:
+        case TokenType::GREATER_OR_EQUAL_OPERATOR:
+        case TokenType::LESS_THAN_OPERATOR:
+        case TokenType::LESS_OR_EQUAL_OPERATOR:
+        case TokenType::AND_OPERATOR:
+        case TokenType::OR_OPERATOR:
+        case TokenType::EXCLAMATION_MARK:
+        case TokenType::END_OF_FILE:
         default:
             return this->parseExpression();
     }
@@ -360,12 +391,37 @@ Expression Parser::parsePrimitiveExpression() {
                 NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
                 currentToken.value == "true"
             );
-        case TokenType::IDENTIFIER: {
+        case TokenType::IDENTIFIER:
             return Identifier(
                 NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
                 currentToken.value
             );
-        }
+
+            // ? Explicitly handle cases to avoid C4061 warnings
+        case TokenType::ASSIGNMENT_OPERATOR:
+        case TokenType::ADDITION_OPERATOR:
+        case TokenType::SUBTRACTION_OPERATOR:
+        case TokenType::MULTIPLICATION_OPERATOR:
+        case TokenType::DIVISION_OPERATOR:
+        case TokenType::MODULO_OPERATOR:
+        case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
+        case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
+        case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
+        case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
+        case TokenType::MODULO_ASSIGNMENT_OPERATOR:
+        case TokenType::TYPE:
+        case TokenType::MUTABLE_KEYWORD:
+        case TokenType::SEMI_COLON:
+        case TokenType::EXCLAMATION_MARK:
+        case TokenType::AND_OPERATOR:
+        case TokenType::OR_OPERATOR:
+        case TokenType::EQUAL_OPERATOR:
+        case TokenType::NOT_EQUAL_OPERATOR:
+        case TokenType::GREATER_THAN_OPERATOR:
+        case TokenType::GREATER_OR_EQUAL_OPERATOR:
+        case TokenType::LESS_THAN_OPERATOR:
+        case TokenType::LESS_OR_EQUAL_OPERATOR:
+        case TokenType::END_OF_FILE:
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }

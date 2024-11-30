@@ -53,8 +53,8 @@ private:
     Expression parsePrimitiveExpression();
 
 public:
-    Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
-    ~Parser() {};
+    Parser(std::string sourceCode, std::vector<Token> tokens);
+    ~Parser();
 
     /// @brief Parses an array of tokens into an Abstract Syntax Tree (AST).
     /// @return An Abstract Syntax Tree (AST).
