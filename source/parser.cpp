@@ -132,7 +132,7 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
             if (std::find(
                 tokenTypeAssignmentOperators.begin(),
                 tokenTypeAssignmentOperators.end(),
-                this->getCurrentToken().type
+                this->peekNextToken().type
             ) != tokenTypeAssignmentOperators.end()) {
                 return this->parseVariableAssignment();
             }
