@@ -8,23 +8,108 @@
 
 TEST_CASE("Semer works correctly", "[semer]") {
     SECTION("Variable declarations are analyzed properly") {
-        SECTION("Constant variable declarations without initial values are flagged as WARNING") {
-            std::string sourceCode = "bool is_valid;";
-            Lexer lexer = Lexer(sourceCode);
-            std::vector<Token> tokens = lexer.tokenize();
+        SECTION("Variable declarations without initial values are flagged as SEMANTIC ERROR because 'null' values are not supported yet") {
+            std::vector<std::string> sourceCodes = {
+                "bool is_valid;",
+                "mut bool is_valid;",
+            };
 
-            Parser parser(sourceCode, tokens);
-            Program program = parser.parse();
+            for (const auto sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
 
-            Semer semer(sourceCode, program);
-            const std::vector<SemerError>& errors = semer.analyze();
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
 
-            REQUIRE(errors.size() == 1);
+                Semer semer(sourceCode, program);
+                const std::vector<SemerError>& errors = semer.analyze();
 
-            const SemerError& error = errors.at(0);
+                REQUIRE(errors.size() == 1);
 
-            REQUIRE(error.type == SemerErrorType::SEMANTIC_ERROR);
-            REQUIRE(error.level == SemerErrorLevel::WARNING);
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::SEMANTIC_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
+        }
+
+        SECTION("Variable declarations with a value of the wrong type are flagged as TYPE ERROR") {
+            std::vector<std::string> sourceCodes = {
+                "bool is_valid = 69;",
+                "int is_valid = \"test\"",
+                "float is_valid = true;",
+                "string is_valid = 3.14;"
+            };
+
+            for (const std::string sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
+
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
+
+                Semer semer(sourceCode, program);
+                const std::vector<SemerError>& errors = semer.analyze();
+
+                REQUIRE(errors.size() == 1);
+
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::TYPE_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
+        }
+    }
+
+    SECTION("Statements are analyzed properly") {
+        SECTION("Variable assignments that are not declared beforehand are flagged as SYNTAX ERROR") {
+            std::vector<std::string> sourceCodes = {
+                "message = \"Hello, World !\";",
+                "message = 69;"
+            };
+
+            for (const std::string sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
+
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
+
+                Semer semer(sourceCode, program);
+                const std::vector<SemerError>& errors = semer.analyze();
+
+                REQUIRE(errors.size() == 1);
+
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::SYNTAX_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
+        }
+
+        SECTION("Variable assignments with a value of the wrong type are flagged as TYPE ERROR") {
+            std::vector<std::string> sourceCodes = {
+                "string message = \"Hello, World!\"; message = 69;",
+                "string message = \"Hello, World!\"; message = true;",
+            };
+
+            for (const std::string sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
+
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
+
+                Semer semer(sourceCode, program);
+                const std::vector<SemerError>& errors = semer.analyze();
+
+                REQUIRE(errors.size() == 1);
+
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::TYPE_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
         }
     }
 }

@@ -4,10 +4,32 @@
 #include "utils.hpp"
 #include "semer.hpp"
 
+Scope::Scope() : parent(nullptr) {};
+Scope::Scope(std::unique_ptr<Scope> parent) : parent(nullptr) {};
+Scope::~Scope() {};
+
+void Scope::add(std::string name, std::shared_ptr<VariableDeclaration> node) {
+    this->symbols[name] = std::move(node);
+};
+
+const std::shared_ptr<VariableDeclaration> Scope::find(const std::string& name) const {
+    if (this->symbols.find(name) != this->symbols.end()) {
+        return this->symbols.at(name);
+    } else if (this->parent != nullptr) {
+        return this->parent->find(name);
+    };
+
+    return nullptr;
+};
+
 std::string getSemerErrorTypeString(SemerErrorType type) {
     switch (type) {
         case SemerErrorType::SEMANTIC_ERROR:
             return "Semantic Error";
+        case SemerErrorType::TYPE_ERROR:
+            return "Type Error";
+        case SemerErrorType::SYNTAX_ERROR:
+            return "Syntax Error";
         default:
             return "Unknown Error Type";
     }
@@ -63,25 +85,106 @@ Semer::Semer(const std::string& sourceCode, const Program& program) : sourceCode
 Semer::~Semer() {};
 
 template <typename T>
-void Semer::analyzeExpression(const T& n) {
+void Semer::analyzeExpression(const T& n, Scope& scope) {
     std::cout << RED << "Expressions are not analyzed yet" << RESET << std::endl;
 }
 
 template <typename T>
-void Semer::analyzeStatement(const T& n) {
+void Semer::analyzeStatement(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, VariableDeclaration>) {
-        if (!n.isMutable && !n.value.has_value()) {
+        if (scope.find(n.identifier) != nullptr) {
             this->errors.push_back(SemerError(
-                SemerErrorType::SEMANTIC_ERROR,
-                SemerErrorLevel::WARNING,
+                SemerErrorType::SYNTAX_ERROR,
+                SemerErrorLevel::ERROR,
                 n.metadata,
                 this->sourceCode,
-                "'" + n.identifier + "' is defined as a const but has no initialization value. This will result in undefined behavior.",
-                "Either set an initialization value or set the variable as mutable."
+                "'" + n.identifier + "' is already defined in this scope.",
+                "Please choose another name or assign to it instead."
             ));
         }
+
+        if (!n.value.has_value()) {
+            // ? Currently, we don't support null
+            // TODO : after supporting null, remove this
+
+            std::string word = n.isMutable ? "mutable" : "const";
+
+            this->errors.push_back(SemerError(
+                SemerErrorType::SEMANTIC_ERROR,
+                SemerErrorLevel::ERROR,
+                n.metadata,
+                this->sourceCode,
+                "'" + n.identifier + "' is defined as a " + word + " variable but has no initialization value. This will result in undefined behavior.",
+                "Note that 'null' values are not supported yet."
+            ));
+        } else {
+            std::visit([&](auto&& type, const auto& expr) {
+                using TypeType = std::decay_t<decltype(*type)>;
+                using ExprType = std::decay_t<decltype(expr)>;
+
+                std::string typeString = type->toString();
+
+                if constexpr ((std::is_same_v<TypeType, StringType> && !std::is_same_v<ExprType, StringLiteral>) ||
+                    (std::is_same_v<TypeType, IntegerType> && !std::is_same_v<ExprType, IntLiteral>) ||
+                    (std::is_same_v<TypeType, FloatType> && !std::is_same_v<ExprType, FloatLiteral>) ||
+                    (std::is_same_v<TypeType, BooleanType> && !std::is_same_v<ExprType, BooleanLiteral>)
+                    ) {
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::TYPE_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "'" + n.identifier + "' is defined as a '" + typeString + "' but received a non-matching value.",
+                        "Either change the type of the variable or change the value to a '" + typeString + "'."
+                    ));
+                }
+
+                this->analyzeExpression(expr, scope);
+            }, n.type, *n.value.value());
+        }
+
+        scope.add(n.identifier, std::make_shared<VariableDeclaration>(n));
+    } else if constexpr (std::is_same_v<T, VariableAssignment>) {
+        if (scope.find(n.identifier) == nullptr) {
+            this->errors.push_back(SemerError(
+                SemerErrorType::SYNTAX_ERROR,
+                SemerErrorLevel::ERROR,
+                n.metadata,
+                this->sourceCode,
+                "'" + n.identifier + "' is not defined in this scope.",
+                "Please define it before assigning to it."
+            ));
+        } else {
+            auto node = scope.find(n.identifier);
+
+            std::visit([&](auto&& type, const auto& expr) {
+                using TypeType = std::decay_t<decltype(*type)>;
+                using ExprType = std::decay_t<decltype(expr)>;
+
+                std::string typeString = type->toString();
+
+                if constexpr ((std::is_same_v<TypeType, StringType> && !std::is_same_v<ExprType, StringLiteral>) ||
+                    (std::is_same_v<TypeType, IntegerType> && !std::is_same_v<ExprType, IntLiteral>) ||
+                    (std::is_same_v<TypeType, FloatType> && !std::is_same_v<ExprType, FloatLiteral>) ||
+                    (std::is_same_v<TypeType, BooleanType> && !std::is_same_v<ExprType, BooleanLiteral>)
+                    ) {
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::TYPE_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "'" + n.identifier + "' is defined as a '" + typeString + "' but received a non-matching value.",
+                        "Either change the type of the variable or change the value to a '" + typeString + "'."
+                    ));
+                }
+
+                this->analyzeExpression(expr, scope);
+            }, node->type, *n.value.value());
+        }
+
+        this->analyzeExpression(n.value, scope);
     } else {
-        throw std::runtime_error("Unknown statement");
+        std::cout << RED << "Unknown statement encountered : " << typeid(T).name() << RESET << std::endl;
     }
 }
 
@@ -94,11 +197,11 @@ const std::vector<SemerError>& Semer::analyze() {
 
             if constexpr (std::is_same_v<PNodeType, Expression>) {
                 std::visit([&](const auto& expr) {
-                    this->analyzeExpression(expr);
+                    this->analyzeExpression(expr, this->rootScope);
                 }, *ptr);
             } else if constexpr (std::is_same_v<PNodeType, Statement>) {
                 std::visit([&](const auto& expr) {
-                    this->analyzeStatement(expr);
+                    this->analyzeStatement(expr, this->rootScope);
                 }, *ptr);
             } else {
                 throw std::runtime_error("Unknown node type encountered");
