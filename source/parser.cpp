@@ -59,7 +59,7 @@ const Token& Parser::expectToken(const std::vector<TokenType>& expected, std::st
         throw std::runtime_error(
             std::string("\n\tEncountered a syntax error")
             + "\n\n\t" + std::to_string(currentToken.metadata.line) + " | " + splitStringByNewline(this->sourceCode).at(currentToken.metadata.line - 1)
-            + "\n\t" + std::string(currentToken.metadata.column + 3, ' ') + std::string(currentToken.metadata.length, '~')
+            + "\n\t" + std::string(currentToken.metadata.column + 3, ' ') + RED + std::string(currentToken.metadata.length, '~')
             + GREEN + "\n\n\tExpected : " + expectedTypes
             + RED + "\n\tReceived : " + currentToken.value
             + RESET
