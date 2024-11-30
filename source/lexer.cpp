@@ -19,6 +19,11 @@ const std::map<std::string, TokenType> arithmeticOperatorToTokenType = {
     { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR }
 };
 
+const std::map<char, TokenType> parenthesisToTokenType = {
+    { '(', TokenType::LEFT_PARENTHESIS },
+    { ')', TokenType::RIGHT_PARENTHESIS }
+};
+
 const std::map<char, TokenType> punctuationToTokenType = {
     { ';', TokenType::SEMI_COLON },
     { '!', TokenType::EXCLAMATION_MARK }
@@ -145,6 +150,11 @@ std::vector<Token> Lexer::tokenize() {
             this->advanceIndex();
         } else if (currentChar == '=') {
             token.type = TokenType::ASSIGNMENT_OPERATOR;
+            token.value = currentChar;
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+            this->advanceIndex();
+        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end()) {
+            token.type = parenthesisToTokenType.at(currentChar);
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
             this->advanceIndex();

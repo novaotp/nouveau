@@ -170,6 +170,8 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
         case TokenType::AND_OPERATOR:
         case TokenType::OR_OPERATOR:
         case TokenType::EXCLAMATION_MARK:
+        case TokenType::LEFT_PARENTHESIS:
+        case TokenType::RIGHT_PARENTHESIS:
         case TokenType::END_OF_FILE:
         default:
             return this->parseExpression();
@@ -396,8 +398,24 @@ Expression Parser::parsePrimitiveExpression() {
                 NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
                 currentToken.value
             );
+        case TokenType::LEFT_PARENTHESIS: {
+            NodePosition start = currentToken.metadata.toStartPosition();
+            Expression expression = this->parseExpression();
+            NodePosition end = this->getCurrentToken().metadata.toEndPosition();
 
-            // ? Explicitly handle cases to avoid C4061 warnings
+            this->expectToken(TokenType::RIGHT_PARENTHESIS, "Did you forget to close the parenthesis ?"); // Skip the ")" token
+
+            // * Include the parentheses in the expression's metadata
+            std::visit([&start, &end](auto& node) {
+                node.metadata.start = start;
+                node.metadata.end = end;
+            }, expression);
+
+            return expression;
+        }
+
+                                        // ? Explicitly handle cases to avoid C4061 warnings
+
         case TokenType::ASSIGNMENT_OPERATOR:
         case TokenType::ADDITION_OPERATOR:
         case TokenType::SUBTRACTION_OPERATOR:
@@ -421,6 +439,7 @@ Expression Parser::parsePrimitiveExpression() {
         case TokenType::GREATER_OR_EQUAL_OPERATOR:
         case TokenType::LESS_THAN_OPERATOR:
         case TokenType::LESS_OR_EQUAL_OPERATOR:
+        case TokenType::RIGHT_PARENTHESIS:
         case TokenType::END_OF_FILE:
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);

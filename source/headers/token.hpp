@@ -35,6 +35,8 @@ enum TokenType {
     OR_OPERATOR,
     SEMI_COLON,
     EXCLAMATION_MARK,
+    LEFT_PARENTHESIS,
+    RIGHT_PARENTHESIS,
     END_OF_FILE
 };
 
@@ -89,6 +91,8 @@ const std::map<TokenType, std::string> tokenTypeToString = {
     { TokenType::OR_OPERATOR, "Or Operator" },
     { TokenType::SEMI_COLON, "Semicolon" },
     { TokenType::EXCLAMATION_MARK, "Exclamation mark" },
+    { TokenType::LEFT_PARENTHESIS, "Left Parenthesis" },
+    { TokenType::RIGHT_PARENTHESIS, "Right Parenthesis" },
     { TokenType::END_OF_FILE, "End of File" }
 };
 
