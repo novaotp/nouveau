@@ -153,13 +153,13 @@ void Program::prettyPrint() {
         const auto& node = this->body[i];
 
         std::visit([](const auto& ptr) {
-            using NodeType = std::decay_t<decltype(*ptr)>;
+            using Type = std::decay_t<decltype(*ptr)>;
 
-            if constexpr (std::is_same_v<NodeType, Expression>) {
+            if constexpr (std::is_same_v<Type, Expression>) {
                 std::visit([](const auto& expr) {
                     printExpression(expr, 0);
                 }, *ptr);
-            } else if constexpr (std::is_same_v<NodeType, Statement>) {
+            } else if constexpr (std::is_same_v<Type, Statement>) {
                 std::visit([](const auto& expr) {
                     printStatement(expr, 0);
                 }, *ptr);
