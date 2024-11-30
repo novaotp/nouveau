@@ -47,6 +47,10 @@ const std::map<std::string, TokenType> keywordToTokenType = {
 Lexer::Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
 Lexer::~Lexer() {};
 
+bool Lexer::isValidIndex(size_t index) {
+    return index < this->sourceCode.size();
+}
+
 size_t Lexer::advanceColumn(size_t n = 1) {
     this->column += n;
     return this->column - n;
@@ -97,7 +101,7 @@ std::vector<Token> Lexer::tokenize() {
 
             this->advanceIndex();
             continue;
-        } else if (currentChar == '/' && this->getCurrentChar() == '/' && this->sourceCode[this->index + 2] == '/') {
+        } else if (currentChar == '/' && this->isValidIndex(this->index + 1) && this->getNextChar() == '/') {
             while (this->getCurrentChar() != '\n' && this->index < this->sourceCode.size()) {
                 this->advanceColumn();
                 this->advanceIndex();

@@ -12,6 +12,8 @@ private:
     size_t line = 1;
     std::string sourceCode;
 
+    bool isValidIndex(size_t index);
+
     /// @brief Advances the current column by 1 and returns the previous column.
     /// @param n The number of column to advance. Defaults to 1.
     /// @return The previous column.
