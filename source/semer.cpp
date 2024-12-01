@@ -84,7 +84,7 @@ const std::string SemerError::toString() const {
 Semer::Semer(const std::string& sourceCode, const Program& program) : sourceCode(sourceCode), program(program) {};
 Semer::~Semer() {};
 
-std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr) {
+std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scope& scope) {
     return std::visit([&](const auto& e) -> std::optional<NodeType> {
         using ExprType = std::decay_t<decltype(e)>;
 
@@ -98,17 +98,31 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr) {
             type = std::make_shared<FloatType>();
         } else if constexpr (std::is_same_v<ExprType, BooleanLiteral>) {
             type = std::make_shared<BooleanType>();
+        } else if constexpr (std::is_same_v<ExprType, Identifier>) {
+            if (scope.find(e.name) != nullptr) {
+                type = scope.find(e.name)->type;
+            }
         } else if constexpr (std::is_same_v<ExprType, LogicalNotOperation>) {
-            type = std::make_shared<BooleanType>();
+            std::optional<NodeType> optType = this->resolveExpressionReturnType(*e.expression, scope);
+
+            if (optType.has_value()) {
+                type = optType.value();
+            }
         } else if constexpr (std::is_same_v<ExprType, BinaryOperation>) {
-            std::optional<NodeType> optLeft = this->resolveExpressionReturnType(*e.lhs);
-            std::optional<NodeType> optRight = this->resolveExpressionReturnType(*e.rhs);
+            std::optional<NodeType> optLeft = this->resolveExpressionReturnType(*e.lhs, scope);
+            std::optional<NodeType> optRight = this->resolveExpressionReturnType(*e.rhs, scope);
 
             if (optLeft.has_value() && optRight.has_value()) {
                 NodeType left = optLeft.value();
                 NodeType right = optRight.value();
 
                 std::visit([&e, &type](const auto& left, const auto& right) {
+                    if (e.op == "==" || e.op == "!=" || e.op == ">" || e.op == "<" || e.op == ">=" || e.op == "<=" || e.op == "&&" || e.op == "||") {
+                        type = std::make_shared<BooleanType>();
+                    }
+
+                    // Only arithmetic operations are left
+
                     if (left->compare(std::make_shared<IntegerType>()) && right->compare(std::make_shared<IntegerType>())) {
                         if (e.op == "/") {
                             type = std::make_shared<FloatType>();
@@ -135,13 +149,36 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr) {
 
 template <typename T>
 void Semer::analyzeExpression(const T& n, Scope& scope) {
-    std::cout << RED << "Expressions are not analyzed yet" << RESET << std::endl;
+    if constexpr (std::is_same_v<T, Identifier>) {
+        auto node = scope.find(n.name);
+
+        if (node == nullptr) {
+            this->errors.push_back(SemerError(
+                SemerErrorType::SYNTAX_ERROR,
+                SemerErrorLevel::ERROR,
+                n.metadata,
+                this->sourceCode,
+                "'" + n.name + "' is not defined in this scope.",
+                "Please define it before using it."
+            ));
+        }
+    } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
+        this->analyzeExpression(*n.expression, scope);
+    } else if constexpr (std::is_same_v<T, BinaryOperation>) {
+        // TODO
+        // * Check if the left is a literal
+        // * Yes -> check right
+        // * No -> analyze the left
+
+        this->analyzeExpression(*n.lhs, scope);
+        this->analyzeExpression(*n.rhs, scope);
+    }
 }
 
 template <typename T>
 void Semer::analyzeStatement(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, VariableDeclaration>) {
-        if (scope.find(n.identifier) != nullptr) {
+        if (scope.find(n.identifier) == nullptr) {
             this->errors.push_back(SemerError(
                 SemerErrorType::SYNTAX_ERROR,
                 SemerErrorLevel::ERROR,
@@ -168,31 +205,21 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
             ));
         } else {
             std::visit([&](auto&& type, const auto& expr) {
-                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr);
+                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
 
-                if (!exprType.has_value() || !type->compare(exprType.value())) {
+                if (exprType.has_value() && !type->compare(exprType.value())) {
                     std::string typeString = type->toString();
-                    std::string message, hint;
-
-                    if (!exprType.has_value()) {
-                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received a non-matching value.";
-                        hint = "Either change the type of the variable or change the value to type '" + typeString + "'.";
-                    } else {
-                        std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
-                            return ptr->toString();
-                        }, exprType.value());
-
-                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.";
-                        hint = "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.";
-                    }
+                    std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
+                        return ptr->toString();
+                    }, exprType.value());
 
                     this->errors.push_back(SemerError(
                         SemerErrorType::TYPE_ERROR,
                         SemerErrorLevel::ERROR,
                         n.metadata,
                         this->sourceCode,
-                        message,
-                        hint
+                        "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
+                        "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
                     ));
                 }
 
@@ -215,31 +242,21 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
             auto node = scope.find(n.identifier);
 
             std::visit([&](auto&& type, const auto& expr) {
-                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr);
+                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
 
-                if (!exprType.has_value() || !type->compare(exprType.value())) {
+                if (exprType.has_value() && !type->compare(exprType.value())) {
                     std::string typeString = type->toString();
-                    std::string message, hint;
-
-                    if (!exprType.has_value()) {
-                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received a non-matching value.";
-                        hint = "Either change the type of the variable or change the value to type '" + typeString + "'.";
-                    } else {
-                        std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
-                            return ptr->toString();
-                        }, exprType.value());
-
-                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.";
-                        hint = "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.";
-                    }
+                    std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
+                        return ptr->toString();
+                    }, exprType.value());
 
                     this->errors.push_back(SemerError(
                         SemerErrorType::TYPE_ERROR,
                         SemerErrorLevel::ERROR,
                         n.metadata,
                         this->sourceCode,
-                        message,
-                        hint
+                        "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
+                        "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
                     ));
                 }
 

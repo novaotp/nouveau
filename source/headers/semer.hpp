@@ -54,8 +54,9 @@ private:
 
     /// @brief Resolves the return type of an expression.
     /// @param expr The expression to resolve.
+    /// @param scope The current scope.
     /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
-    std::optional<NodeType> resolveExpressionReturnType(Expression expr);
+    std::optional<NodeType> resolveExpressionReturnType(Expression expr, Scope& scope);
 
     template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
