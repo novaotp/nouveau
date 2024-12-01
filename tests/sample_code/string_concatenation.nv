@@ -1,0 +1,13 @@
+// Should work
+string message = "Hello" + "World";
+int counter = 2 + 3;
+float value = 4.5 - 5;
+float value2 = 9 * 5.8;
+float value3 = 24.3 / 4.3;
+bool yes = !true;
+
+// Should not work
+string fail_message = "Hello" + 5;
+string fail_message2 = "Hello" * "World";
+int fail_counter = 2 + true;
+float fail_value = false - 5;

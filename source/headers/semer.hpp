@@ -52,6 +52,11 @@ private:
     const std::string& sourceCode;
     const Program& program;
 
+    /// @brief Resolves the return type of an expression.
+    /// @param expr The expression to resolve.
+    /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
+    std::optional<NodeType> resolveExpressionReturnType(Expression expr);
+
     template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
 

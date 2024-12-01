@@ -84,6 +84,55 @@ const std::string SemerError::toString() const {
 Semer::Semer(const std::string& sourceCode, const Program& program) : sourceCode(sourceCode), program(program) {};
 Semer::~Semer() {};
 
+std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr) {
+    return std::visit([&](const auto& e) -> std::optional<NodeType> {
+        using ExprType = std::decay_t<decltype(e)>;
+
+        std::optional<NodeType> type = std::nullopt;
+
+        if constexpr (std::is_same_v<ExprType, StringLiteral>) {
+            type = std::make_shared<StringType>();
+        } else if constexpr (std::is_same_v<ExprType, IntLiteral>) {
+            type = std::make_shared<IntegerType>();
+        } else if constexpr (std::is_same_v<ExprType, FloatLiteral>) {
+            type = std::make_shared<FloatType>();
+        } else if constexpr (std::is_same_v<ExprType, BooleanLiteral>) {
+            type = std::make_shared<BooleanType>();
+        } else if constexpr (std::is_same_v<ExprType, LogicalNotOperation>) {
+            type = std::make_shared<BooleanType>();
+        } else if constexpr (std::is_same_v<ExprType, BinaryOperation>) {
+            std::optional<NodeType> optLeft = this->resolveExpressionReturnType(*e.lhs);
+            std::optional<NodeType> optRight = this->resolveExpressionReturnType(*e.rhs);
+
+            if (optLeft.has_value() && optRight.has_value()) {
+                NodeType left = optLeft.value();
+                NodeType right = optRight.value();
+
+                std::visit([&e, &type](const auto& left, const auto& right) {
+                    if (left->compare(std::make_shared<IntegerType>()) && right->compare(std::make_shared<IntegerType>())) {
+                        if (e.op == "/") {
+                            type = std::make_shared<FloatType>();
+                        } else {
+                            type = std::make_shared<IntegerType>();
+                        }
+                    } else if ((left->compare(std::make_shared<IntegerType>()) && right->compare(std::make_shared<FloatType>())) ||
+                        (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<IntegerType>())) ||
+                        (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<FloatType>()))
+                        ) {
+                        type = std::make_shared<FloatType>();
+                    } else if (e.op == "+" && left->compare(std::make_shared<StringType>()) && right->compare(std::make_shared<StringType>())) {
+                        type = left;
+                    }
+                }, optLeft.value(), optRight.value());
+            }
+        } else {
+            std::cout << "Unsupported Expression Type: " << typeid(ExprType).name() << std::endl;
+        }
+
+        return type;
+    }, expr);
+}
+
 template <typename T>
 void Semer::analyzeExpression(const T& n, Scope& scope) {
     std::cout << RED << "Expressions are not analyzed yet" << RESET << std::endl;
@@ -119,23 +168,31 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
             ));
         } else {
             std::visit([&](auto&& type, const auto& expr) {
-                using TypeType = std::decay_t<decltype(*type)>;
-                using ExprType = std::decay_t<decltype(expr)>;
+                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr);
 
-                std::string typeString = type->toString();
+                if (!exprType.has_value() || !type->compare(exprType.value())) {
+                    std::string typeString = type->toString();
+                    std::string message, hint;
 
-                if constexpr ((std::is_same_v<TypeType, StringType> && !std::is_same_v<ExprType, StringLiteral>) ||
-                    (std::is_same_v<TypeType, IntegerType> && !std::is_same_v<ExprType, IntLiteral>) ||
-                    (std::is_same_v<TypeType, FloatType> && !std::is_same_v<ExprType, FloatLiteral>) ||
-                    (std::is_same_v<TypeType, BooleanType> && !std::is_same_v<ExprType, BooleanLiteral>)
-                    ) {
+                    if (!exprType.has_value()) {
+                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received a non-matching value.";
+                        hint = "Either change the type of the variable or change the value to type '" + typeString + "'.";
+                    } else {
+                        std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
+                            return ptr->toString();
+                        }, exprType.value());
+
+                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.";
+                        hint = "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.";
+                    }
+
                     this->errors.push_back(SemerError(
                         SemerErrorType::TYPE_ERROR,
                         SemerErrorLevel::ERROR,
                         n.metadata,
                         this->sourceCode,
-                        "'" + n.identifier + "' is defined as a '" + typeString + "' but received a non-matching value.",
-                        "Either change the type of the variable or change the value to a '" + typeString + "'."
+                        message,
+                        hint
                     ));
                 }
 
@@ -158,28 +215,36 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
             auto node = scope.find(n.identifier);
 
             std::visit([&](auto&& type, const auto& expr) {
-                using TypeType = std::decay_t<decltype(*type)>;
-                using ExprType = std::decay_t<decltype(expr)>;
+                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr);
 
-                std::string typeString = type->toString();
+                if (!exprType.has_value() || !type->compare(exprType.value())) {
+                    std::string typeString = type->toString();
+                    std::string message, hint;
 
-                if constexpr ((std::is_same_v<TypeType, StringType> && !std::is_same_v<ExprType, StringLiteral>) ||
-                    (std::is_same_v<TypeType, IntegerType> && !std::is_same_v<ExprType, IntLiteral>) ||
-                    (std::is_same_v<TypeType, FloatType> && !std::is_same_v<ExprType, FloatLiteral>) ||
-                    (std::is_same_v<TypeType, BooleanType> && !std::is_same_v<ExprType, BooleanLiteral>)
-                    ) {
+                    if (!exprType.has_value()) {
+                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received a non-matching value.";
+                        hint = "Either change the type of the variable or change the value to type '" + typeString + "'.";
+                    } else {
+                        std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
+                            return ptr->toString();
+                        }, exprType.value());
+
+                        message = "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.";
+                        hint = "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.";
+                    }
+
                     this->errors.push_back(SemerError(
                         SemerErrorType::TYPE_ERROR,
                         SemerErrorLevel::ERROR,
                         n.metadata,
                         this->sourceCode,
-                        "'" + n.identifier + "' is defined as a '" + typeString + "' but received a non-matching value.",
-                        "Either change the type of the variable or change the value to a '" + typeString + "'."
+                        message,
+                        hint
                     ));
                 }
 
                 this->analyzeExpression(expr, scope);
-            }, node->type, *n.value.value());
+            }, (*node).type, *n.value.value());
         }
 
         this->analyzeExpression(n.value, scope);
