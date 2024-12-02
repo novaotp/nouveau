@@ -58,6 +58,35 @@ private:
     /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
     std::optional<NodeType> resolveExpressionReturnType(Expression expr, Scope& scope);
 
+    constexpr bool isLiteral(const Expression& expr) const {
+        using ExprType = std::decay_t<decltype(expr)>;
+
+        if constexpr (
+            std::is_same_v<ExprType, StringLiteral> ||
+            std::is_same_v<ExprType, IntLiteral> ||
+            std::is_same_v<ExprType, FloatLiteral> ||
+            std::is_same_v<ExprType, BooleanLiteral>
+            ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// @brief Checks if the given expression is either an `IntegerLiteral` or a `FloatLiteral`.
+    constexpr bool isNumber(const Expression& expr) const {
+        using ExprType = std::decay_t<decltype(expr)>;
+
+        if constexpr (
+            std::is_same_v<ExprType, IntLiteral> ||
+            std::is_same_v<ExprType, FloatLiteral>
+            ) {
+            return true;
+        }
+
+        return false;
+    }
+
     template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
 
