@@ -150,9 +150,7 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
 template <typename T>
 void Semer::analyzeExpression(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, Identifier>) {
-        auto node = scope.find(n.name);
-
-        if (node == nullptr) {
+        if (scope.find(n.name) == nullptr) {
             this->errors.push_back(SemerError(
                 SemerErrorType::SYNTAX_ERROR,
                 SemerErrorLevel::ERROR,
@@ -165,13 +163,66 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
     } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
         this->analyzeExpression(*n.expression, scope);
     } else if constexpr (std::is_same_v<T, BinaryOperation>) {
-        // TODO
-        // * Check if the left is a literal
-        // * Yes -> check right
-        // * No -> analyze the left
+        std::visit([&](const auto& left, const auto& right) {
+            using LeftType = std::decay_t<decltype(left)>;
+            using RightType = std::decay_t<decltype(right)>;
 
-        this->analyzeExpression(*n.lhs, scope);
-        this->analyzeExpression(*n.rhs, scope);
+            if constexpr (this->isLiteral(left) && this->isLiteral(right)) {
+                if constexpr (std::is_same_v<LeftType, StringLiteral> &&
+                    std::is_same_v<RightType, StringLiteral> &&
+                    (n.op == "-" || n.op == "*" || n.op == "/" || n.op == "%")
+                    ) {
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::SYNTAX_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "Cannot perform '" + n.op + "' operation on strings.",
+                        "Please use a valid operator for strings."
+                    ));
+                } else if constexpr (
+                    (std::is_same_v<LeftType, StringLiteral>) &&
+                    !(n.op == "&&" || n.op == "||")
+                    ) {
+                    // * Strings can only perform '&&' and '||' operations with other types
+
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::SYNTAX_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "Can only perform '&&' and '||' operations between string and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                        "Please use a valid operator for strings."
+                    ));
+                } else if constexpr (
+                    this->isNumber(left) &&
+                    !this->isNumber(right) && // * Numbers can perform any operations with other numbers
+                    !(n.op == "&&" || n.op == "||")
+                    ) {
+                    // * Numbers can only perform '&&' and '||' operations with other types
+
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::SYNTAX_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "Can only perform '&&' and '||' operations between number and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                        "Please use a valid operator for numbers."
+                    ));
+                } else if constexpr (std::is_same_v<LeftType, BooleanLiteral> && !(op == "&&" || op == "||")) {
+                    // * Booleans can only perform '&&' and '||' operations with booleans and other types
+
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::SYNTAX_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "Can only perform '&&' and '||' operations between bool and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                        "Please use a valid operator for booleans."
+                    ));
+                }
+            }
+        }, *n.lhs, *n.rhs);
     }
 }
 
