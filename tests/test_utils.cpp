@@ -6,7 +6,7 @@
 TEST_CASE("Files can be read", "[file]") {
     SECTION("Reading files") {
         SECTION("Reading the contents of an existing file") {
-            std::string contents = readFile("../tests/sample_code/arithmetic.nv");
+            std::string contents = readFile("../tests/sample_code/test_utils.nv");
 
             REQUIRE(contents == "1 + 2;\n");
         }
@@ -14,7 +14,7 @@ TEST_CASE("Files can be read", "[file]") {
         SECTION("Throws an error for a missing file") {
             bool hasSucceeded = true;
             try {
-                std::string contents = readFile("./tests/sample_code/arithmetic1.nv");
+                std::string contents = readFile("./this/file/does/not/exist.nv");
             } catch (...) {
                 hasSucceeded = false;
             }
@@ -68,10 +68,10 @@ TEST_CASE("Files can be read", "[file]") {
          * * See https://stackoverflow.com/a/26032303
          */
 
-         /**
-          * ? Why static_cast<int>
-          * * Because parseCommandLineArguments expects an int (argc), but cstrings.size() returns a size_t.
-          */
+        /**
+         * ? Why static_cast<int>
+         * * Because parseCommandLineArguments expects an int (argc), but cstrings.size() returns a size_t.
+         */
 
         SECTION("No arguments returns an empty map") {
             std::vector<std::string> strings = { "nv" };

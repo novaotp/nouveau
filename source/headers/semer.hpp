@@ -58,6 +58,18 @@ private:
     /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
     std::optional<NodeType> resolveExpressionReturnType(Expression expr, Scope& scope);
 
+    std::string resolveExpressionReturnTypeString(Expression expr, Scope& scope);
+
+    /* /// @brief Checks if the given type is either an `IntegerType` or a `FloatType`.
+    static constexpr bool isNumberType(const NodeType& type) {
+        return std::visit([](const auto& t) -> bool {
+            return t->compare(std::make_shared<IntegerType>()) || t->compare(std::make_shared<FloatType>());
+        }, type);
+    } */
+
+    template <typename T>
+    void analyzeBinaryOperation(const T& n, Scope& scope);
+
     template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
 
