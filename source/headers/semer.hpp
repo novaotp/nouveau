@@ -66,7 +66,7 @@ private:
             std::is_same_v<ExprType, IntLiteral> ||
             std::is_same_v<ExprType, FloatLiteral> ||
             std::is_same_v<ExprType, BooleanLiteral>
-            ) {
+        ) {
             return true;
         }
 
@@ -80,22 +80,12 @@ private:
         if constexpr (
             std::is_same_v<ExprType, IntLiteral> ||
             std::is_same_v<ExprType, FloatLiteral>
-            ) {
+        ) {
             return true;
         }
 
         return false;
     }
-
-    /// @brief Checks if the given type is either an `IntegerType` or a `FloatType`.
-    constexpr bool isNumberType(const NodeType& type) const {
-        return std::visit([](const auto& t) -> bool {
-            return t->compare(std::make_shared<IntegerType>()) || t->compare(std::make_shared<FloatType>());
-        }, type);
-    }
-
-    template <typename T>
-    void analyzeBinaryOperation(const T& n, Scope& scope);
 
     template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
