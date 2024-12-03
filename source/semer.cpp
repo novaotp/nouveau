@@ -178,7 +178,7 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
 template <typename T>
 void Semer::analyzeStatement(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, VariableDeclaration>) {
-        if (scope.find(n.identifier) == nullptr) {
+        if (scope.find(n.identifier) != nullptr) {
             this->errors.push_back(SemerError(
                 SemerErrorType::SYNTAX_ERROR,
                 SemerErrorLevel::ERROR,
