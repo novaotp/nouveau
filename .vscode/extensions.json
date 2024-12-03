@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "chiehyu.vscode-astyle",
+        "jeff-hykin.better-cpp-syntax",
+        "aaron-bond.better-comments",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cmake-tools",
+        "usernamehw.errorlens"
+    ]
+}
