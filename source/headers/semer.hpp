@@ -95,6 +95,9 @@ private:
     }
 
     template <typename T>
+    void analyzeBinaryOperation(const T& n, Scope& scope);
+
+    template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
 
     template <typename T>
