@@ -6,11 +6,13 @@
 #include "token.hpp"
 
 class Lexer {
-    private:
+private:
     size_t index = 0;
     size_t column = 1;
     size_t line = 1;
     std::string sourceCode;
+
+    bool isValidIndex(size_t i);
 
     /// @brief Advances the current column by 1 and returns the previous column.
     /// @param n The number of column to advance. Defaults to 1.
@@ -27,9 +29,9 @@ class Lexer {
     char getNextChar();
     bool isArithmeticOperator(char op);
 
-    public:
-    Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
-    ~Lexer() {};
+public:
+    Lexer(std::string sourceCode);
+    ~Lexer();
 
     /// @brief Transforms a given source code to an array of tokens.
     /// @return The array of tokens.

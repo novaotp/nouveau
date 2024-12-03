@@ -5,6 +5,9 @@
 #include "utils.hpp"
 #include "parser.hpp"
 
+Parser::Parser(std::string sourceCode, std::vector<Token> tokens) : sourceCode(sourceCode), tokens(tokens) {};
+Parser::~Parser() {};
+
 // ! Unsafe
 NodeMetadata getExpressionMetadata(const Expression& expr) {
     NodeMetadata metadata;
@@ -59,7 +62,7 @@ const Token& Parser::expectToken(const std::vector<TokenType>& expected, std::st
         throw std::runtime_error(
             std::string("\n\tEncountered a syntax error")
             + "\n\n\t" + std::to_string(currentToken.metadata.line) + " | " + splitStringByNewline(this->sourceCode).at(currentToken.metadata.line - 1)
-            + "\n\t" + std::string(currentToken.metadata.column + 3, ' ') + std::string(currentToken.metadata.length, '~')
+            + "\n\t" + std::string(currentToken.metadata.column + 3, ' ') + RED + std::string(currentToken.metadata.length, '~')
             + GREEN + "\n\n\tExpected : " + expectedTypes
             + RED + "\n\tReceived : " + currentToken.value
             + RESET
@@ -126,11 +129,50 @@ std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpr
         case TokenType::TYPE:
             return this->parseVariableDeclaration();
         case TokenType::IDENTIFIER:
-            return this->parseVariableAssignment();
+            if (std::find(
+                tokenTypeAssignmentOperators.begin(),
+                tokenTypeAssignmentOperators.end(),
+                this->peekNextToken().type
+            ) != tokenTypeAssignmentOperators.end()) {
+                return this->parseVariableAssignment();
+            }
+
+            // * Identifier is not a variable assignment, so it must be an expression
+            return this->parseExpression();
         case TokenType::SEMI_COLON: {
             this->expectToken(TokenType::SEMI_COLON);
             return std::monostate{};
         }
+
+                                  // ? Explicitly handle cases to avoid C4061 warnings
+
+        case TokenType::STRING:
+        case TokenType::INTEGER:
+        case TokenType::FLOAT:
+        case TokenType::BOOLEAN:
+        case TokenType::ADDITION_OPERATOR:
+        case TokenType::SUBTRACTION_OPERATOR:
+        case TokenType::MULTIPLICATION_OPERATOR:
+        case TokenType::DIVISION_OPERATOR:
+        case TokenType::MODULO_OPERATOR:
+        case TokenType::ASSIGNMENT_OPERATOR:
+        case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
+        case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
+        case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
+        case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
+        case TokenType::MODULO_ASSIGNMENT_OPERATOR:
+        case TokenType::EQUAL_OPERATOR:
+        case TokenType::NOT_EQUAL_OPERATOR:
+        case TokenType::GREATER_THAN_OPERATOR:
+        case TokenType::GREATER_OR_EQUAL_OPERATOR:
+        case TokenType::LESS_THAN_OPERATOR:
+        case TokenType::LESS_OR_EQUAL_OPERATOR:
+        case TokenType::AND_OPERATOR:
+        case TokenType::OR_OPERATOR:
+        case TokenType::EXCLAMATION_MARK:
+        case TokenType::LEFT_PARENTHESIS:
+        case TokenType::RIGHT_PARENTHESIS:
+        case TokenType::END_OF_FILE:
         default:
             return this->parseExpression();
     }
@@ -351,12 +393,54 @@ Expression Parser::parsePrimitiveExpression() {
                 NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
                 currentToken.value == "true"
             );
-        case TokenType::IDENTIFIER: {
+        case TokenType::IDENTIFIER:
             return Identifier(
                 NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
                 currentToken.value
             );
+        case TokenType::LEFT_PARENTHESIS: {
+            NodePosition start = currentToken.metadata.toStartPosition();
+            Expression expression = this->parseExpression();
+            NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+
+            this->expectToken(TokenType::RIGHT_PARENTHESIS, "Did you forget to close the parenthesis ?"); // Skip the ")" token
+
+            // * Include the parentheses in the expression's metadata
+            std::visit([&start, &end](auto& node) {
+                node.metadata.start = start;
+                node.metadata.end = end;
+            }, expression);
+
+            return expression;
         }
+
+                                        // ? Explicitly handle cases to avoid C4061 warnings
+
+        case TokenType::ASSIGNMENT_OPERATOR:
+        case TokenType::ADDITION_OPERATOR:
+        case TokenType::SUBTRACTION_OPERATOR:
+        case TokenType::MULTIPLICATION_OPERATOR:
+        case TokenType::DIVISION_OPERATOR:
+        case TokenType::MODULO_OPERATOR:
+        case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
+        case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
+        case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
+        case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
+        case TokenType::MODULO_ASSIGNMENT_OPERATOR:
+        case TokenType::TYPE:
+        case TokenType::MUTABLE_KEYWORD:
+        case TokenType::SEMI_COLON:
+        case TokenType::EXCLAMATION_MARK:
+        case TokenType::AND_OPERATOR:
+        case TokenType::OR_OPERATOR:
+        case TokenType::EQUAL_OPERATOR:
+        case TokenType::NOT_EQUAL_OPERATOR:
+        case TokenType::GREATER_THAN_OPERATOR:
+        case TokenType::GREATER_OR_EQUAL_OPERATOR:
+        case TokenType::LESS_THAN_OPERATOR:
+        case TokenType::LESS_OR_EQUAL_OPERATOR:
+        case TokenType::RIGHT_PARENTHESIS:
+        case TokenType::END_OF_FILE:
         default:
             throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }

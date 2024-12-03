@@ -6,7 +6,9 @@
 #include "ast.hpp"
 
 enum SemerErrorType {
-    SEMANTIC_ERROR
+    SEMANTIC_ERROR,
+    TYPE_ERROR,
+    SYNTAX_ERROR
 };
 
 enum SemerErrorLevel {
@@ -27,17 +29,40 @@ struct SemerError {
     const std::string toString() const;
 };
 
+class Scope {
+private:
+    std::unique_ptr<Scope> parent;
+    std::map<std::string, std::shared_ptr<VariableDeclaration>> symbols;
+public:
+    Scope();
+    Scope(std::unique_ptr<Scope> parent);
+    ~Scope();
+
+    Scope(const Scope&) = delete;
+    Scope& operator=(const Scope&) = delete;
+
+    void add(std::string name, std::shared_ptr<VariableDeclaration> node);
+    const std::shared_ptr<VariableDeclaration> find(const std::string& name) const;
+};
+
 class Semer {
 private:
+    Scope rootScope = Scope();
     std::vector<SemerError> errors = {};
     const std::string& sourceCode;
     const Program& program;
 
-    template <typename T>
-    void analyzeExpression(const T& n);
+    /// @brief Resolves the return type of an expression.
+    /// @param expr The expression to resolve.
+    /// @param scope The current scope.
+    /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
+    std::optional<NodeType> resolveExpressionReturnType(Expression expr, Scope& scope);
 
     template <typename T>
-    void analyzeStatement(const T& n);
+    void analyzeExpression(const T& n, Scope& scope);
+
+    template <typename T>
+    void analyzeStatement(const T& n, Scope& scope);
 public:
     Semer(const std::string& sourceCode, const Program& program);
     ~Semer();

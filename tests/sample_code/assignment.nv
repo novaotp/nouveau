@@ -1,2 +1,4 @@
-string message;
-mut int counter;
+string message = "";
+mut int counter = 0;
+
+counter = message;

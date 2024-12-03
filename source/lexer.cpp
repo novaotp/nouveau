@@ -19,6 +19,11 @@ const std::map<std::string, TokenType> arithmeticOperatorToTokenType = {
     { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR }
 };
 
+const std::map<char, TokenType> parenthesisToTokenType = {
+    { '(', TokenType::LEFT_PARENTHESIS },
+    { ')', TokenType::RIGHT_PARENTHESIS }
+};
+
 const std::map<char, TokenType> punctuationToTokenType = {
     { ';', TokenType::SEMI_COLON },
     { '!', TokenType::EXCLAMATION_MARK }
@@ -43,6 +48,13 @@ const std::map<std::string, TokenType> keywordToTokenType = {
     { "void", TokenType::TYPE },
     { "mut", TokenType::MUTABLE_KEYWORD }
 };
+
+Lexer::Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
+Lexer::~Lexer() {};
+
+bool Lexer::isValidIndex(size_t i) {
+    return i < this->sourceCode.size();
+}
 
 size_t Lexer::advanceColumn(size_t n = 1) {
     this->column += n;
@@ -94,7 +106,7 @@ std::vector<Token> Lexer::tokenize() {
 
             this->advanceIndex();
             continue;
-        } else if (currentChar == '/' && this->getCurrentChar() == '/' && this->sourceCode[this->index + 2] == '/') {
+        } else if (currentChar == '/' && this->isValidIndex(this->index + 1) && this->getNextChar() == '/') {
             while (this->getCurrentChar() != '\n' && this->index < this->sourceCode.size()) {
                 this->advanceColumn();
                 this->advanceIndex();
@@ -138,6 +150,11 @@ std::vector<Token> Lexer::tokenize() {
             this->advanceIndex();
         } else if (currentChar == '=') {
             token.type = TokenType::ASSIGNMENT_OPERATOR;
+            token.value = currentChar;
+            token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
+            this->advanceIndex();
+        } else if (parenthesisToTokenType.find(currentChar) != parenthesisToTokenType.end()) {
+            token.type = parenthesisToTokenType.at(currentChar);
             token.value = currentChar;
             token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
             this->advanceIndex();
