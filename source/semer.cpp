@@ -397,72 +397,92 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
 
                 if (!leftReturnType.has_value() || !rightReturnType.has_value()) {
                     this->errors.push_back(SemerError(
-                        SemerErrorType::SYNTAX_ERROR,
-                        SemerErrorLevel::ERROR,
-                        n.metadata,
-                        this->sourceCode,
-                        "Cannot perform '" + n.op + "' operation on between these values.",
-                        "Please use a valid operator."
-                    ));
+                                               SemerErrorType::SYNTAX_ERROR,
+                                               SemerErrorLevel::ERROR,
+                                               n.metadata,
+                                               this->sourceCode,
+                                               "Cannot perform '" + n.op + "' operation on between these values.",
+                                               "Please use a valid operator."
+                                           ));
                 }
 
                 std::visit([&](const auto& leftType, const auto& rightType) {
                     if constexpr (leftType->compare(std::make_shared<StringType>()) &&
-                        rightType->compare(std::make_shared<StringType>()) &&
-                        (n.op == "-" || n.op == "*" || n.op == "/" || n.op == "%")
-                        ) {
+                                  rightType->compare(std::make_shared<StringType>()) &&
+                    (n.op == "-" || n.op == "*" || n.op == "/" || n.op == "%")
+                                 ) {
                         this->errors.push_back(SemerError(
-                            SemerErrorType::SYNTAX_ERROR,
-                            SemerErrorLevel::ERROR,
-                            n.metadata,
-                            this->sourceCode,
-                            "Cannot perform '" + n.op + "' operation on strings.",
-                            "Please use a valid operator for strings."
-                        ));
+                                                   SemerErrorType::SYNTAX_ERROR,
+                                                   SemerErrorLevel::ERROR,
+                                                   n.metadata,
+                                                   this->sourceCode,
+                                                   "Cannot perform '" + n.op + "' operation on strings.",
+                                                   "Please use a valid operator for strings."
+                                               ));
                     } else if constexpr (
                         leftType->compare(std::make_shared<StringType>()) &&
-                        !(n.op == "&&" || n.op == "||")
-                        ) {
+                    !(n.op == "&&" || n.op == "||")
+                    ) {
                         // * Strings can only perform '&&' and '||' operations with other types
 
                         this->errors.push_back(SemerError(
-                            SemerErrorType::SYNTAX_ERROR,
-                            SemerErrorLevel::ERROR,
-                            n.metadata,
-                            this->sourceCode,
-                            "Can only perform '&&' and '||' operations between string and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
-                            "Please use a valid operator for strings."
-                        ));
+                                                   SemerErrorType::SYNTAX_ERROR,
+                                                   SemerErrorLevel::ERROR,
+                                                   n.metadata,
+                                                   this->sourceCode,
+                                                   "Can only perform '&&' and '||' operations between string and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                                                   "Please use a valid operator for strings."
+                                               ));
                     } else if constexpr (
                         this->isNumberType(leftType) &&
                         !this->isNumberType(rightType) && // * Numbers can perform any operations with other numbers
-                        !(n.op == "&&" || n.op == "||")
-                        ) {
+                    !(n.op == "&&" || n.op == "||")
+                    ) {
                         // * Numbers can only perform '&&' and '||' operations with other types
 
                         this->errors.push_back(SemerError(
-                            SemerErrorType::SYNTAX_ERROR,
-                            SemerErrorLevel::ERROR,
-                            n.metadata,
-                            this->sourceCode,
-                            "Can only perform '&&' and '||' operations between number and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
-                            "Please use a valid operator for numbers."
-                        ));
+                                                   SemerErrorType::SYNTAX_ERROR,
+                                                   SemerErrorLevel::ERROR,
+                                                   n.metadata,
+                                                   this->sourceCode,
+                                                   "Can only perform '&&' and '||' operations between number and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                                                   "Please use a valid operator for numbers."
+                                               ));
                     } else if constexpr (leftType->compare(std::make_shared<BooleanType>()) && !(op == "&&" || op == "||")) {
                         // * Booleans can only perform '&&' and '||' operations with booleans and other types
 
                         this->errors.push_back(SemerError(
-                            SemerErrorType::SYNTAX_ERROR,
-                            SemerErrorLevel::ERROR,
-                            n.metadata,
-                            this->sourceCode,
-                            "Can only perform '&&' and '||' operations between bool and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
-                            "Please use a valid operator for booleans."
-                        ));
+                                                   SemerErrorType::SYNTAX_ERROR,
+                                                   SemerErrorLevel::ERROR,
+                                                   n.metadata,
+                                                   this->sourceCode,
+                                                   "Can only perform '&&' and '||' operations between bool and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                                                   "Please use a valid operator for booleans."
+                                               ));
                     }
                 }, leftReturnType.value(), rightReturnType.value());
             }
         }, *n.lhs, *n.rhs);
+    }
+};
+
+template <typename T>
+void Semer::analyzeExpression(const T& n, Scope& scope) {
+    if constexpr (std::is_same_v<T, Identifier>) {
+        if (scope.find(n.name) == nullptr) {
+            this->errors.push_back(SemerError(
+                                       SemerErrorType::SYNTAX_ERROR,
+                                       SemerErrorLevel::ERROR,
+                                       n.metadata,
+                                       this->sourceCode,
+                                       "'" + n.name + "' is not defined in this scope.",
+                                       "Please define it before using it."
+                                   ));
+        }
+    } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
+        this->analyzeExpression(*n.expression, scope);
+    } else if constexpr (std::is_same_v<T, BinaryOperation>) {
+        this->analyzeBinaryOperation(n, scope);
     }
 }
 
