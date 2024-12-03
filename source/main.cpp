@@ -14,18 +14,19 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     std::string sourceCode = readFile(filePath);
 
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                          std::chrono::system_clock::now().time_since_epoch()
+                                      );
 
     Lexer lexer(sourceCode);
     std::vector<Token> tokens = lexer.tokenize();
 
     std::chrono::milliseconds lexerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                             std::chrono::system_clock::now().time_since_epoch()
+                                         );
 
     Parser parser(sourceCode, tokens);
     Program program;
+
     try {
         program = parser.parse();
     } catch (const std::exception& e) {
@@ -34,8 +35,8 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     }
 
     std::chrono::milliseconds parserEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                              std::chrono::system_clock::now().time_since_epoch()
+                                          );
 
     // program.prettyPrint();
 
@@ -43,8 +44,8 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     const std::vector<SemerError>& errors = semer.analyze();
 
     std::chrono::milliseconds semerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                             std::chrono::system_clock::now().time_since_epoch()
+                                         );
 
     if (!errors.empty()) {
         for (const auto& error : errors) {
@@ -63,21 +64,26 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
         }
 
         std::cout << std::string(8, ' ') << std::string(45, '-') << "\n" << std::endl;
-        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s)" + RESET + " and " + RED + std::to_string(errorCount) + " error(s)" + RESET + ".\n" << std::endl;
+        std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(
+                      warningCount) + " warning(s)" + RESET + " and " + RED + std::to_string(
+                      errorCount) + " error(s)" + RESET + ".\n" << std::endl;
     } else {
         std::cout << GREEN << "\n\tAnalyzed source code, no errors found.\n" << RESET << std::endl;
     }
 
     std::chrono::milliseconds end = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                        std::chrono::system_clock::now().time_since_epoch()
+                                    );
 
-    if (commandLineArguments.find("--timings") != commandLineArguments.end() && commandLineArguments["--timings"] == "true") {
+    if (commandLineArguments.find("--timings") != commandLineArguments.end() &&
+    commandLineArguments["--timings"] == "true") {
         std::cout << std::string(8, ' ') << std::string(45, '-') << "\n" << std::endl;
         std::cout << "Timing Reports\n" << std::endl;
         std::cout << "\tLexer took " << std::to_string((lexerEnd - start).count()) << " ms\n" << std::flush;
-        std::cout << "\tParser took " << std::to_string((parserEnd - lexerEnd).count()) << " ms\n" << std::flush;
-        std::cout << "\tSemer took " << std::to_string((semerEnd - parserEnd).count()) << " ms\n" << std::flush;
+        std::cout << "\tParser took " << std::to_string((parserEnd - lexerEnd).count()) << " ms\n" <<
+                  std::flush;
+        std::cout << "\tSemer took " << std::to_string((semerEnd - parserEnd).count()) << " ms\n" <<
+                  std::flush;
         std::cout << "\tTotal took " << std::to_string((end - start).count()) << " ms\n" << std::flush;
     }
 
@@ -85,7 +91,8 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
 }
 
 int version() {
-    std::cout << "\n\tNouveau Compiler v" << Nouveau_VERSION_MAJOR << "." << Nouveau_VERSION_MINOR << "." << Nouveau_VERSION_PATCH << std::endl;
+    std::cout << "\n\tNouveau Compiler v" << Nouveau_VERSION_MAJOR << "." << Nouveau_VERSION_MINOR <<
+                 "." << Nouveau_VERSION_PATCH << std::endl;
 
     return 0;
 }
@@ -97,9 +104,11 @@ int help() {
     std::cout << "\tnv [options] [filename]\n" << std::endl;
 
     std::cout << "\t" << padRight("nv --help", 27) << "Prints this help." << std::endl;
-    std::cout << "\t" << padRight("nv --version", 27) << "Prints the version of the compiler." << std::endl;
+    std::cout << "\t" << padRight("nv --version",
+                                  27) << "Prints the version of the compiler." << std::endl;
     std::cout << "\t" << padRight("nv <filename>", 27) << "Compiles the specified file." << std::endl;
-    std::cout << "\t" << padRight("nv --timings <filename>", 27) << "Compiles the specified file and prints the time it took to compile." << std::endl;
+    std::cout << "\t" << padRight("nv --timings <filename>",
+                                  27) << "Compiles the specified file and prints the time it took to compile." << std::endl;
 
     std::cout << std::endl;
 

@@ -14,6 +14,7 @@ std::string readFile(const std::string& path) {
     }
 
     std::string line;
+
     while (std::getline(file, line)) {
         contents += line + '\n';
     }
@@ -63,7 +64,8 @@ std::map<std::string, std::string> parseCommandLineArguments(int argc, char** ar
     }
 
     // Add the last argument as "filename" if it's not a key-value pair
-    if (argc > 1 && std::string(argv[argc - 1]).substr(0, 2) != "--" && std::string(argv[argc - 1]).find('=') == std::string::npos) {
+    if (argc > 1 && std::string(argv[argc - 1]).substr(0, 2) != "--" &&
+    std::string(argv[argc - 1]).find('=') == std::string::npos) {
         result["filename"] = argv[argc - 1];
     }
 

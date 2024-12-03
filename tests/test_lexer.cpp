@@ -39,7 +39,8 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             { "-", TokenType::SUBTRACTION_OPERATOR },
             { "*", TokenType::MULTIPLICATION_OPERATOR },
             { "/", TokenType::DIVISION_OPERATOR },
-            { "%", TokenType::MODULO_OPERATOR } };
+            { "%", TokenType::MODULO_OPERATOR }
+        };
 
         for (const auto& [sourceCode, expectedType] : operatorCases) {
             Lexer lexer = Lexer(sourceCode);
@@ -63,7 +64,8 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             "\r",
             "\v",
             "\f",
-            "  \t\n" };
+            "  \t\n"
+        };
 
         for (const std::string& sourceCode : whitespaceCases) {
             Lexer lexer = Lexer(sourceCode);
@@ -231,7 +233,8 @@ TEST_CASE("Lexer works correctly", "[lexer]") {
             { "-=", TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR },
             { "*=", TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR },
             { "/=", TokenType::DIVISION_ASSIGNMENT_OPERATOR },
-            { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR } };
+            { "%=", TokenType::MODULO_ASSIGNMENT_OPERATOR }
+        };
 
         for (const auto& [sourceCode, expectedType] : compoundAssignmentCases) {
             Lexer lexer = Lexer(sourceCode);

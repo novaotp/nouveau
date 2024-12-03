@@ -13,12 +13,12 @@ struct FloatType;
 struct BooleanType;
 
 // ? Might want to find a better name
-using NodeType = std::variant<
-    std::shared_ptr<StringType>,
-    std::shared_ptr<IntegerType>,
-    std::shared_ptr<FloatType>,
-    std::shared_ptr<BooleanType>
->;
+using NodeType = std::variant <
+                 std::shared_ptr<StringType>,
+                 std::shared_ptr<IntegerType>,
+                 std::shared_ptr<FloatType>,
+                 std::shared_ptr<BooleanType>
+                 >;
 
 /** The base type for a type. */
 struct Type {
@@ -125,15 +125,15 @@ struct Identifier {
 struct LogicalNotOperation;
 struct BinaryOperation;
 
-using Expression = std::variant<
-    BinaryOperation,
-    LogicalNotOperation,
-    Identifier,
-    StringLiteral,
-    IntLiteral,
-    FloatLiteral,
-    BooleanLiteral
->;
+using Expression = std::variant <
+                   BinaryOperation,
+                   LogicalNotOperation,
+                   Identifier,
+                   StringLiteral,
+                   IntLiteral,
+                   FloatLiteral,
+                   BooleanLiteral
+                   >;
 
 struct LogicalNotOperation {
     NodeMetadata metadata;
@@ -148,7 +148,8 @@ struct BinaryOperation {
     std::string op;
     std::shared_ptr<Expression> rhs;
 
-    BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right);
+    BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op,
+                    std::shared_ptr<Expression> right);
 };
 
 struct VariableDeclaration {
@@ -156,14 +157,14 @@ struct VariableDeclaration {
     bool isMutable;
     NodeType type;
     std::string identifier;
-    std::optional<std::shared_ptr<Expression>> value;
+    std::optional<std::shared_ptr<Expression >> value;
 
     VariableDeclaration(
         NodeMetadata metadata,
         bool isMutable,
         NodeType type,
         const std::string& identifier,
-        std::optional<std::shared_ptr<Expression>> value
+        std::optional<std::shared_ptr<Expression >> value
     );
 };
 
@@ -171,23 +172,23 @@ struct VariableAssignment {
     NodeMetadata metadata;
     std::string identifier;
     std::string op;
-    std::optional<std::shared_ptr<Expression>> value;
+    std::optional<std::shared_ptr<Expression >> value;
 
     VariableAssignment(
         NodeMetadata metadata,
         const std::string& identifier,
         const std::string& op,
-        std::optional<std::shared_ptr<Expression>> value
+        std::optional<std::shared_ptr<Expression >> value
     );
 };
 
-using Statement = std::variant<
-    VariableDeclaration,
-    VariableAssignment
->;
+using Statement = std::variant <
+                  VariableDeclaration,
+                  VariableAssignment
+                  >;
 
 struct Program {
-    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;
+    std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement >>> body;
 
     Program();
 
