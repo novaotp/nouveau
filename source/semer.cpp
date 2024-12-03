@@ -320,6 +320,11 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
             using LeftType = std::decay_t<decltype(left)>;
             using RightType = std::decay_t<decltype(right)>;
 
+            // TODO : Need to check if the sides are identifiers or not
+            // TODO : If yes, we need to check if they are defined or not
+            // TODO : Then, we need to retrieve the type of the identifier
+            // TODO : And finally, use the variable's type to check if the operation is valid
+
             if constexpr (this->isLiteral(left) && this->isLiteral(right)) {
                 if constexpr (std::is_same_v<LeftType, StringLiteral> &&
                               std::is_same_v<RightType, StringLiteral> &&
@@ -374,6 +379,88 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
                                                "Please use a valid operator for booleans."
                                            ));
                 }
+            } else {
+                // * If one of the sides is not a literal, we need to check to inspect the side.
+
+                if (!this->isLiteral(left)) {
+                    this->analyzeExpression(left, scope);
+                }
+
+                if (!this->isLiteral(right)) {
+                    this->analyzeExpression(right, scope);
+                }
+
+                // * Validate the combination of types
+
+                std::optional<NodeType> leftReturnType = this->resolveExpressionReturnType(left, scope);
+                std::optional<NodeType> rightReturnType = this->resolveExpressionReturnType(right, scope);
+
+                if (!leftReturnType.has_value() || !rightReturnType.has_value()) {
+                    this->errors.push_back(SemerError(
+                        SemerErrorType::SYNTAX_ERROR,
+                        SemerErrorLevel::ERROR,
+                        n.metadata,
+                        this->sourceCode,
+                        "Cannot perform '" + n.op + "' operation on between these values.",
+                        "Please use a valid operator."
+                    ));
+                }
+
+                std::visit([&](const auto& leftType, const auto& rightType) {
+                    if constexpr (leftType->compare(std::make_shared<StringType>()) &&
+                        rightType->compare(std::make_shared<StringType>()) &&
+                        (n.op == "-" || n.op == "*" || n.op == "/" || n.op == "%")
+                        ) {
+                        this->errors.push_back(SemerError(
+                            SemerErrorType::SYNTAX_ERROR,
+                            SemerErrorLevel::ERROR,
+                            n.metadata,
+                            this->sourceCode,
+                            "Cannot perform '" + n.op + "' operation on strings.",
+                            "Please use a valid operator for strings."
+                        ));
+                    } else if constexpr (
+                        leftType->compare(std::make_shared<StringType>()) &&
+                        !(n.op == "&&" || n.op == "||")
+                        ) {
+                        // * Strings can only perform '&&' and '||' operations with other types
+
+                        this->errors.push_back(SemerError(
+                            SemerErrorType::SYNTAX_ERROR,
+                            SemerErrorLevel::ERROR,
+                            n.metadata,
+                            this->sourceCode,
+                            "Can only perform '&&' and '||' operations between string and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                            "Please use a valid operator for strings."
+                        ));
+                    } else if constexpr (
+                        this->isNumberType(leftType) &&
+                        !this->isNumberType(rightType) && // * Numbers can perform any operations with other numbers
+                        !(n.op == "&&" || n.op == "||")
+                        ) {
+                        // * Numbers can only perform '&&' and '||' operations with other types
+
+                        this->errors.push_back(SemerError(
+                            SemerErrorType::SYNTAX_ERROR,
+                            SemerErrorLevel::ERROR,
+                            n.metadata,
+                            this->sourceCode,
+                            "Can only perform '&&' and '||' operations between number and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                            "Please use a valid operator for numbers."
+                        ));
+                    } else if constexpr (leftType->compare(std::make_shared<BooleanType>()) && !(op == "&&" || op == "||")) {
+                        // * Booleans can only perform '&&' and '||' operations with booleans and other types
+
+                        this->errors.push_back(SemerError(
+                            SemerErrorType::SYNTAX_ERROR,
+                            SemerErrorLevel::ERROR,
+                            n.metadata,
+                            this->sourceCode,
+                            "Can only perform '&&' and '||' operations between bool and '" + this->resolveExpressionReturnType(right, scope).value()->toString() + "'.",
+                            "Please use a valid operator for booleans."
+                        ));
+                    }
+                }, leftReturnType.value(), rightReturnType.value());
             }
         }, *n.lhs, *n.rhs);
     }
