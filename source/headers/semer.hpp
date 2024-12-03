@@ -87,6 +87,13 @@ private:
         return false;
     }
 
+    /// @brief Checks if the given type is either an `IntegerType` or a `FloatType`.
+    constexpr bool isNumberType(const NodeType& type) const {
+        return std::visit([](const auto& t) -> bool {
+            return t->compare(std::make_shared<IntegerType>()) || t->compare(std::make_shared<FloatType>());
+        }, type);
+    }
+
     template <typename T>
     void analyzeExpression(const T& n, Scope& scope);
 
