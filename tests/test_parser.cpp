@@ -18,9 +18,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<StringLiteral>(*expressionPtr));
 
         StringLiteral stringLiteral = std::get<StringLiteral>(*expressionPtr);
@@ -43,9 +43,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<IntLiteral>(*expressionPtr));
 
         IntLiteral intLiteral = std::get<IntLiteral>(*expressionPtr);
@@ -68,9 +68,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<FloatLiteral>(*expressionPtr));
 
         FloatLiteral floatLiteral = std::get<FloatLiteral>(*expressionPtr);
@@ -93,9 +93,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BooleanLiteral>(*expressionPtr));
 
         BooleanLiteral booleanLiteral = std::get<BooleanLiteral>(*expressionPtr);
@@ -118,9 +118,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
         BinaryOperation arithmeticOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
 
@@ -155,9 +155,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         // Top-level ((420 + (69 * 3.14)) - 7)
@@ -181,7 +181,8 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         // Right side of the "+" (69 * 3.14)
         REQUIRE(std::holds_alternative<BinaryOperation>(*additiveOperation.rhs));
-        BinaryOperation multiplicativeOperation = std::move(std::get<BinaryOperation>(*additiveOperation.rhs));
+        BinaryOperation multiplicativeOperation = std::move(std::get<BinaryOperation>
+                                                            (*additiveOperation.rhs));
         REQUIRE(multiplicativeOperation.op == "*");
 
         // Left side of the "*" (69)
@@ -211,9 +212,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         // Top-level ((420 + 69) * (3.14 - 7))
@@ -267,9 +268,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
         BinaryOperation comparisonOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
 
@@ -304,9 +305,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<LogicalNotOperation>(*expressionPtr));
 
         LogicalNotOperation notOperation = std::move(std::get<LogicalNotOperation>(*expressionPtr));
@@ -332,9 +333,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         BinaryOperation andOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
@@ -368,9 +369,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body[0];
-        REQUIRE(std::holds_alternative<std::shared_ptr<Expression>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Expression >> (firstElement));
 
-        auto& expressionPtr = std::get<std::shared_ptr<Expression>>(firstElement);
+        auto& expressionPtr = std::get<std::shared_ptr<Expression >> (firstElement);
         REQUIRE(std::holds_alternative<BinaryOperation>(*expressionPtr));
 
         BinaryOperation orOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
@@ -404,16 +405,16 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body.at(0);
-        REQUIRE(std::holds_alternative<std::shared_ptr<Statement>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Statement >> (firstElement));
 
-        auto& statement = std::get<std::shared_ptr<Statement>>(firstElement);
+        auto& statement = std::get<std::shared_ptr<Statement >> (firstElement);
         REQUIRE(std::holds_alternative<VariableDeclaration>(*statement));
 
         VariableDeclaration variableDeclaration = std::move(std::get<VariableDeclaration>(*statement));
 
         REQUIRE(variableDeclaration.isMutable == false);
 
-        std::visit([](const auto& typePtr) {
+        std::visit([](const auto & typePtr) {
             REQUIRE(typePtr->compare(std::make_shared<StringType>()) == true);
         }, variableDeclaration.type);
 
@@ -443,9 +444,9 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(program.body.size() == 1);
 
         auto& firstElement = program.body.at(0);
-        REQUIRE(std::holds_alternative<std::shared_ptr<Statement>>(firstElement));
+        REQUIRE(std::holds_alternative<std::shared_ptr<Statement >> (firstElement));
 
-        auto& statement = std::get<std::shared_ptr<Statement>>(firstElement);
+        auto& statement = std::get<std::shared_ptr<Statement >> (firstElement);
         REQUIRE(std::holds_alternative<VariableAssignment>(*statement));
 
         VariableAssignment variableAssignment = std::move(std::get<VariableAssignment>(*statement));

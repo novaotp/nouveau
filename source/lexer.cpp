@@ -50,6 +50,7 @@ const std::map<std::string, TokenType> keywordToTokenType = {
 };
 
 Lexer::Lexer(std::string sourceCode) : sourceCode(sourceCode) {};
+
 Lexer::~Lexer() {};
 
 bool Lexer::isValidIndex(size_t i) {
@@ -91,14 +92,17 @@ std::vector<Token> Lexer::tokenize() {
         char currentChar = this->getCurrentChar();
 
         Token token;
+
         if (isspace(currentChar)) {
             switch (currentChar) {
                 case '\n':
                     this->advanceLine();
                     break;
+
                 case '\t':
                     this->advanceColumn(TAB_SIZE);
                     break;
+
                 default:
                     this->advanceColumn();
                     break;
@@ -106,14 +110,16 @@ std::vector<Token> Lexer::tokenize() {
 
             this->advanceIndex();
             continue;
-        } else if (currentChar == '/' && this->isValidIndex(this->index + 1) && this->getNextChar() == '/') {
+        } else if (currentChar == '/' && this->isValidIndex(this->index + 1) &&
+        this->getNextChar() == '/') {
             while (this->getCurrentChar() != '\n' && this->index < this->sourceCode.size()) {
                 this->advanceColumn();
                 this->advanceIndex();
             }
 
             continue;
-        } else if ((((currentChar == '=') || (currentChar == '!')) && (this->getNextChar() == '=')) || currentChar == '>' || currentChar == '<') {
+        } else if ((((currentChar == '=') || (currentChar == '!')) && (this->getNextChar() == '=')) ||
+        currentChar == '>' || currentChar == '<') {
             std::string op = std::string(1, this->getCurrentChar()) + std::string(1, this->getNextChar());
 
             if (comparisonOperatorToTokenType.find(op) != comparisonOperatorToTokenType.end()) {
@@ -122,13 +128,15 @@ std::vector<Token> Lexer::tokenize() {
                 token.metadata = TokenMetadata(this->advanceColumn(), this->line, 2);
                 this->advanceColumn();
                 this->advanceIndex(2);
-            } else if (comparisonOperatorToTokenType.find(std::string(1, currentChar)) != comparisonOperatorToTokenType.end()) {
+            } else if (comparisonOperatorToTokenType.find(std::string(1,
+                                                                      currentChar)) != comparisonOperatorToTokenType.end()) {
                 token.type = comparisonOperatorToTokenType.at(std::string(1, currentChar));
                 token.value = std::string(1, currentChar);
                 token.metadata = TokenMetadata(this->advanceColumn(), this->line, 1);
                 this->advanceIndex();
             }
-        } else if ((currentChar == '&' && this->getNextChar() == '&') || (currentChar == '|' && this->getNextChar() == '|')) {
+        } else if ((currentChar == '&' && this->getNextChar() == '&') || (currentChar == '|' &&
+        this->getNextChar() == '|')) {
             if (currentChar == '&') {
                 token.type = TokenType::AND_OPERATOR;
                 token.value = "&&";
@@ -236,13 +244,15 @@ std::vector<Token> Lexer::tokenize() {
                 token.type = TokenType::IDENTIFIER;
             }
         } else {
-            throw std::runtime_error("Error: Unknown character encountered <" + std::string(1, currentChar) + ">");
+            throw std::runtime_error("Error: Unknown character encountered <" + std::string(1,
+                                     currentChar) + ">");
         }
 
         tokens.push_back(token);
     }
 
-    tokens.push_back(Token(TokenType::END_OF_FILE, "", TokenMetadata(this->advanceColumn(), this->line, 0)));
+    tokens.push_back(Token(TokenType::END_OF_FILE, "", TokenMetadata(this->advanceColumn(), this->line,
+                           0)));
 
     return tokens;
 }

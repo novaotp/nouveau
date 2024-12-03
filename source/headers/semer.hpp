@@ -24,93 +24,93 @@ struct SemerError {
     std::string message;
     std::string hint;
 
-    SemerError(SemerErrorType type, SemerErrorLevel level, NodeMetadata metadata, const std::string& sourceCode, std::string message, std::string hint);
+    SemerError(SemerErrorType type, SemerErrorLevel level, NodeMetadata metadata,
+               const std::string& sourceCode, std::string message, std::string hint);
 
     const std::string toString() const;
 };
 
 class Scope {
-private:
-    std::unique_ptr<Scope> parent;
-    std::map<std::string, std::shared_ptr<VariableDeclaration>> symbols;
-public:
-    Scope();
-    Scope(std::unique_ptr<Scope> parent);
-    ~Scope();
+    private:
+        std::unique_ptr<Scope> parent;
+        std::map<std::string, std::shared_ptr<VariableDeclaration >> symbols;
+    public:
+        Scope();
+        Scope(std::unique_ptr<Scope> parent);
+        ~Scope();
 
-    Scope(const Scope&) = delete;
-    Scope& operator=(const Scope&) = delete;
+        Scope(const Scope&) = delete;
+        Scope& operator=(const Scope&) = delete;
 
-    void add(std::string name, std::shared_ptr<VariableDeclaration> node);
-    const std::shared_ptr<VariableDeclaration> find(const std::string& name) const;
+        void add(std::string name, std::shared_ptr<VariableDeclaration> node);
+        const std::shared_ptr<VariableDeclaration> find(const std::string& name) const;
 };
 
 class Semer {
-private:
-    Scope rootScope = Scope();
-    std::vector<SemerError> errors = {};
-    const std::string& sourceCode;
-    const Program& program;
+    private:
+        Scope rootScope = Scope();
+        std::vector<SemerError> errors = {};
+        const std::string& sourceCode;
+        const Program& program;
 
-    /// @brief Resolves the return type of an expression.
-    /// @param expr The expression to resolve.
-    /// @param scope The current scope.
-    /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
-    std::optional<NodeType> resolveExpressionReturnType(Expression expr, Scope& scope);
+        /// @brief Resolves the return type of an expression.
+        /// @param expr The expression to resolve.
+        /// @param scope The current scope.
+        /// @return A `NodeType` if the expression has a valid return type, otherwise `std::nullopt`.
+        std::optional<NodeType> resolveExpressionReturnType(Expression expr, Scope& scope);
 
-    constexpr bool isLiteral(const Expression& expr) const {
-        using ExprType = std::decay_t<decltype(expr)>;
+        constexpr bool isLiteral(const Expression& expr) const {
+            using ExprType = std::decay_t<decltype(expr)>;
 
-        if constexpr (
-            std::is_same_v<ExprType, StringLiteral> ||
-            std::is_same_v<ExprType, IntLiteral> ||
-            std::is_same_v<ExprType, FloatLiteral> ||
-            std::is_same_v<ExprType, BooleanLiteral>
+            if constexpr(
+                std::is_same_v<ExprType, StringLiteral> ||
+                std::is_same_v<ExprType, IntLiteral> ||
+                std::is_same_v<ExprType, FloatLiteral> ||
+                std::is_same_v<ExprType, BooleanLiteral>
             ) {
-            return true;
+                return true;
+            }
+
+            return false;
         }
 
-        return false;
-    }
+        /// @brief Checks if the given expression is either an `IntegerLiteral` or a `FloatLiteral`.
+        constexpr bool isNumber(const Expression& expr) const {
+            using ExprType = std::decay_t<decltype(expr)>;
 
-    /// @brief Checks if the given expression is either an `IntegerLiteral` or a `FloatLiteral`.
-    constexpr bool isNumber(const Expression& expr) const {
-        using ExprType = std::decay_t<decltype(expr)>;
-
-        if constexpr (
-            std::is_same_v<ExprType, IntLiteral> ||
-            std::is_same_v<ExprType, FloatLiteral>
+            if constexpr(
+                std::is_same_v<ExprType, IntLiteral> ||
+                std::is_same_v<ExprType, FloatLiteral>
             ) {
-            return true;
+                return true;
+            }
+
+            return false;
         }
 
-        return false;
-    }
+        /// @brief Checks if the given type is either an `IntegerType` or a `FloatType`.
+        constexpr bool isNumberType(const NodeType& type) const {
+            return std::visit([](const auto & t) -> bool {
+                return t->compare(std::make_shared<IntegerType>()) || t->compare(std::make_shared<FloatType>());
+            }, type);
+        }
 
-    /// @brief Checks if the given type is either an `IntegerType` or a `FloatType`.
-    constexpr bool isNumberType(const NodeType& type) const {
-        return std::visit([](const auto& t) -> bool {
-            return t->compare(std::make_shared<IntegerType>()) || t->compare(std::make_shared<FloatType>());
-        }, type);
-    }
+        template <typename T>
+        void analyzeBinaryOperation(const T& n, Scope& scope);
 
-    template <typename T>
-    void analyzeBinaryOperation(const T& n, Scope& scope);
+        template <typename T>
+        void analyzeExpression(const T& n, Scope& scope);
 
-    template <typename T>
-    void analyzeExpression(const T& n, Scope& scope);
+        template <typename T>
+        void analyzeStatement(const T& n, Scope& scope);
+    public:
+        Semer(const std::string& sourceCode, const Program& program);
+        ~Semer();
 
-    template <typename T>
-    void analyzeStatement(const T& n, Scope& scope);
-public:
-    Semer(const std::string& sourceCode, const Program& program);
-    ~Semer();
+        Semer(const Semer&) = delete;
+        Semer& operator=(const Semer&) = delete;
 
-    Semer(const Semer&) = delete;
-    Semer& operator=(const Semer&) = delete;
-
-    const std::vector<SemerError>& analyze();
+        const std::vector<SemerError>& analyze();
 };
-
 
 #endif // SEMER_HPP
