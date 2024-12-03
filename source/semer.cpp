@@ -148,21 +148,8 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
 }
 
 template <typename T>
-void Semer::analyzeExpression(const T& n, Scope& scope) {
-    if constexpr (std::is_same_v<T, Identifier>) {
-        if (scope.find(n.name) == nullptr) {
-            this->errors.push_back(SemerError(
-                SemerErrorType::SYNTAX_ERROR,
-                SemerErrorLevel::ERROR,
-                n.metadata,
-                this->sourceCode,
-                "'" + n.name + "' is not defined in this scope.",
-                "Please define it before using it."
-            ));
-        }
-    } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
-        this->analyzeExpression(*n.expression, scope);
-    } else if constexpr (std::is_same_v<T, BinaryOperation>) {
+void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
+    if constexpr (std::is_same_v<T, BinaryOperation>) {
         std::visit([&](const auto& left, const auto& right) {
             using LeftType = std::decay_t<decltype(left)>;
             using RightType = std::decay_t<decltype(right)>;
@@ -310,6 +297,26 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
                 }, leftReturnType.value(), rightReturnType.value());
             }
         }, *n.lhs, *n.rhs);
+    }
+};
+
+template <typename T>
+void Semer::analyzeExpression(const T& n, Scope& scope) {
+    if constexpr (std::is_same_v<T, Identifier>) {
+        if (scope.find(n.name) == nullptr) {
+            this->errors.push_back(SemerError(
+                SemerErrorType::SYNTAX_ERROR,
+                SemerErrorLevel::ERROR,
+                n.metadata,
+                this->sourceCode,
+                "'" + n.name + "' is not defined in this scope.",
+                "Please define it before using it."
+            ));
+        }
+    } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
+        this->analyzeExpression(*n.expression, scope);
+    } else if constexpr (std::is_same_v<T, BinaryOperation>) {
+        this->analyzeBinaryOperation(n, scope);
     }
 }
 
