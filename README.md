@@ -12,51 +12,50 @@ Step-by-step instructions to get the compiler up and running.
 
 Linux / MacOS :
 
-- make
+-   make
 
 Windows :
 
-- Visual Studio with the "Desktop Development in C++" extension
+-   Visual Studio with the "Desktop Development in C++" extension
 
 ### Installation
 
 1. Clone the repository
 
-   ```bash
-   git clone https://github.com/novaotp/nouveau
-   ```
+    ```bash
+    git clone https://github.com/novaotp/nouveau
+    ```
 
 1. Build the compiler
 
-   ```bash
-   cd ./build
-   cmake .. -DBUILD_TESTS=ON
+    ```bash
+    cmake -S . -B build -DBUILD_TESTS=ON
 
-   # Linux
-   make
+    # Linux
+    make ./build
 
-   # Windows
-   cmake --build . --config Debug
-   ```
+    # Windows
+    cmake --build build --config Debug
+    ```
 
 1. Execute a file
 
-   ```bash
-   # Linux
-   ./nouveau ../path/to/your/file.nv
+    ```bash
+    # Linux
+    ./build/nouveau ../path/to/your/file.nv
 
-   # Windows
-   ./Debug/nouveau ../path/to/your/file.nv
-   ```
+    # Windows
+    ./build/Debug/nouveau ../path/to/your/file.nv
+    ```
 
 ### Testing
 
 1. Run the test suite
 
-   ```bash
-   # Linux
-   ./nouveau_tests
+    ```bash
+    # Linux
+    ./build/nouveau_tests
 
-   # Windows
-   ./Debug/nouveau_tests
-   ```
+    # Windows
+    ./build/Debug/nouveau_tests
+    ```
