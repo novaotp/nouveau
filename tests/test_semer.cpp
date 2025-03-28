@@ -112,4 +112,51 @@ TEST_CASE("Semer works correctly", "[semer]") {
             }
         }
     }
+
+    SECTION("Expressions are analyzed properly") {
+        SECTION("Identifiers that are not declared beforehand are flagged as SYNTAX ERROR") {
+            std::string sourceCode = "message = \"Hello, World!\"";
+            Lexer lexer = Lexer(sourceCode);
+            std::vector<Token> tokens = lexer.tokenize();
+
+            Parser parser(sourceCode, tokens);
+            Program program = parser.parse();
+
+            Semer semer(sourceCode, program);
+            const std::vector<SemerError>& errors = semer.analyze();
+
+            REQUIRE(errors.size() == 1);
+
+            const SemerError& error = errors.at(0);
+
+            REQUIRE(error.type == SemerErrorType::SYNTAX_ERROR);
+            REQUIRE(error.level == SemerErrorLevel::ERROR);
+        }
+
+        SECTION("Binary operations with invalid operands are flagged as TYPE ERROR") {
+            std::vector<std::string> sourceCodes = {
+                "string message = \"Hello\" + 5;",
+                "string message = \"Hello\" + true;",
+                "string message = true / 3.14;",
+            };
+
+            for (const std::string sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
+
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
+
+                Semer semer(sourceCode, program);
+                const std::vector<SemerError>& errors = semer.analyze();
+
+                REQUIRE(errors.size() == 1);
+
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::SYNTAX_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
+        }
+    }
 }

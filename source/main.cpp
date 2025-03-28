@@ -14,15 +14,15 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     std::string sourceCode = readFile(filePath);
 
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                          std::chrono::system_clock::now().time_since_epoch()
+                                      );
 
     Lexer lexer(sourceCode);
     std::vector<Token> tokens = lexer.tokenize();
 
     std::chrono::milliseconds lexerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+            std::chrono::system_clock::now().time_since_epoch()
+                                         );
 
     Parser parser(sourceCode, tokens);
     Program program;
@@ -34,8 +34,8 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     }
 
     std::chrono::milliseconds parserEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+            std::chrono::system_clock::now().time_since_epoch()
+                                          );
 
     // program.prettyPrint();
 
@@ -43,8 +43,8 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     const std::vector<SemerError>& errors = semer.analyze();
 
     std::chrono::milliseconds semerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+            std::chrono::system_clock::now().time_since_epoch()
+                                         );
 
     if (!errors.empty()) {
         for (const auto& error : errors) {
@@ -69,8 +69,8 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     }
 
     std::chrono::milliseconds end = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    );
+                                        std::chrono::system_clock::now().time_since_epoch()
+                                    );
 
     if (commandLineArguments.find("--timings") != commandLineArguments.end() && commandLineArguments["--timings"] == "true") {
         std::cout << std::string(8, ' ') << std::string(45, '-') << "\n" << std::endl;
@@ -110,7 +110,9 @@ int main(int argc, char* argv[]) {
     std::map<std::string, std::string> commandLineArguments = parseCommandLineArguments(argc, argv);
 
     if (commandLineArguments.empty()) {
-        std::cerr << RED << "\n\tError: No arguments or specified.\n" << RESET << std::endl;
+        std::cerr << RED << "\n\tError: No arguments or specified." << RESET << std::endl;
+        std::cout << "\n\tRun 'nv --help' to see what you can do with the compiler !\n" << ::std::endl;
+
         return 1;
     }
 

@@ -24,14 +24,14 @@ const std::shared_ptr<VariableDeclaration> Scope::find(const std::string& name) 
 
 std::string getSemerErrorTypeString(SemerErrorType type) {
     switch (type) {
-        case SemerErrorType::SEMANTIC_ERROR:
-            return "Semantic Error";
-        case SemerErrorType::TYPE_ERROR:
-            return "Type Error";
-        case SemerErrorType::SYNTAX_ERROR:
-            return "Syntax Error";
-        default:
-            return "Unknown Error Type";
+    case SemerErrorType::SEMANTIC_ERROR:
+        return "Semantic Error";
+    case SemerErrorType::TYPE_ERROR:
+        return "Type Error";
+    case SemerErrorType::SYNTAX_ERROR:
+        return "Syntax Error";
+    default:
+        return "Unknown Error Type";
     }
 }
 
@@ -57,8 +57,8 @@ const std::string SemerError::toString() const {
 
         if (line == this->metadata.start.line) {
             size_t length = line == this->metadata.end.line
-                ? this->metadata.end.column - this->metadata.start.column
-                : lines[line - 1].size() - this->metadata.start.column;
+                                    ? this->metadata.end.column - this->metadata.start.column
+                                    : lines[line - 1].size() - this->metadata.start.column;
 
             result += std::string(this->metadata.start.column + 3, ' ') + COLOR + std::string(length, '~') + RESET;
         } else if (line == this->metadata.end.line) {
@@ -130,9 +130,9 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
                             type = std::make_shared<IntegerType>();
                         }
                     } else if ((left->compare(std::make_shared<IntegerType>()) && right->compare(std::make_shared<FloatType>())) ||
-                        (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<IntegerType>())) ||
-                        (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<FloatType>()))
-                        ) {
+                               (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<IntegerType>())) ||
+                               (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<FloatType>()))
+                              ) {
                         type = std::make_shared<FloatType>();
                     } else if (e.op == "+" && left->compare(std::make_shared<StringType>()) && right->compare(std::make_shared<StringType>())) {
                         type = left;
@@ -147,31 +147,127 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
     }, expr);
 }
 
+std::string Semer::resolveExpressionReturnTypeString(Expression expr, Scope& scope) {
+    return std::visit([](const auto& value) -> std::string {
+        return value->toString();
+    }, this->resolveExpressionReturnType(expr, scope).value());
+}
+
+template <typename T>
+void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
+    std::visit([&](const auto& left, const auto& right) {
+        using LeftType = std::decay_t<decltype(left)>;
+        using RightType = std::decay_t<decltype(right)>;
+
+        if constexpr ((std::is_same_v<LeftType, StringLiteral> ||
+                       std::is_same_v<LeftType, IntLiteral> ||
+                       std::is_same_v<LeftType, FloatLiteral> ||
+                       std::is_same_v<LeftType, BooleanLiteral>) && (std::is_same_v<RightType, StringLiteral> ||
+                               std::is_same_v<RightType, IntLiteral> ||
+                               std::is_same_v<RightType, FloatLiteral> ||
+                               std::is_same_v<RightType, BooleanLiteral>)) {
+            if constexpr (std::is_same_v<LeftType, StringLiteral> && std::is_same_v<RightType, StringLiteral>) {
+                if (n.op == "-" || n.op == "*" || n.op == "/" || n.op == "%") {
+                    this->errors.push_back(SemerError(
+                                               SemerErrorType::SYNTAX_ERROR,
+                                               SemerErrorLevel::ERROR,
+                                               n.metadata,
+                                               this->sourceCode,
+                                               "Cannot perform '" + n.op + "' operation on strings.",
+                                               "Please use a valid operator for strings."
+                                           ));
+                }
+            } else if (std::is_same_v<LeftType, StringLiteral> && !(n.op == "&&" || n.op == "||")) {
+                // * Strings can only perform '&&' and '||' operations with other types
+
+                this->errors.push_back(SemerError(
+                                           SemerErrorType::SYNTAX_ERROR,
+                                           SemerErrorLevel::ERROR,
+                                           n.metadata,
+                                           this->sourceCode,
+                                           "Can only perform '&&' and '||' operations between 'string' and '" + this->resolveExpressionReturnTypeString(right, scope) + "'.",
+                                           "Please use a valid operator for strings."
+                                       ));
+            } else if (
+                (std::is_same_v<LeftType, IntLiteral> ||
+                 std::is_same_v<LeftType, FloatLiteral>) &&
+                !(std::is_same_v<RightType, IntLiteral> ||
+                  std::is_same_v<RightType, FloatLiteral>) && // * Numbers can perform any operations with other numbers
+            !(n.op == "&&" || n.op == "||")
+            ) {
+                // * Numbers can only perform '&&' and '||' operations with other types
+
+                this->errors.push_back(SemerError(
+                                           SemerErrorType::SYNTAX_ERROR,
+                                           SemerErrorLevel::ERROR,
+                                           n.metadata,
+                                           this->sourceCode,
+                                           "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
+                                           "Please use a valid operator for numbers."
+                                       ));
+            } else if (std::is_same_v<LeftType, BooleanLiteral> && !(n.op == "&&" || n.op == "||")) {
+                // * Booleans can only perform '&&' and '||' operations with booleans and other types
+
+                this->errors.push_back(SemerError(
+                                           SemerErrorType::SYNTAX_ERROR,
+                                           SemerErrorLevel::ERROR,
+                                           n.metadata,
+                                           this->sourceCode,
+                                           "Can only perform '&&' and '||' operations between 'bool' and '" + this->resolveExpressionReturnTypeString(right, scope) + "'.",
+                                           "Please use a valid operator for booleans."
+                                       ));
+            }
+        } else {
+            if constexpr (!(std::is_same_v<LeftType, StringLiteral> ||
+                            std::is_same_v<LeftType, IntLiteral> ||
+                            std::is_same_v<LeftType, FloatLiteral> ||
+                            std::is_same_v<LeftType, BooleanLiteral>)) {
+                this->analyzeExpression(left, scope);
+            }
+
+            if constexpr (!(std::is_same_v<RightType, StringLiteral> ||
+                            std::is_same_v<RightType, IntLiteral> ||
+                            std::is_same_v<RightType, FloatLiteral> ||
+                            std::is_same_v<RightType, BooleanLiteral>)) {
+                this->analyzeExpression(right, scope);
+            }
+
+            std::optional<NodeType> leftReturnType = this->resolveExpressionReturnType(left, scope);
+            std::optional<NodeType> rightReturnType = this->resolveExpressionReturnType(right, scope);
+
+            if (!leftReturnType.has_value() || !rightReturnType.has_value()) {
+                this->errors.push_back(SemerError(
+                                           SemerErrorType::SYNTAX_ERROR,
+                                           SemerErrorLevel::ERROR,
+                                           n.metadata,
+                                           this->sourceCode,
+                                           "Cannot perform '" + n.op + "' operation on between these values.",
+                                           "Please use a valid operator."
+                                       ));
+            }
+
+            // ? What to do next
+        }
+    }, *n.lhs, *n.rhs);
+};
+
 template <typename T>
 void Semer::analyzeExpression(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, Identifier>) {
-        auto node = scope.find(n.name);
-
-        if (node == nullptr) {
+        if (scope.find(n.name) == nullptr) {
             this->errors.push_back(SemerError(
-                SemerErrorType::SYNTAX_ERROR,
-                SemerErrorLevel::ERROR,
-                n.metadata,
-                this->sourceCode,
-                "'" + n.name + "' is not defined in this scope.",
-                "Please define it before using it."
-            ));
+                                       SemerErrorType::SYNTAX_ERROR,
+                                       SemerErrorLevel::ERROR,
+                                       n.metadata,
+                                       this->sourceCode,
+                                       "'" + n.name + "' is not defined in this scope.",
+                                       "Please define it before using it."
+                                   ));
         }
     } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
         this->analyzeExpression(*n.expression, scope);
     } else if constexpr (std::is_same_v<T, BinaryOperation>) {
-        // TODO
-        // * Check if the left is a literal
-        // * Yes -> check right
-        // * No -> analyze the left
-
-        this->analyzeExpression(*n.lhs, scope);
-        this->analyzeExpression(*n.rhs, scope);
+        this->analyzeBinaryOperation(n, scope);
     }
 }
 
@@ -180,13 +276,13 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, VariableDeclaration>) {
         if (scope.find(n.identifier) != nullptr) {
             this->errors.push_back(SemerError(
-                SemerErrorType::SYNTAX_ERROR,
-                SemerErrorLevel::ERROR,
-                n.metadata,
-                this->sourceCode,
-                "'" + n.identifier + "' is already defined in this scope.",
-                "Please choose another name or assign to it instead."
-            ));
+                                       SemerErrorType::SYNTAX_ERROR,
+                                       SemerErrorLevel::ERROR,
+                                       n.metadata,
+                                       this->sourceCode,
+                                       "'" + n.identifier + "' is already defined in this scope.",
+                                       "Please choose another name or assign to it instead."
+                                   ));
         }
 
         if (!n.value.has_value()) {
@@ -196,13 +292,13 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
             std::string word = n.isMutable ? "mutable" : "const";
 
             this->errors.push_back(SemerError(
-                SemerErrorType::SEMANTIC_ERROR,
-                SemerErrorLevel::ERROR,
-                n.metadata,
-                this->sourceCode,
-                "'" + n.identifier + "' is defined as a " + word + " variable but has no initialization value. This will result in undefined behavior.",
-                "Note that 'null' values are not supported yet."
-            ));
+                                       SemerErrorType::SEMANTIC_ERROR,
+                                       SemerErrorLevel::ERROR,
+                                       n.metadata,
+                                       this->sourceCode,
+                                       "'" + n.identifier + "' is defined as a " + word + " variable but has no initialization value. This will result in undefined behavior.",
+                                       "Note that 'null' values are not supported yet."
+                                   ));
         } else {
             std::visit([&](auto&& type, const auto& expr) {
                 std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
@@ -214,13 +310,13 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                     }, exprType.value());
 
                     this->errors.push_back(SemerError(
-                        SemerErrorType::TYPE_ERROR,
-                        SemerErrorLevel::ERROR,
-                        n.metadata,
-                        this->sourceCode,
-                        "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
-                        "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
-                    ));
+                                               SemerErrorType::TYPE_ERROR,
+                                               SemerErrorLevel::ERROR,
+                                               n.metadata,
+                                               this->sourceCode,
+                                               "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
+                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
+                                           ));
                 }
 
                 this->analyzeExpression(expr, scope);
@@ -231,13 +327,13 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
     } else if constexpr (std::is_same_v<T, VariableAssignment>) {
         if (scope.find(n.identifier) == nullptr) {
             this->errors.push_back(SemerError(
-                SemerErrorType::SYNTAX_ERROR,
-                SemerErrorLevel::ERROR,
-                n.metadata,
-                this->sourceCode,
-                "'" + n.identifier + "' is not defined in this scope.",
-                "Please define it before assigning to it."
-            ));
+                                       SemerErrorType::SYNTAX_ERROR,
+                                       SemerErrorLevel::ERROR,
+                                       n.metadata,
+                                       this->sourceCode,
+                                       "'" + n.identifier + "' is not defined in this scope.",
+                                       "Please define it before assigning to it."
+                                   ));
         } else {
             auto node = scope.find(n.identifier);
 
@@ -251,13 +347,13 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                     }, exprType.value());
 
                     this->errors.push_back(SemerError(
-                        SemerErrorType::TYPE_ERROR,
-                        SemerErrorLevel::ERROR,
-                        n.metadata,
-                        this->sourceCode,
-                        "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
-                        "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
-                    ));
+                                               SemerErrorType::TYPE_ERROR,
+                                               SemerErrorLevel::ERROR,
+                                               n.metadata,
+                                               this->sourceCode,
+                                               "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
+                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
+                                           ));
                 }
 
                 this->analyzeExpression(expr, scope);
