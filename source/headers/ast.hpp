@@ -14,11 +14,11 @@ struct BooleanType;
 
 // ? Might want to find a better name
 using NodeType = std::variant<
-    std::shared_ptr<StringType>,
-    std::shared_ptr<IntegerType>,
-    std::shared_ptr<FloatType>,
-    std::shared_ptr<BooleanType>
->;
+                 std::shared_ptr<StringType>,
+                 std::shared_ptr<IntegerType>,
+                 std::shared_ptr<FloatType>,
+                 std::shared_ptr<BooleanType>
+                 >;
 
 /** The base type for a type. */
 struct Type {
@@ -87,68 +87,87 @@ struct NodeMetadata {
     NodeMetadata(NodePosition start, NodePosition end);
 };
 
-struct StringLiteral {
+struct Node {
+    virtual ~Node() = default;
+    virtual std::string codegen() const = 0;
+};
+
+struct StringLiteral : public Node {
     NodeMetadata metadata;
     std::string value;
 
     StringLiteral(NodeMetadata metadata, std::string value);
+
+    std::string codegen() const;
 };
 
-struct IntLiteral {
+struct IntLiteral : public Node {
     NodeMetadata metadata;
     int value;
 
     IntLiteral(NodeMetadata metadata, int value);
+
+    std::string codegen() const;
 };
 
-struct FloatLiteral {
+struct FloatLiteral : public Node {
     NodeMetadata metadata;
     float value;
 
     FloatLiteral(NodeMetadata metadata, float value);
+
+    std::string codegen() const;
 };
 
-struct BooleanLiteral {
+struct BooleanLiteral : public Node {
     NodeMetadata metadata;
     bool value;
 
     BooleanLiteral(NodeMetadata metadata, bool value);
+
+    std::string codegen() const;
 };
 
-struct Identifier {
+struct Identifier : public Node {
     NodeMetadata metadata;
     std::string name;
 
     Identifier(NodeMetadata metadata, std::string name);
+
+    std::string codegen() const;
 };
 
 struct LogicalNotOperation;
 struct BinaryOperation;
 
 using Expression = std::variant<
-    BinaryOperation,
-    LogicalNotOperation,
-    Identifier,
-    StringLiteral,
-    IntLiteral,
-    FloatLiteral,
-    BooleanLiteral
->;
+                   BinaryOperation,
+                   LogicalNotOperation,
+                   Identifier,
+                   StringLiteral,
+                   IntLiteral,
+                   FloatLiteral,
+                   BooleanLiteral
+                   >;
 
-struct LogicalNotOperation {
+struct LogicalNotOperation : public Node {
     NodeMetadata metadata;
     std::shared_ptr<Expression> expression;
 
     LogicalNotOperation(NodeMetadata metadata, std::shared_ptr<Expression> expression);
+
+    std::string codegen() const;
 };
 
-struct BinaryOperation {
+struct BinaryOperation : public Node {
     NodeMetadata metadata;
     std::shared_ptr<Expression> lhs;
     std::string op;
     std::shared_ptr<Expression> rhs;
 
     BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right);
+
+    std::string codegen() const;
 };
 
 struct VariableDeclaration {
@@ -182,9 +201,9 @@ struct VariableAssignment {
 };
 
 using Statement = std::variant<
-    VariableDeclaration,
-    VariableAssignment
->;
+                  VariableDeclaration,
+                  VariableAssignment
+                  >;
 
 struct Program {
     std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;

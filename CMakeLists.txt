@@ -10,6 +10,7 @@ add_executable(nouveau
     source/semer.cpp
     source/token.cpp
     source/utils.cpp
+    source/codegen.cpp
     source/main.cpp
 )
 

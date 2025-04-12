@@ -44,15 +44,43 @@ NodePosition::NodePosition(size_t column, size_t line) : column(column), line(li
 NodeMetadata::NodeMetadata() : start(NodePosition()), end(NodePosition()) {};
 NodeMetadata::NodeMetadata(NodePosition start, NodePosition end) : start(start), end(end) {};
 
-StringLiteral::StringLiteral(NodeMetadata metadata, std::string value) : metadata(metadata), value(value) {};
-IntLiteral::IntLiteral(NodeMetadata metadata, int value) : metadata(metadata), value(value) {};
-FloatLiteral::FloatLiteral(NodeMetadata metadata, float value) : metadata(metadata), value(value) {};
-BooleanLiteral::BooleanLiteral(NodeMetadata metadata, bool value) : metadata(metadata), value(value) {};
-Identifier::Identifier(NodeMetadata metadata, std::string name) : metadata(metadata), name(name) {};
+StringLiteral::StringLiteral(NodeMetadata metadata, std::string value) : metadata(metadata), value(value) {}
+std::string StringLiteral::codegen() const {
+    return "";
+};
+
+IntLiteral::IntLiteral(NodeMetadata metadata, int value) : metadata(metadata), value(value) {}
+std::string IntLiteral::codegen() const {
+    return std::string("eax ") + std::to_string(this->value);
+};
+
+FloatLiteral::FloatLiteral(NodeMetadata metadata, float value) : metadata(metadata), value(value) {}
+std::string FloatLiteral::codegen() const {
+    return "";
+};
+
+BooleanLiteral::BooleanLiteral(NodeMetadata metadata, bool value) : metadata(metadata), value(value) {}
+std::string BooleanLiteral::codegen() const {
+    return "";
+};
+
+Identifier::Identifier(NodeMetadata metadata, std::string name) : metadata(metadata), name(name) {}
+std::string Identifier::codegen() const {
+    return "";
+};
+
 LogicalNotOperation::LogicalNotOperation(NodeMetadata metadata, std::shared_ptr<Expression> expression)
-    : metadata(metadata), expression(std::move(expression)) {};
+    : metadata(metadata), expression(std::move(expression)) {}
+std::string LogicalNotOperation::codegen() const {
+    return "";
+};
+
 BinaryOperation::BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right)
-    : metadata(metadata), lhs(std::move(left)), op(op), rhs(std::move(right)) {};
+    : metadata(metadata), lhs(std::move(left)), op(op), rhs(std::move(right)) {}
+std::string BinaryOperation::codegen() const {
+    return "";
+};
+
 VariableDeclaration::VariableDeclaration(
     NodeMetadata metadata,
     bool isMutable,
