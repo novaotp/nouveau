@@ -1,0 +1,6 @@
+int nice = 69;
+float pi = 3.14;
+string message = "Hello World!";
+
+nice = 420;
+pi = 3.14156295;

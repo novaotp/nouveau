@@ -45,40 +45,40 @@ NodeMetadata::NodeMetadata() : start(NodePosition()), end(NodePosition()) {};
 NodeMetadata::NodeMetadata(NodePosition start, NodePosition end) : start(start), end(end) {};
 
 StringLiteral::StringLiteral(NodeMetadata metadata, std::string value) : metadata(metadata), value(value) {}
-std::string StringLiteral::codegen() const {
-    return "";
+Value StringLiteral::codegen() const {
+    return Value({}, {}, {});
 };
 
 IntLiteral::IntLiteral(NodeMetadata metadata, int value) : metadata(metadata), value(value) {}
-std::string IntLiteral::codegen() const {
-    return std::string("eax ") + std::to_string(this->value);
+Value IntLiteral::codegen() const {
+    return Value({}, {}, { std::string("mov rax, ") + std::to_string(this->value) });
 };
 
 FloatLiteral::FloatLiteral(NodeMetadata metadata, float value) : metadata(metadata), value(value) {}
-std::string FloatLiteral::codegen() const {
-    return "";
+Value FloatLiteral::codegen() const {
+    return Value({}, {}, { std::string("movsd xmm0, ") + std::to_string(this->value) });
 };
 
 BooleanLiteral::BooleanLiteral(NodeMetadata metadata, bool value) : metadata(metadata), value(value) {}
-std::string BooleanLiteral::codegen() const {
-    return "";
+Value BooleanLiteral::codegen() const {
+    return Value({}, {}, {});
 };
 
 Identifier::Identifier(NodeMetadata metadata, std::string name) : metadata(metadata), name(name) {}
-std::string Identifier::codegen() const {
-    return "";
+Value Identifier::codegen() const {
+    return Value({}, {}, {});
 };
 
 LogicalNotOperation::LogicalNotOperation(NodeMetadata metadata, std::shared_ptr<Expression> expression)
     : metadata(metadata), expression(std::move(expression)) {}
-std::string LogicalNotOperation::codegen() const {
-    return "";
+Value LogicalNotOperation::codegen() const {
+    return Value({}, {}, {});
 };
 
 BinaryOperation::BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right)
     : metadata(metadata), lhs(std::move(left)), op(op), rhs(std::move(right)) {}
-std::string BinaryOperation::codegen() const {
-    return "";
+Value BinaryOperation::codegen() const {
+    return Value({}, {}, {});
 };
 
 VariableDeclaration::VariableDeclaration(
@@ -88,13 +88,91 @@ VariableDeclaration::VariableDeclaration(
     const std::string& identifier,
     std::optional<std::shared_ptr<Expression>> value = std::nullopt
 ) : metadata(metadata), isMutable(isMutable), type(type), identifier(identifier), value(std::move(value)) {};
+Value VariableDeclaration::codegen() const {
+    if (!this->isMutable && this->value.has_value()) {
+        std::string data = std::visit([&](const auto& dataType) -> std::string {
+            using DataType = std::decay_t<decltype(*dataType)>;
+
+            std::string operand;
+            if constexpr (std::is_same_v<DataType, IntegerType> || std::is_same_v<DataType, FloatType>) {
+                operand = "dq";
+            } else if constexpr (std::is_same_v<DataType, StringType>) {
+                operand = "db";
+            }
+
+            return this->identifier + std::string(" ") + operand + std::string(" ") + std::visit([&](const auto& value) -> std::string {
+                using ValueType = std::decay_t<decltype(value)>;
+
+                if constexpr (std::is_same_v<ValueType, IntLiteral> || std::is_same_v<ValueType, FloatLiteral>) {
+                    return std::to_string(value.value);
+                } else if constexpr (std::is_same_v<ValueType, StringLiteral>) {
+                    return std::string("\"") + value.value + std::string("\", 0xA")
+                    + std::string("\n\t") + this->identifier + std::string("_length equ $ - ") + this->identifier;
+                } else {
+                    return std::string("");
+                }
+            }, *(this->value.value()));
+        }, this->type);
+
+        /* std::string instructions = std::visit([&](const auto& value) -> std::string {
+            using ValueType = std::decay_t<decltype(value)>;
+
+            if constexpr (std::is_same_v<ValueType, IntLiteral>) {
+                return std::string("mov rax, [") + this->identifier + std::string("]");
+            } else if constexpr (std::is_same_v<ValueType, FloatLiteral>) {
+                return std::string("movsd xmm0, [") + this->identifier + std::string("]");
+            } else {
+                return std::string("");
+            }
+        }, *(this->value.value())); */
+
+        return Value({ data }, {}, { });
+    } else {
+        return Value({}, {}, {});
+    }
+};
+
+std::string generateTempName() {
+    static int counter = 0;
+    return "_tmp" + std::to_string(counter++);
+}
+
 VariableAssignment::VariableAssignment(
     NodeMetadata metadata,
     const std::string& identifier,
     const std::string& op,
-    std::optional<std::shared_ptr<Expression>> value = std::nullopt
+    std::shared_ptr<Expression> value
 ) : metadata(metadata), identifier(identifier), op(op), value(std::move(value)) {};
+Value VariableAssignment::codegen() const {
+    std::vector<std::string> data = {};
+    std::vector<std::string> instructions = {};
+
+    std::visit([&](const auto& value) {
+        using ValueType = std::decay_t<decltype(value)>;
+
+        std::cout << typeid(ValueType).name() << std::endl;
+
+        if constexpr (std::is_same_v<ValueType, IntLiteral>) {
+            instructions.push_back(std::string("mov qword [") + this->identifier + std::string("], ") + std::to_string(value.value));
+        }/*  else if constexpr (std::is_same_v<ValueType, FloatLiteral>) {
+            auto new_identifier = generateTempName();
+
+            std::optional<std::shared_ptr<Expression>> new_value = this->value;
+            VariableDeclaration(this->metadata, false, FloatType(), this->identifier, new_value);
+
+            instructions.push_back(std::string("movsd [") + this->identifier + std::string("], ") + std::to_string(value.value));
+        } */ else {
+
+        }
+    }, *(this->value));
+
+    return Value({}, {}, instructions);
+};
+
 Program::Program() : body{} {};
+
+Value::Value(std::vector<std::string> data, std::vector<std::string> bss, std::vector<std::string> instructions)
+    : data(data), bss(bss), instructions(instructions) {};
 
 constexpr int SPACE_COUNT = 4;
 
@@ -162,15 +240,11 @@ void printStatement(const NodeType& n, const size_t indentCount) {
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Operator: " << n.op << std::endl;
 
-        if (n.value.has_value()) {
-            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
 
-            std::visit([&indentCount](const auto& expr) {
-                printExpression(expr, indentCount + 2);
-            }, *n.value.value());
-        } else {
-            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
-        }
+        std::visit([&indentCount](const auto& expr) {
+            printExpression(expr, indentCount + 2);
+        }, *(n.value));
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;
     }

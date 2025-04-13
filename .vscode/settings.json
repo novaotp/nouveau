@@ -1,5 +1,10 @@
 {
     "files.associations": {
+        "*.page-template": "vue",
+        "*.layout-template": "vue",
+        "*.vue": "vue",
+        "*.inf": "plaintext",
+        "*.svx": "svelte",
         "xstring": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -119,7 +124,10 @@
         "*.odl": "cpp",
         "*.xsd": "cpp",
         "*.mof": "cpp",
-        "*.in": "cpp"
+        "*.in": "cpp",
+        "*.tcc": "cpp",
+        "string_view": "cpp",
+        "text_encoding": "cpp"
     },
     "[cpp]": {
         "editor.defaultFormatter": "chiehyu.vscode-astyle"
