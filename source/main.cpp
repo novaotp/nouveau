@@ -8,6 +8,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "semer.hpp"
+#include "constant_folding.hpp"
 
 int compile(std::map<std::string, std::string> commandLineArguments) {
     std::string filePath = commandLineArguments["filename"];
@@ -67,6 +68,9 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     } else {
         std::cout << GREEN << "\n\tAnalyzed source code, no errors found.\n" << RESET << std::endl;
     }
+
+    ConstantFolder constantFolder(program);
+    constantFolder.optimize().prettyPrint();
 
     std::chrono::milliseconds end = std::chrono::duration_cast<std::chrono::milliseconds>(
                                         std::chrono::system_clock::now().time_since_epoch()

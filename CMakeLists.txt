@@ -10,12 +10,14 @@ add_executable(nouveau
     source/frontend/semer.cpp
     source/frontend/token.cpp
     source/frontend/utils.cpp
+    source/backend/constant_folding.cpp
     source/main.cpp
 )
 
 configure_file(source/config.h.in "${CMAKE_BINARY_DIR}/config.h" @ONLY)
 
 target_include_directories(nouveau PRIVATE source/frontend/headers)
+target_include_directories(nouveau PRIVATE source/backend/headers)
 target_include_directories(nouveau PRIVATE "${PROJECT_BINARY_DIR}")
 
 target_compile_features(nouveau PRIVATE cxx_std_17)
@@ -46,6 +48,7 @@ if(BUILD_TESTS)
         source/frontend/semer.cpp
         source/frontend/token.cpp
         source/frontend/utils.cpp
+        source/backend/constant_folding.cpp
     )
 
     target_link_libraries(nouveau_tests PRIVATE Catch2::Catch2WithMain)
