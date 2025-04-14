@@ -15,7 +15,7 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
         ) {
             std::optional<Expression> expr;
             if (
-                (node.op == "*" && lhs.value != 0 && rhs.value != 0) &&
+                (!(node.op == "*" && (lhs.value == 0 || rhs.value == 0))) &&
                 (node.op == "/" || std::is_same_v<LType, FloatLiteral> || std::is_same_v<RType, FloatLiteral>)
             ) {
                 float value;
@@ -26,7 +26,7 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
                 } else if (node.op == "*") {
                     value = lhs.value * rhs.value;
                 } else if (node.op == "/") {
-                    value = lhs.value / rhs.value;
+                    value = float(lhs.value) / rhs.value;
                 } /* else if (node.op == "%") {
                     value = lhs.value % rhs.value;
                 } */ else {
@@ -42,8 +42,6 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
                     value = lhs.value - rhs.value;
                 } else if (node.op == "*") {
                     value = lhs.value * rhs.value;
-                } else if (node.op == "/") {
-                    value = lhs.value / rhs.value;
                 } /* else if (node.op == "%") {
                     value = lhs.value % rhs.value;
                 } */ else {
@@ -53,6 +51,7 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
                 expr = IntLiteral(node.metadata, value);
             }
 
+            this->isOptimized = false;
             return expr.value();
         } else if (
         (std::is_same_v<LType, StringLiteral> && std::is_same_v<RType, StringLiteral> && node.op == "+") ||
@@ -85,7 +84,24 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
                 expr = StringLiteral(node.metadata, buffer);
             }
 
+            this->isOptimized = false;
             return expr.value();
+        } else if constexpr (std::is_same_v<LType, BinaryOperation>) {
+            return BinaryOperation(
+                       node.metadata,
+                       std::make_shared<Expression>(this->optimizeBinaryOperation(lhs)),
+                       node.op,
+                       std::make_shared<Expression>(rhs)
+                   );
+        } else if constexpr (std::is_same_v<RType, BinaryOperation>) {
+            return BinaryOperation(
+                       node.metadata,
+                       std::make_shared<Expression>(lhs),
+                       node.op,
+                       std::make_shared<Expression>(this->optimizeBinaryOperation(rhs))
+                   );
+        } else {
+            return node;
         }
     }, *node.lhs, *node.rhs);
 };
@@ -137,28 +153,43 @@ Statement ConstantFolder::optimizeStatement(Statement node) {
 }
 
 Program ConstantFolder::optimize() {
-    for (size_t i = 0; i < this->program.body.size(); i++)
-    {
-        auto statementOrExpression = std::visit([&](const auto& node) -> std::variant<Expression, Statement> {
-            using NodeType = std::decay_t<decltype(*node)>;
+    Program oldProgram = this->program;
+    Program newProgram = Program();
+    size_t count = 1;
 
-            if constexpr (std::is_same_v<NodeType, Statement>) {
-                return this->optimizeStatement(*node);
-            } else {
-                return this->optimizeExpression(*node);
+    while (!this->isOptimized) {
+        newProgram = Program();
+        this->isOptimized = true;
+
+        for (size_t i = 0; i < oldProgram.body.size(); i++)
+        {
+            auto statementOrExpression = std::visit([&](const auto& node) -> std::variant<Expression, Statement> {
+                using NodeType = std::decay_t<decltype(*node)>;
+
+                if constexpr (std::is_same_v<NodeType, Statement>) {
+                    return this->optimizeStatement(*node);
+                } else {
+                    return this->optimizeExpression(*node);
+                }
+            }, oldProgram.body.at(i));
+
+            if (std::holds_alternative<Statement>(statementOrExpression)) {
+                newProgram.body.push_back(
+                    std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
+                );
+            } else if (std::holds_alternative<Expression>(statementOrExpression)) {
+                newProgram.body.push_back(
+                    std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
+                );
             }
-        }, this->program.body.at(i));
-
-        if (std::holds_alternative<Statement>(statementOrExpression)) {
-            this->newProgram.body.push_back(
-                std::make_shared<Statement>(std::move(std::get<Statement>(statementOrExpression)))
-            );
-        } else if (std::holds_alternative<Expression>(statementOrExpression)) {
-            this->newProgram.body.push_back(
-                std::make_shared<Expression>(std::move(std::get<Expression>(statementOrExpression)))
-            );
         }
+
+        newProgram.prettyPrint();
+        std::cout << std::to_string(count) << "_____________________" << std::endl;
+
+        oldProgram = newProgram;
+        count++;
     }
 
-    return this->newProgram;
+    return newProgram;
 };

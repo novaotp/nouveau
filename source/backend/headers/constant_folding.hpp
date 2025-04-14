@@ -5,7 +5,7 @@
 
 class ConstantFolder {
 private:
-    Program newProgram = Program();
+    bool isOptimized = false;
     Program program;
 
     Expression optimizeExpression(Expression node);
