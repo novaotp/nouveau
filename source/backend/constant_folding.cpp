@@ -10,10 +10,6 @@ void ConstantFolder::optimizeVariableDeclaration(VariableDeclaration node) {
             using ExpressionType = std::decay_t<decltype(expression)>;
 
             if constexpr (std::is_same_v<ExpressionType, BinaryOperation>) {
-                /* if (auto lhs = std::get_if<IntLiteral>(&(*expression.lhs))) {
-                    if (auto rhs = std::get_if<IntLiteral>(&(*expression.rhs)))
-                } */
-
                 std::visit([&](auto&& lhs, auto&& rhs) {
                     using LType = std::decay_t<decltype(lhs)>;
                     using RType = std::decay_t<decltype(rhs)>;
@@ -65,10 +61,44 @@ void ConstantFolder::optimizeVariableDeclaration(VariableDeclaration node) {
                         VariableDeclaration variableDeclaration(node.metadata, node.isMutable, node.type, node.identifier, std::make_shared<Expression>(expr.value()));
 
                         this->newProgram.body.push_back(std::make_shared<Statement>(std::move(variableDeclaration)));
+                    } else if (
+                    (std::is_same_v<LType, StringLiteral> && std::is_same_v<RType, StringLiteral> && expression.op == "+") ||
+                        (((std::is_same_v<LType, StringLiteral> && std::is_same_v<RType, IntLiteral>) ||
+                    (std::is_same_v<LType, IntLiteral> && std::is_same_v<RType, StringLiteral>)) && expression.op == "*")
+                    ) {
+                        // * The conditions are constexpr so that .value if inferred correctly
+                        // * Otherwise, I get C2039 errors
+
+                        std::optional<Expression> expr;
+                        if constexpr (std::is_same_v<LType, StringLiteral> && std::is_same_v<RType, StringLiteral>) {
+                            expr = StringLiteral(expression.metadata, lhs.value + rhs.value);
+                        } else {
+                            std::string str;
+                            int max;
+                            if constexpr (std::is_same_v<LType, IntLiteral> && std::is_same_v<RType, StringLiteral>) {
+                                max = lhs.value;
+                                str = rhs.value;
+                            } else if constexpr (std::is_same_v<LType, StringLiteral> && std::is_same_v<RType, IntLiteral>) {
+                                max = rhs.value;
+                                str = lhs.value;
+                            }
+
+                            std::string buffer = "";
+                            for (size_t i = 0; i < max; i++)
+                            {
+                                buffer += str;
+                            }
+
+                            expr = StringLiteral(expression.metadata, buffer);
+                        }
+
+                        VariableDeclaration variableDeclaration(node.metadata, node.isMutable, node.type, node.identifier, std::make_shared<Expression>(expr.value()));
+
+                        this->newProgram.body.push_back(std::make_shared<Statement>(std::move(variableDeclaration)));
                     }
                 }, *expression.lhs, *expression.rhs);
             }
-        }, *node.value.value());
+        }, *(node.value.value()));
     }
 };
 
