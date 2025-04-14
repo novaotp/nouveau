@@ -1,3 +1,7 @@
 int nice = 42.203 * 0;
 string message = "Hello" + " World!";
 string gabbro = "gabbro" * 5;
+
+3 * 5;
+
+"hello" + " guys";

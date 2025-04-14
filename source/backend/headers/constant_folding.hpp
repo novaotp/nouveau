@@ -8,8 +8,11 @@ private:
     Program newProgram = Program();
     Program program;
 
-    void optimizeStatement(Statement node);
-    void optimizeVariableDeclaration(VariableDeclaration node);
+    Expression optimizeExpression(Expression node);
+    Expression optimizeBinaryOperation(BinaryOperation node);
+
+    Statement optimizeStatement(Statement node);
+    Statement optimizeVariableDeclaration(VariableDeclaration node);
 
 public:
     ConstantFolder(Program program);
