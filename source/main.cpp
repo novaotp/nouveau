@@ -64,6 +64,9 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
 
         std::cout << std::string(8, ' ') << std::string(45, '-') << "\n" << std::endl;
         std::cout << "\tAfter compiling, found " + std::string(YELLOW) + std::to_string(warningCount) + " warning(s)" + RESET + " and " + RED + std::to_string(errorCount) + " error(s)" + RESET + ".\n" << std::endl;
+
+        // Breaking early to avoid continuing with errors
+        if (errorCount > 0) return 1;
     } else {
         std::cout << GREEN << "\n\tAnalyzed source code, no errors found.\n" << RESET << std::endl;
     }
