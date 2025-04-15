@@ -10,6 +10,7 @@ private:
 
     Expression optimizeExpression(Expression node);
     Expression optimizeBinaryOperation(BinaryOperation node);
+    Expression optimizeLogicalNotOperation(LogicalNotOperation ode);
 
     Statement optimizeStatement(Statement node);
     Statement optimizeVariableDeclaration(VariableDeclaration node);

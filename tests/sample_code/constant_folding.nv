@@ -5,3 +5,9 @@ string gabbro = "gabbro" * 5;
 3 * 5 * 4 + 2 / 7 * (2 + 13);
 
 "hello" + " guys" + ". How" + "ARE YOU" + " doing ??" + "lel";
+
+!true;
+!"hello";
+!!!false;
+
+!("hello" + "hey")

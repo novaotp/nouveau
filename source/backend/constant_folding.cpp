@@ -4,6 +4,38 @@
 ConstantFolder::ConstantFolder(Program program) : program(program) {};
 ConstantFolder::~ConstantFolder() {};
 
+Expression ConstantFolder::optimizeLogicalNotOperation(LogicalNotOperation node) {
+    return std::visit([&](auto&& expression) -> Expression {
+        using ExpressionType = std::decay_t<decltype(expression)>;
+
+        if constexpr (std::is_same_v<ExpressionType, BooleanLiteral>) {
+            this->isOptimized = false;
+            return BooleanLiteral(node.metadata, !expression.value);
+        } else if constexpr (
+            std::is_same_v<ExpressionType, StringLiteral> ||
+            std::is_same_v<ExpressionType, IntLiteral> ||
+            std::is_same_v<ExpressionType, FloatLiteral>
+        ) {
+            // * The only falsy values are false and null
+
+            this->isOptimized = false;
+            return BooleanLiteral(node.metadata, false);
+        } else if constexpr (std::is_same_v<ExpressionType, LogicalNotOperation>) {
+            return LogicalNotOperation(
+                node.metadata,
+                std::make_shared<Expression>(this->optimizeLogicalNotOperation(expression))
+            );
+        } else if constexpr (std::is_same_v<ExpressionType, BinaryOperation>) {
+            return LogicalNotOperation(
+                node.metadata,
+                std::make_shared<Expression>(this->optimizeBinaryOperation(expression))
+            );
+        } else {
+            return expression;
+        }
+    }, *node.expression);
+};
+
 Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
     return std::visit([&](auto&& lhs, auto&& rhs) -> Expression {
         using LType = std::decay_t<decltype(lhs)>;
@@ -112,6 +144,8 @@ Expression ConstantFolder::optimizeExpression(Expression node) {
 
         if constexpr (std::is_same_v<ExpressionType, BinaryOperation>) {
             return this->optimizeBinaryOperation(expression);
+        } else if constexpr (std::is_same_v<ExpressionType, LogicalNotOperation>) {
+            return this->optimizeLogicalNotOperation(expression);
         } else {
             return node;
         }
