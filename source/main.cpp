@@ -69,7 +69,7 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
         std::cout << GREEN << "\n\tAnalyzed source code, no errors found.\n" << RESET << std::endl;
     }
 
-    ConstantFolder constantFolder(program);
+    ConstantFolder constantFolder(program, scope);
     constantFolder.optimize().prettyPrint();
 
     std::chrono::milliseconds end = std::chrono::duration_cast<std::chrono::milliseconds>(

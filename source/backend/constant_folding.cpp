@@ -1,8 +1,34 @@
 #include <iostream>
 #include "constant_folding.hpp"
 
-ConstantFolder::ConstantFolder(Program program) : program(program) {};
+ConstantFolder::ConstantFolder(Program program, std::shared_ptr<Scope> scope) : program(program), scope(scope) {};
 ConstantFolder::~ConstantFolder() {};
+
+Expression ConstantFolder::optimizeIdentifier(Identifier node) {
+    auto symbol = this->scope->find(node.name);
+
+    if (symbol == nullptr || !symbol->value->value.has_value()) return node;
+
+    return std::visit([&](auto&& expression) -> Expression {
+        using ExpressionType = std::decay_t<decltype(expression)>;
+
+        if constexpr (std::is_same_v<ExpressionType, StringLiteral>) {
+            this->isOptimized = false;
+            return StringLiteral(node.metadata, expression.value);
+        } else if constexpr (std::is_same_v<ExpressionType, IntLiteral>) {
+            this->isOptimized = false;
+            return IntLiteral(node.metadata, expression.value);
+        } else if constexpr (std::is_same_v<ExpressionType, FloatLiteral>) {
+            this->isOptimized = false;
+            return FloatLiteral(node.metadata, expression.value);
+        } else if constexpr (std::is_same_v<ExpressionType, BooleanLiteral>) {
+            this->isOptimized = false;
+            return BooleanLiteral(node.metadata, expression.value);
+        } else {
+            return node;
+        }
+    }, *symbol->value->value.value());
+}
 
 Expression ConstantFolder::optimizeLogicalNotOperation(LogicalNotOperation node) {
     return std::visit([&](auto&& expression) -> Expression {
@@ -29,6 +55,11 @@ Expression ConstantFolder::optimizeLogicalNotOperation(LogicalNotOperation node)
             return LogicalNotOperation(
                 node.metadata,
                 std::make_shared<Expression>(this->optimizeBinaryOperation(expression))
+            );
+        } else if constexpr (std::is_same_v<ExpressionType, Identifier>) {
+            return LogicalNotOperation(
+                node.metadata,
+                std::make_shared<Expression>(this->optimizeIdentifier(expression))
             );
         } else {
             return expression;
@@ -132,6 +163,20 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
                        node.op,
                        std::make_shared<Expression>(this->optimizeBinaryOperation(rhs))
                    );
+        } else if constexpr (std::is_same_v<LType, Identifier>) {
+            return BinaryOperation(
+                       node.metadata,
+                       std::make_shared<Expression>(this->optimizeIdentifier(lhs)),
+                       node.op,
+                       std::make_shared<Expression>(rhs)
+                   );
+        } else if constexpr (std::is_same_v<RType, Identifier>) {
+            return BinaryOperation(
+                       node.metadata,
+                       std::make_shared<Expression>(lhs),
+                       node.op,
+                       std::make_shared<Expression>(this->optimizeIdentifier(rhs))
+                   );
         } else {
             return node;
         }
@@ -146,6 +191,8 @@ Expression ConstantFolder::optimizeExpression(Expression node) {
             return this->optimizeBinaryOperation(expression);
         } else if constexpr (std::is_same_v<ExpressionType, LogicalNotOperation>) {
             return this->optimizeLogicalNotOperation(expression);
+        } else if constexpr (std::is_same_v<ExpressionType, Identifier>) {
+            return this->optimizeIdentifier(expression);
         } else {
             return node;
         }
