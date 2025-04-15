@@ -358,7 +358,7 @@ Expression Parser::parseLogicalNotExpression() {
         NodePosition start = this->getCurrentToken().metadata.toStartPosition();
 
         this->expectToken(TokenType::EXCLAMATION_MARK);
-        Expression expression = this->parsePrimitiveExpression();
+        Expression expression = this->parseLogicalNotExpression();
 
         return LogicalNotOperation(
             NodeMetadata(start, getExpressionMetadata(expression).end),
