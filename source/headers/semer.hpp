@@ -29,20 +29,34 @@ struct SemerError {
     const std::string toString() const;
 };
 
+struct Symbol {
+    std::shared_ptr<VariableDeclaration> value;
+    size_t referenceCount = 0;
+
+    Symbol(std::shared_ptr<VariableDeclaration> value);
+};
+
 class Scope {
 private:
-    std::unique_ptr<Scope> parent;
-    std::map<std::string, std::shared_ptr<VariableDeclaration>> symbols;
+    std::shared_ptr<Scope> parent;
+
 public:
+    std::map<std::string, std::shared_ptr<Symbol>> symbols = {};
+    std::vector<std::shared_ptr<Scope>> scopes = {};
+
     Scope();
-    Scope(std::unique_ptr<Scope> parent);
+    Scope(std::shared_ptr<Scope> parent);
     ~Scope();
 
-    Scope(const Scope&) = delete;
-    Scope& operator=(const Scope&) = delete;
+    void addSymbol(std::string name, std::shared_ptr<VariableDeclaration> node);
 
-    void add(std::string name, std::shared_ptr<VariableDeclaration> node);
-    const std::shared_ptr<VariableDeclaration> find(const std::string& name) const;
+    /// @brief Adds a new scope that is linked to the current one.
+    /// @return The newly created scope.
+    std::shared_ptr<Scope> addScope();
+
+    const std::shared_ptr<Symbol> find(const std::string& name) const;
+
+    void printSymbolTable();
 };
 
 class Semer {
@@ -75,6 +89,9 @@ private:
 
     template <typename T>
     void analyzeStatement(const T& n, Scope& scope);
+
+    void warnUnusedSymbols(std::shared_ptr<Scope> scope);
+
 public:
     Semer(const std::string& sourceCode, const Program& program);
     ~Semer();
@@ -82,8 +99,7 @@ public:
     Semer(const Semer&) = delete;
     Semer& operator=(const Semer&) = delete;
 
-    const std::vector<SemerError>& analyze();
+    std::tuple<std::vector<SemerError>&, std::shared_ptr<Scope>> analyze();
 };
-
 
 #endif // SEMER_HPP

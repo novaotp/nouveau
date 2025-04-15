@@ -9,9 +9,11 @@
 TEST_CASE("Semer works correctly", "[semer]") {
     SECTION("Variable declarations are analyzed properly") {
         SECTION("Variable declarations without initial values are flagged as SEMANTIC ERROR because 'null' values are not supported yet") {
+            // * 'is_valid;' added to prevent unused variable warning
+
             std::vector<std::string> sourceCodes = {
-                "bool is_valid;",
-                "mut bool is_valid;",
+                "bool is_valid; is_valid;",
+                "mut bool is_valid; is_valid;",
             };
 
             for (const auto sourceCode : sourceCodes) {
@@ -22,7 +24,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Program program = parser.parse();
 
                 Semer semer(sourceCode, program);
-                const std::vector<SemerError>& errors = semer.analyze();
+                auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
 
@@ -34,11 +36,13 @@ TEST_CASE("Semer works correctly", "[semer]") {
         }
 
         SECTION("Variable declarations with a value of the wrong type are flagged as TYPE ERROR") {
+            // * 'is_valid;' added to prevent unused variable warning
+
             std::vector<std::string> sourceCodes = {
-                "bool is_valid = 69;",
-                "int is_valid = \"test\"",
-                "float is_valid = true;",
-                "string is_valid = 3.14;"
+                "bool is_valid = 69; is_valid;",
+                "int is_valid = \"test\"; is_valid;",
+                "float is_valid = true; is_valid;",
+                "string is_valid = 3.14; is_valid;"
             };
 
             for (const std::string sourceCode : sourceCodes) {
@@ -49,7 +53,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Program program = parser.parse();
 
                 Semer semer(sourceCode, program);
-                const std::vector<SemerError>& errors = semer.analyze();
+                auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
 
@@ -76,7 +80,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Program program = parser.parse();
 
                 Semer semer(sourceCode, program);
-                const std::vector<SemerError>& errors = semer.analyze();
+                auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
 
@@ -88,9 +92,11 @@ TEST_CASE("Semer works correctly", "[semer]") {
         }
 
         SECTION("Variable assignments with a value of the wrong type are flagged as TYPE ERROR") {
+            // * 'message;' added to prevent unused variable warning
+
             std::vector<std::string> sourceCodes = {
-                "string message = \"Hello, World!\"; message = 69;",
-                "string message = \"Hello, World!\"; message = true;",
+                "string message = \"Hello, World!\"; message = 69; message;",
+                "string message = \"Hello, World!\"; message = true; message;",
             };
 
             for (const std::string sourceCode : sourceCodes) {
@@ -101,7 +107,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Program program = parser.parse();
 
                 Semer semer(sourceCode, program);
-                const std::vector<SemerError>& errors = semer.analyze();
+                auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
 
@@ -123,7 +129,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
             Program program = parser.parse();
 
             Semer semer(sourceCode, program);
-            const std::vector<SemerError>& errors = semer.analyze();
+            auto [errors, scope] = semer.analyze();
 
             REQUIRE(errors.size() == 1);
 
@@ -134,10 +140,12 @@ TEST_CASE("Semer works correctly", "[semer]") {
         }
 
         SECTION("Binary operations with invalid operands are flagged as TYPE ERROR") {
+            // * 'message;' added to prevent unused variable warning
+
             std::vector<std::string> sourceCodes = {
-                "string message = \"Hello\" + 5;",
-                "string message = \"Hello\" + true;",
-                "string message = true / 3.14;",
+                "string message = \"Hello\" + 5; message;",
+                "string message = \"Hello\" + true; message;",
+                "string message = true / 3.14; message;",
             };
 
             for (const std::string sourceCode : sourceCodes) {
@@ -148,7 +156,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Program program = parser.parse();
 
                 Semer semer(sourceCode, program);
-                const std::vector<SemerError>& errors = semer.analyze();
+                auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
 
@@ -156,6 +164,33 @@ TEST_CASE("Semer works correctly", "[semer]") {
 
                 REQUIRE(error.type == SemerErrorType::SYNTAX_ERROR);
                 REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
+        }
+    }
+
+    SECTION("Symbol table works correctly") {
+        SECTION("Unused variables are flagged as SEMANTIC WARNING") {
+            std::vector<std::string> sourceCodes = {
+                "string message = \"Hello\";",
+                "int count = 69;"
+            };
+
+            for (const std::string sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
+
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
+
+                Semer semer(sourceCode, program);
+                auto [errors, scope] = semer.analyze();
+
+                REQUIRE(errors.size() == 1);
+
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::SEMANTIC_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::WARNING);
             }
         }
     }

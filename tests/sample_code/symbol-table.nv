@@ -1,0 +1,12 @@
+// count is referenced 5 times
+// nice is referenced 0 times
+
+int count = 69;
+
+count;
+
+count;
+
+int nice = count + 351;
+
+count + count;

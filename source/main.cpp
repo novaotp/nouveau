@@ -40,7 +40,7 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
     // program.prettyPrint();
 
     Semer semer(sourceCode, program);
-    const std::vector<SemerError>& errors = semer.analyze();
+    auto [errors, scope] = semer.analyze();
 
     std::chrono::milliseconds semerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()

@@ -4,15 +4,24 @@
 #include "utils.hpp"
 #include "semer.hpp"
 
-Scope::Scope() : parent(nullptr) {};
-Scope::Scope(std::unique_ptr<Scope> parent) : parent(nullptr) {};
+Symbol::Symbol(std::shared_ptr<VariableDeclaration> value) : value(value) {};
+
+Scope::Scope() {};
+Scope::Scope(std::shared_ptr<Scope> parent) : parent(parent) {};
 Scope::~Scope() {};
 
-void Scope::add(std::string name, std::shared_ptr<VariableDeclaration> node) {
-    this->symbols[name] = std::move(node);
+void Scope::addSymbol(std::string name, std::shared_ptr<VariableDeclaration> node) {
+    this->symbols[name] = std::make_shared<Symbol>(Symbol(std::move(node)));
 };
 
-const std::shared_ptr<VariableDeclaration> Scope::find(const std::string& name) const {
+std::shared_ptr<Scope> Scope::addScope() {
+    auto scope = std::make_shared<Scope>();
+    this->scopes.push_back(scope);
+
+    return scope;
+};
+
+const std::shared_ptr<Symbol> Scope::find(const std::string& name) const {
     if (this->symbols.find(name) != this->symbols.end()) {
         return this->symbols.at(name);
     } else if (this->parent != nullptr) {
@@ -21,6 +30,12 @@ const std::shared_ptr<VariableDeclaration> Scope::find(const std::string& name) 
 
     return nullptr;
 };
+
+void Scope::printSymbolTable() {
+    for (const auto& [identifier, symbol] : this->symbols) {
+        std::cout << identifier << " was referenced " << symbol->referenceCount << " times." << std::endl;
+    }
+}
 
 std::string getSemerErrorTypeString(SemerErrorType type) {
     switch (type) {
@@ -70,7 +85,14 @@ const std::string SemerError::toString() const {
         result += "\n";
     }
 
-    result += std::string(COLOR) + "\n\tError: " + message + RESET + "\n";
+    std::string word = "";
+    if (this->level == SemerErrorLevel::WARNING) {
+        word = "Warning";
+    } else {
+        word = "Error";
+    }
+
+    result += std::string(COLOR) + "\n\t" + word + ": " + message + RESET + "\n";
 
     if (!hint.empty()) {
         result += "\n\tHint: " + hint + "\n";
@@ -100,7 +122,7 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
             type = std::make_shared<BooleanType>();
         } else if constexpr (std::is_same_v<ExprType, Identifier>) {
             if (scope.find(e.name) != nullptr) {
-                type = scope.find(e.name)->type;
+                type = scope.find(e.name)->value->type;
             }
         } else if constexpr (std::is_same_v<ExprType, LogicalNotOperation>) {
             std::optional<NodeType> optType = this->resolveExpressionReturnType(*e.expression, scope);
@@ -254,7 +276,9 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
 template <typename T>
 void Semer::analyzeExpression(const T& n, Scope& scope) {
     if constexpr (std::is_same_v<T, Identifier>) {
-        if (scope.find(n.name) == nullptr) {
+        auto symbol = scope.find(n.name);
+
+        if (symbol == nullptr) {
             this->errors.push_back(SemerError(
                                        SemerErrorType::SYNTAX_ERROR,
                                        SemerErrorLevel::ERROR,
@@ -263,6 +287,8 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
                                        "'" + n.name + "' is not defined in this scope.",
                                        "Please define it before using it."
                                    ));
+        } else {
+            symbol->referenceCount++;
         }
     } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
         this->analyzeExpression(*n.expression, scope);
@@ -323,9 +349,11 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
             }, n.type, *n.value.value());
         }
 
-        scope.add(n.identifier, std::make_shared<VariableDeclaration>(n));
+        scope.addSymbol(n.identifier, std::make_shared<VariableDeclaration>(n));
     } else if constexpr (std::is_same_v<T, VariableAssignment>) {
-        if (scope.find(n.identifier) == nullptr) {
+        auto symbol = scope.find(n.identifier);
+
+        if (symbol == nullptr) {
             this->errors.push_back(SemerError(
                                        SemerErrorType::SYNTAX_ERROR,
                                        SemerErrorLevel::ERROR,
@@ -335,7 +363,7 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                        "Please define it before assigning to it."
                                    ));
         } else {
-            auto node = scope.find(n.identifier);
+            auto node = symbol->value;
 
             std::visit([&](auto&& type, const auto& expr) {
                 std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
@@ -357,7 +385,7 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                 }
 
                 this->analyzeExpression(expr, scope);
-            }, (*node).type, *n.value.value());
+            }, node->type, *n.value.value());
         }
 
         this->analyzeExpression(n.value, scope);
@@ -366,7 +394,27 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
     }
 }
 
-const std::vector<SemerError>& Semer::analyze() {
+void Semer::warnUnusedSymbols(std::shared_ptr<Scope> scope) {
+    for (const auto& [identifier, symbol] : scope->symbols) {
+        if (symbol->referenceCount == 0) {
+            this->errors.push_back(SemerError(
+                                       SemerErrorType::SEMANTIC_ERROR,
+                                       SemerErrorLevel::WARNING,
+                                       symbol->value->metadata,
+                                       this->sourceCode,
+                                       "'" + symbol->value->identifier + "' is declared but never used. Did you forget to use it ?",
+                                       "Remove unused code to improve performance."
+                                   ));
+        }
+    }
+
+    for (size_t i = 0; i < scope->scopes.size(); i++)
+    {
+        this->warnUnusedSymbols(scope->scopes.at(i));
+    }
+};
+
+std::tuple<std::vector<SemerError>&, std::shared_ptr<Scope>> Semer::analyze() {
     for (size_t i = 0; i < this->program.body.size(); i++) {
         const auto& node = this->program.body[i];
 
@@ -387,5 +435,7 @@ const std::vector<SemerError>& Semer::analyze() {
         }, node);
     }
 
-    return this->errors;
+    this->warnUnusedSymbols(std::make_shared<Scope>(this->rootScope));
+
+    return {this->errors, std::make_shared<Scope>(this->rootScope)};
 }
