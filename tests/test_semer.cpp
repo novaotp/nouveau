@@ -65,7 +65,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
         }
     }
 
-    SECTION("Statements are analyzed properly") {
+    SECTION("Variable assignments are analyzed properly") {
         SECTION("Variable assignments that are not declared beforehand are flagged as SYNTAX ERROR") {
             std::vector<std::string> sourceCodes = {
                 "message = \"Hello, World !\";",
@@ -95,8 +95,8 @@ TEST_CASE("Semer works correctly", "[semer]") {
             // * 'message;' added to prevent unused variable warning
 
             std::vector<std::string> sourceCodes = {
-                "string message = \"Hello, World!\"; message = 69; message;",
-                "string message = \"Hello, World!\"; message = true; message;",
+                "mut string message = \"Hello, World!\"; message = 69; message;",
+                "mut string message = \"Hello, World!\"; message = true; message;",
             };
 
             for (const std::string sourceCode : sourceCodes) {
@@ -114,6 +114,33 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 const SemerError& error = errors.at(0);
 
                 REQUIRE(error.type == SemerErrorType::TYPE_ERROR);
+                REQUIRE(error.level == SemerErrorLevel::ERROR);
+            }
+        }
+
+        SECTION("Assigning to a constant variable is flagged as SEMANTIC ERROR") {
+            // * 'counter;' and 'message;' added to prevent unused variable warning
+
+            std::vector<std::string> sourceCodes = {
+                "int counter = 0; counter = 69; counter;",
+                "string message = \"Hello, World!\"; message = \"Goodbye, World!\"; message;",
+            };
+
+            for (const std::string sourceCode : sourceCodes) {
+                Lexer lexer = Lexer(sourceCode);
+                std::vector<Token> tokens = lexer.tokenize();
+
+                Parser parser(sourceCode, tokens);
+                Program program = parser.parse();
+
+                Semer semer(sourceCode, program);
+                auto [errors, scope] = semer.analyze();
+
+                REQUIRE(errors.size() == 1);
+
+                const SemerError& error = errors.at(0);
+
+                REQUIRE(error.type == SemerErrorType::SEMANTIC_ERROR);
                 REQUIRE(error.level == SemerErrorLevel::ERROR);
             }
         }

@@ -365,6 +365,17 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
         } else {
             auto node = symbol->value;
 
+            if (!node->isMutable) {
+                this->errors.push_back(SemerError(
+                                           SemerErrorType::SEMANTIC_ERROR,
+                                           SemerErrorLevel::ERROR,
+                                           n.metadata,
+                                           this->sourceCode,
+                                           "'" + n.identifier + "' is declared as a constant but you are trying to assign to it.",
+                                           "Declare it as mutable if you need to assign to it."
+                                       ));
+            }
+
             std::visit([&](auto&& type, const auto& expr) {
                 std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
 
