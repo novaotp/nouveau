@@ -6,6 +6,9 @@
 #define GREEN   "\033[32m"
 #define YELLOW   "\033[33m"
 
+#define UNDERLINE "\033[4m"
+#define RESET_UNDERLINE "\033[24m"
+
 #include <vector>
 #include <string>
 #include <map>

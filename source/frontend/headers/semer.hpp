@@ -24,8 +24,9 @@ struct SemerError {
     const std::string& sourceCode;
     std::string message;
     std::string hint;
+    std::string absoluteFilePath;
 
-    SemerError(SemerErrorType type, SemerErrorLevel level, NodeMetadata metadata, const std::string& sourceCode, std::string message, std::string hint);
+    SemerError(SemerErrorType type, SemerErrorLevel level, NodeMetadata metadata, const std::string& sourceCode, std::string message, std::string hint, std::string absoluteFilePath);
 
     const std::string toString() const;
 };
@@ -64,8 +65,10 @@ class Semer {
 private:
     Scope rootScope = Scope();
     std::vector<SemerError> errors = {};
+
     const std::string& sourceCode;
     const Program& program;
+    std::string absoluteFilePath;
 
     /// @brief Resolves the return type of an expression.
     /// @param expr The expression to resolve.
@@ -94,7 +97,7 @@ private:
     void warnUnusedSymbols(std::shared_ptr<Scope> scope);
 
 public:
-    Semer(const std::string& sourceCode, const Program& program);
+    Semer(const std::string& sourceCode, const Program& program, std::string absoluteFilePath);
     ~Semer();
 
     Semer(const Semer&) = delete;

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <filesystem>
 #include "config.h"
 #include "utils.hpp"
 #include "lexer.hpp"
@@ -11,7 +12,11 @@
 #include "constant_folding.hpp"
 
 int compile(std::map<std::string, std::string> commandLineArguments) {
+    std::filesystem::path currentPath = std::filesystem::current_path();
+
     std::string filePath = commandLineArguments["filename"];
+    std::string absoluteFilePath = std::filesystem::canonical(currentPath / filePath).string();
+
     std::string sourceCode = readFile(filePath);
 
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -40,7 +45,7 @@ int compile(std::map<std::string, std::string> commandLineArguments) {
 
     // program.prettyPrint();
 
-    Semer semer(sourceCode, program);
+    Semer semer(sourceCode, program, absoluteFilePath);
     auto [errors, scope] = semer.analyze();
 
     std::chrono::milliseconds semerEnd = std::chrono::duration_cast<std::chrono::milliseconds>(
