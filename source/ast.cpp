@@ -64,7 +64,7 @@ VariableAssignment::VariableAssignment(
     NodeMetadata metadata,
     const std::string& identifier,
     const std::string& op,
-    std::optional<std::shared_ptr<Expression>> value = std::nullopt
+    std::shared_ptr<Expression> value
 ) : metadata(metadata), identifier(identifier), op(op), value(std::move(value)) {};
 Program::Program() : body{} {};
 
@@ -133,16 +133,11 @@ void printStatement(const NodeType& n, const size_t indentCount) {
         std::cout << indent << "Variable Assignment" << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
         std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Operator: " << n.op << std::endl;
+        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
 
-        if (n.value.has_value()) {
-            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
-
-            std::visit([&indentCount](const auto& expr) {
-                printExpression(expr, indentCount + 2);
-            }, *n.value.value());
-        } else {
-            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
-        }
+        std::visit([&indentCount](const auto& expr) {
+            printExpression(expr, indentCount + 2);
+        }, *n.value);
     } else {
         std::cout << indent << "Unknown Statement Type" << std::endl;
     }

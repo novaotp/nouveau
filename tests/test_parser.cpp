@@ -456,12 +456,10 @@ TEST_CASE("Parser works correctly", "[parser]") {
         REQUIRE(variableAssignment.metadata.end.line == 1);
 
         REQUIRE(variableAssignment.identifier == "message");
-        REQUIRE(variableAssignment.value.has_value() == true);
 
-        auto& valueExpressionPtr = variableAssignment.value.value();
-        REQUIRE(std::holds_alternative<StringLiteral>(*valueExpressionPtr));
+        REQUIRE(std::holds_alternative<StringLiteral>(*variableAssignment.value));
+        StringLiteral stringLiteral = std::get<StringLiteral>(*variableAssignment.value);
 
-        StringLiteral stringLiteral = std::get<StringLiteral>(*valueExpressionPtr);
         REQUIRE(stringLiteral.value == "Hello, World !");
     }
 }

@@ -14,11 +14,11 @@ struct BooleanType;
 
 // ? Might want to find a better name
 using NodeType = std::variant<
-    std::shared_ptr<StringType>,
-    std::shared_ptr<IntegerType>,
-    std::shared_ptr<FloatType>,
-    std::shared_ptr<BooleanType>
->;
+                 std::shared_ptr<StringType>,
+                 std::shared_ptr<IntegerType>,
+                 std::shared_ptr<FloatType>,
+                 std::shared_ptr<BooleanType>
+                 >;
 
 /** The base type for a type. */
 struct Type {
@@ -126,14 +126,14 @@ struct LogicalNotOperation;
 struct BinaryOperation;
 
 using Expression = std::variant<
-    BinaryOperation,
-    LogicalNotOperation,
-    Identifier,
-    StringLiteral,
-    IntLiteral,
-    FloatLiteral,
-    BooleanLiteral
->;
+                   BinaryOperation,
+                   LogicalNotOperation,
+                   Identifier,
+                   StringLiteral,
+                   IntLiteral,
+                   FloatLiteral,
+                   BooleanLiteral
+                   >;
 
 struct LogicalNotOperation {
     NodeMetadata metadata;
@@ -171,20 +171,20 @@ struct VariableAssignment {
     NodeMetadata metadata;
     std::string identifier;
     std::string op;
-    std::optional<std::shared_ptr<Expression>> value;
+    std::shared_ptr<Expression> value;
 
     VariableAssignment(
         NodeMetadata metadata,
         const std::string& identifier,
         const std::string& op,
-        std::optional<std::shared_ptr<Expression>> value
+        std::shared_ptr<Expression> value
     );
 };
 
 using Statement = std::variant<
-    VariableDeclaration,
-    VariableAssignment
->;
+                  VariableDeclaration,
+                  VariableAssignment
+                  >;
 
 struct Program {
     std::vector<std::variant<std::shared_ptr<Expression>, std::shared_ptr<Statement>>> body;
