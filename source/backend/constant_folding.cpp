@@ -7,7 +7,7 @@ ConstantFolder::~ConstantFolder() {};
 Expression ConstantFolder::optimizeIdentifier(Identifier node) {
     auto symbol = this->scope->find(node.name);
 
-    if (symbol == nullptr || !symbol->value->value.has_value()) return node;
+    if (symbol == nullptr || symbol->value->isMutable || !symbol->value->value.has_value()) return node;
 
     return std::visit([&](auto&& expression) -> Expression {
         using ExpressionType = std::decay_t<decltype(expression)>;
