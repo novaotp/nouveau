@@ -158,20 +158,25 @@ Statement ConstantFolder::optimizeVariableDeclaration(VariableDeclaration node) 
     }
 
     return std::visit([&](const auto& expression) -> Statement {
-        using ExpressionType = std::decay_t<decltype(expression)>;
-
-        if constexpr (std::is_same_v<ExpressionType, BinaryOperation>) {
-            return VariableDeclaration(
-                node.metadata,
-                node.isMutable,
-                node.type,
-                node.identifier,
-                std::make_shared<Expression>(this->optimizeBinaryOperation(expression))
-            );
-        } else {
-            return node;
-        }
+        return VariableDeclaration(
+            node.metadata,
+            node.isMutable,
+            node.type,
+            node.identifier,
+            std::make_shared<Expression>(this->optimizeExpression(expression))
+        );
     }, *(node.value.value()));
+};
+
+Statement ConstantFolder::optimizeVariableAssignment(VariableAssignment node) {
+    return std::visit([&](const auto& expression) -> Statement {
+        return VariableAssignment(
+            node.metadata,
+            node.identifier,
+            node.op,
+            std::make_shared<Expression>(this->optimizeExpression(expression))
+        );
+    }, *node.value);
 };
 
 Statement ConstantFolder::optimizeStatement(Statement node) {
@@ -180,6 +185,8 @@ Statement ConstantFolder::optimizeStatement(Statement node) {
 
         if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
             return this->optimizeVariableDeclaration(statement);
+        } else if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
+            return this->optimizeVariableAssignment(statement);
         } else {
             return statement;
         }

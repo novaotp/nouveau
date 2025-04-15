@@ -14,6 +14,7 @@ private:
 
     Statement optimizeStatement(Statement node);
     Statement optimizeVariableDeclaration(VariableDeclaration node);
+    Statement optimizeVariableAssignment(VariableAssignment node);
 
 public:
     ConstantFolder(Program program);
