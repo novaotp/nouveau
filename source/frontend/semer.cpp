@@ -385,7 +385,7 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                 }
 
                 this->analyzeExpression(expr, scope);
-            }, node->type, *n.value.value());
+            }, node->type, *n.value);
         }
 
         this->analyzeExpression(n.value, scope);

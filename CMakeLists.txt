@@ -54,6 +54,7 @@ if(BUILD_TESTS)
     target_link_libraries(nouveau_tests PRIVATE Catch2::Catch2WithMain)
 
     target_include_directories(nouveau_tests PRIVATE source/frontend/headers)
+    target_include_directories(nouveau_tests PRIVATE source/backend/headers)
     target_include_directories(nouveau_tests PRIVATE "${PROJECT_BINARY_DIR}")
 
     target_compile_features(nouveau_tests PRIVATE cxx_std_17)
