@@ -83,32 +83,36 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
             ) {
                 float value;
                 if (node.op == "+") {
-                    value = lhs.value + rhs.value;
+                    value = float(lhs.value) + float(rhs.value);
                 } else if (node.op == "-") {
-                    value = lhs.value - rhs.value;
+                    value = float(lhs.value) - float(rhs.value);
                 } else if (node.op == "*") {
-                    value = lhs.value * rhs.value;
+                    value = float(lhs.value) * float(rhs.value);
                 } else if (node.op == "/") {
-                    value = float(lhs.value) / rhs.value;
-                } /* else if (node.op == "%") {
-                    value = lhs.value % rhs.value;
-                } */ else {
+                    value = float(lhs.value) / float(rhs.value);
+                } else if (node.op == "%") {
+                    value = float(lhs.value) % float(rhs.value);
+                } else {
                     std::cerr << "Unknown op in constant folding" << std::endl;
+                    return node;
                 }
 
                 expr = FloatLiteral(node.metadata, value);
             } else {
+                // * No division because divisions always end up as floats
+
                 int value;
                 if (node.op == "+") {
-                    value = lhs.value + rhs.value;
+                    value = int(lhs.value) + int(rhs.value);
                 } else if (node.op == "-") {
-                    value = lhs.value - rhs.value;
+                    value = int(lhs.value) - int(rhs.value);
                 } else if (node.op == "*") {
-                    value = lhs.value * rhs.value;
-                } /* else if (node.op == "%") {
-                    value = lhs.value % rhs.value;
-                } */ else {
+                    value = int(lhs.value) * int(rhs.value);
+                } else if (node.op == "%") {
+                    value = int(lhs.value) % int(rhs.value);
+                } else {
                     std::cerr << "Unknown op in constant folding" << std::endl;
+                    return node;
                 }
 
                 expr = IntLiteral(node.metadata, value);
@@ -129,12 +133,12 @@ Expression ConstantFolder::optimizeBinaryOperation(BinaryOperation node) {
                 expr = StringLiteral(node.metadata, lhs.value + rhs.value);
             } else {
                 std::string str;
-                int max;
+                size_t max;
                 if constexpr (std::is_same_v<LType, IntLiteral> && std::is_same_v<RType, StringLiteral>) {
-                    max = lhs.value;
+                    max = size_t(lhs.value);
                     str = rhs.value;
                 } else if constexpr (std::is_same_v<LType, StringLiteral> && std::is_same_v<RType, IntLiteral>) {
-                    max = rhs.value;
+                    max = size_t(rhs.value);
                     str = lhs.value;
                 }
 
@@ -228,11 +232,11 @@ Statement ConstantFolder::optimizeVariableAssignment(VariableAssignment node) {
 
 Statement ConstantFolder::optimizeStatement(Statement node) {
     return std::visit([&](const auto& statement) -> Statement {
-        using NodeType = std::decay_t<decltype(statement)>;
+        using StatementType = std::decay_t<decltype(statement)>;
 
-        if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
+        if constexpr (std::is_same_v<StatementType, VariableDeclaration>) {
             return this->optimizeVariableDeclaration(statement);
-        } else if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
+        } else if constexpr (std::is_same_v<StatementType, VariableAssignment>) {
             return this->optimizeVariableAssignment(statement);
         } else {
             return statement;
@@ -252,9 +256,9 @@ Program ConstantFolder::optimize() {
         for (size_t i = 0; i < oldProgram.body.size(); i++)
         {
             auto statementOrExpression = std::visit([&](const auto& node) -> std::variant<Expression, Statement> {
-                using NodeType = std::decay_t<decltype(*node)>;
+                using StatementOrExpressionType = std::decay_t<decltype(*node)>;
 
-                if constexpr (std::is_same_v<NodeType, Statement>) {
+                if constexpr (std::is_same_v<StatementOrExpressionType, Statement>) {
                     return this->optimizeStatement(*node);
                 } else {
                     return this->optimizeExpression(*node);
