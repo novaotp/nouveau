@@ -42,10 +42,10 @@ Windows :
 
     ```bash
     # Linux
-    ./build/nouveau ../path/to/your/file.nv
+    ./build/nouveau ./path/to/your/file.nv
 
     # Windows
-    ./build/Debug/nouveau ../path/to/your/file.nv
+    ./build/Debug/nouveau.exe ./path/to/your/file.nv
     ```
 
 ### Testing
@@ -53,9 +53,11 @@ Windows :
 1. Run the test suite
 
     ```bash
+    cd ./build
+
     # Linux
-    ./build/nouveau_tests
+    ./nouveau_tests
 
     # Windows
-    ./build/Debug/nouveau_tests
+    ./Debug/nouveau_tests.exe
     ```
