@@ -6,6 +6,8 @@
 #include "parser.hpp"
 #include "semer.hpp"
 
+std::string fakePath = "fake-path.nv";
+
 TEST_CASE("Semer works correctly", "[semer]") {
     SECTION("Variable declarations are analyzed properly") {
         SECTION("Variable declarations without initial values are flagged as SEMANTIC ERROR because 'null' values are not supported yet") {
@@ -23,7 +25,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
@@ -52,7 +54,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
@@ -79,7 +81,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
@@ -106,7 +108,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
@@ -133,7 +135,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
@@ -155,7 +157,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
             Parser parser(sourceCode, tokens);
             Program program = parser.parse();
 
-            Semer semer(sourceCode, program);
+            Semer semer(sourceCode, program, fakePath);
             auto [errors, scope] = semer.analyze();
 
             REQUIRE(errors.size() == 1);
@@ -182,7 +184,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);
@@ -209,7 +211,7 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 Parser parser(sourceCode, tokens);
                 Program program = parser.parse();
 
-                Semer semer(sourceCode, program);
+                Semer semer(sourceCode, program, fakePath);
                 auto [errors, scope] = semer.analyze();
 
                 REQUIRE(errors.size() == 1);

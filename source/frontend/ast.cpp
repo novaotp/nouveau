@@ -70,94 +70,97 @@ Program::Program() : body{} {};
 
 constexpr int SPACE_COUNT = 4;
 
-template <typename NodeType>
-void printExpression(const NodeType& n, const size_t indentCount) {
+void printExpression(const Expression& n, const size_t indentCount) {
     std::string indent(indentCount * SPACE_COUNT, ' ');
 
-    if constexpr (std::is_same_v<NodeType, StringLiteral>) {
-        std::cout << indent << "String: " << n.value << std::endl;
-    } else if constexpr (std::is_same_v<NodeType, IntLiteral>) {
-        std::cout << indent << "Int: " << n.value << std::endl;
-    } else if constexpr (std::is_same_v<NodeType, FloatLiteral>) {
-        std::cout << indent << "Float: " << n.value << std::endl;
-    } else if constexpr (std::is_same_v<NodeType, BooleanLiteral>) {
-        std::cout << indent << "Boolean: " << (n.value ? "true" : "false") << std::endl;
-    } else if constexpr (std::is_same_v<NodeType, Identifier>) {
-        std::cout << indent << "Identifier: " << n.name << std::endl;
-    } else if constexpr (std::is_same_v<NodeType, BinaryOperation>) {
-        std::cout << indent << "BinaryOperation" << std::endl;
+    std::visit([&indent, &indentCount](const auto& expression) {
+        using ExpressionType = std::decay_t<decltype(expression)>;
 
-        std::visit([&indentCount](const auto& expr) {
-            printExpression(expr, indentCount + 1);
-        }, *n.lhs);
-        std::cout << indent + std::string(SPACE_COUNT, ' ') << "Operator: " << n.op << std::endl;
-        std::visit([&indentCount](const auto& expr) {
-            printExpression(expr, indentCount + 1);
-        }, *n.rhs);
-    } else if constexpr (std::is_same_v<NodeType, LogicalNotOperation>) {
-        std::cout << indent << "NotOperation" << std::endl;
-        std::visit([&indentCount](const auto& expr) {
-            printExpression(expr, indentCount + 1);
-        }, *n.expression);
-    } else {
-        std::cout << indent << "Unknown Expression Type" << std::endl;
-    }
+        if constexpr (std::is_same_v<ExpressionType, StringLiteral>) {
+            std::cout << indent << "String: " << expression.value << std::endl;
+        } else if constexpr (std::is_same_v<ExpressionType, IntLiteral>) {
+            std::cout << indent << "Int: " << expression.value << std::endl;
+        } else if constexpr (std::is_same_v<ExpressionType, FloatLiteral>) {
+            std::cout << indent << "Float: " << expression.value << std::endl;
+        } else if constexpr (std::is_same_v<ExpressionType, BooleanLiteral>) {
+            std::cout << indent << "Boolean: " << (expression.value ? "true" : "false") << std::endl;
+        } else if constexpr (std::is_same_v<ExpressionType, Identifier>) {
+            std::cout << indent << "Identifier: " << expression.name << std::endl;
+        } else if constexpr (std::is_same_v<ExpressionType, BinaryOperation>) {
+            std::cout << indent << "BinaryOperation" << std::endl;
+
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount + 1);
+            }, *expression.lhs);
+
+            std::cout << indent + std::string(SPACE_COUNT, ' ') << "Operator: " << binaryOperatorToString(expression.op) << std::endl;
+
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount + 1);
+            }, *expression.rhs);
+        } else if constexpr (std::is_same_v<ExpressionType, LogicalNotOperation>) {
+            std::cout << indent << "NotOperation" << std::endl;
+
+            std::visit([&indentCount](const auto& expr) {
+                printExpression(expr, indentCount + 1);
+            }, *expression.expression);
+        } else {
+            std::cout << indent << "Unknown Expression Type" << std::endl;
+        }
+    }, n);
 }
 
-template <typename NodeType>
-void printStatement(const NodeType& n, const size_t indentCount) {
+void printStatement(const Statement& n, const size_t indentCount) {
     std::string indent(indentCount * SPACE_COUNT, ' ');
 
-    if constexpr (std::is_same_v<NodeType, VariableDeclaration>) {
-        std::cout << indent << "Variable Declaration" << std::endl;
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "IsMutable: " << (n.isMutable ? "true" : "false") << std::endl;
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Type: ";
+    std::visit([&indent, &indentCount](const auto& statement) {
+        using StatementType = std::decay_t<decltype(statement)>;
 
-        std::cout << std::visit([](const auto& ptr) -> std::string {
-            return ptr->toString();
-        }, n.type) << std::endl;
+        if constexpr (std::is_same_v<StatementType, VariableDeclaration>) {
+            std::cout << indent << "Variable Declaration" << std::endl;
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "IsMutable: " << (statement.isMutable ? "true" : "false") << std::endl;
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Type: ";
 
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
+            std::cout << std::visit([](const auto& ptr) -> std::string {
+                return ptr->toString();
+            }, statement.type) << std::endl;
 
-        if (n.value.has_value()) {
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << statement.identifier << std::endl;
+
+            if (statement.value.has_value()) {
+                std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
+
+                std::visit([&indentCount](const auto& expr) {
+                    printExpression(expr, indentCount + 2);
+                }, *statement.value.value());
+            } else {
+                std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: undefined" << std::endl;
+            }
+        } else if constexpr (std::is_same_v<StatementType, VariableAssignment>) {
+
+            std::cout << indent << "Variable Assignment" << std::endl;
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << statement.identifier << std::endl;
+            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Operator: " << statement.op << std::endl;
             std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
 
             std::visit([&indentCount](const auto& expr) {
                 printExpression(expr, indentCount + 2);
-            }, *n.value.value());
+            }, *statement.value);
         } else {
-            std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value: null" << std::endl;
+            std::cout << indent << "Unknown Statement Type" << std::endl;
         }
-    } else if constexpr (std::is_same_v<NodeType, VariableAssignment>) {
-
-        std::cout << indent << "Variable Assignment" << std::endl;
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Identifier: " << n.identifier << std::endl;
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Operator: " << n.op << std::endl;
-        std::cout << (indent + std::string(SPACE_COUNT, ' ')) << "Value" << std::endl;
-
-        std::visit([&indentCount](const auto& expr) {
-            printExpression(expr, indentCount + 2);
-        }, *n.value);
-    } else {
-        std::cout << indent << "Unknown Statement Type" << std::endl;
-    }
+    }, n);
 }
 
 void Program::prettyPrint() {
-    for (size_t i = 0; i < this->body.size(); i++) {
-        const auto& node = this->body[i];
-
+    for (const auto& node : this->body) {
         std::visit([](const auto& ptr) {
-            using Type = std::decay_t<decltype(*ptr)>;
+            using StatementOrExpression = std::decay_t<decltype(*ptr)>;
 
-            if constexpr (std::is_same_v<Type, Expression>) {
-                std::visit([](const auto& expr) {
-                    printExpression(expr, 0);
-                }, *ptr);
-            } else if constexpr (std::is_same_v<Type, Statement>) {
-                std::visit([](const auto& expr) {
-                    printStatement(expr, 0);
-                }, *ptr);
+            if constexpr (std::is_same_v<StatementOrExpression, Expression>) {
+                printExpression(*ptr, 0);
+            } else if constexpr (std::is_same_v<StatementOrExpression, Statement>) {
+                printStatement(*ptr, 0);
             } else {
                 std::cout << "Unknown Node Type" << std::endl;
             }
