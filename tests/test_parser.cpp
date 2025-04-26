@@ -135,7 +135,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         IntLiteral lhsIntLiteral = std::get<IntLiteral>(*lhs);
         REQUIRE(lhsIntLiteral.value == 69);
 
-        REQUIRE(arithmeticOperation.op == "+");
+        REQUIRE(arithmeticOperation.op == BinaryOperator::ADDITION);
 
         auto& rhs = arithmeticOperation.rhs;
         REQUIRE(std::holds_alternative<FloatLiteral>(*rhs));
@@ -162,7 +162,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         // Top-level ((420 + (69 * 3.14)) - 7)
         BinaryOperation topLevelOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
-        REQUIRE(topLevelOperation.op == "-");
+        REQUIRE(topLevelOperation.op == BinaryOperator::SUBTRACTION);
 
         REQUIRE(topLevelOperation.metadata.start.column == 1);
         REQUIRE(topLevelOperation.metadata.start.line == 1);
@@ -172,7 +172,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         // Left side should (420 + (69 * 3.14))
         REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.lhs));
         BinaryOperation additiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.lhs));
-        REQUIRE(additiveOperation.op == "+");
+        REQUIRE(additiveOperation.op == BinaryOperator::ADDITION);
 
         // Left side of the "+" (420)
         REQUIRE(std::holds_alternative<IntLiteral>(*additiveOperation.lhs));
@@ -182,7 +182,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         // Right side of the "+" (69 * 3.14)
         REQUIRE(std::holds_alternative<BinaryOperation>(*additiveOperation.rhs));
         BinaryOperation multiplicativeOperation = std::move(std::get<BinaryOperation>(*additiveOperation.rhs));
-        REQUIRE(multiplicativeOperation.op == "*");
+        REQUIRE(multiplicativeOperation.op == BinaryOperator::MULTIPLICATION);
 
         // Left side of the "*" (69)
         REQUIRE(std::holds_alternative<IntLiteral>(*multiplicativeOperation.lhs));
@@ -218,7 +218,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
 
         // Top-level ((420 + 69) * (3.14 - 7))
         BinaryOperation topLevelOperation = std::move(std::get<BinaryOperation>(*expressionPtr));
-        REQUIRE(topLevelOperation.op == "*");
+        REQUIRE(topLevelOperation.op == BinaryOperator::MULTIPLICATION);
 
         REQUIRE(topLevelOperation.metadata.start.column == 1);
         REQUIRE(topLevelOperation.metadata.start.line == 1);
@@ -228,7 +228,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         // Left side should be (420 + 69)
         REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.lhs));
         BinaryOperation additiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.lhs));
-        REQUIRE(additiveOperation.op == "+");
+        REQUIRE(additiveOperation.op == BinaryOperator::ADDITION);
 
         // Left side of the "+" (420)
         REQUIRE(std::holds_alternative<IntLiteral>(*additiveOperation.lhs));
@@ -243,7 +243,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         // Right side of the "*" (3.14 - 7)
         REQUIRE(std::holds_alternative<BinaryOperation>(*topLevelOperation.rhs));
         BinaryOperation subtractiveOperation = std::move(std::get<BinaryOperation>(*topLevelOperation.rhs));
-        REQUIRE(subtractiveOperation.op == "-");
+        REQUIRE(subtractiveOperation.op == BinaryOperator::SUBTRACTION);
 
         // Left side of the "-" (3.14)
         REQUIRE(std::holds_alternative<FloatLiteral>(*subtractiveOperation.lhs));
@@ -284,7 +284,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         IntLiteral lhsIntLiteral = std::get<IntLiteral>(*lhs);
         REQUIRE(lhsIntLiteral.value == 69);
 
-        REQUIRE(comparisonOperation.op == ">");
+        REQUIRE(comparisonOperation.op == BinaryOperator::GREATER_THAN);
 
         auto& rhs = comparisonOperation.rhs;
         REQUIRE(std::holds_alternative<FloatLiteral>(*rhs));
@@ -348,7 +348,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*andOperation.lhs);
         REQUIRE(lhsBooleanLiteral.value == true);
 
-        REQUIRE(andOperation.op == "&&");
+        REQUIRE(andOperation.op == BinaryOperator::AND);
 
         auto& rhs = andOperation.rhs;
         REQUIRE(std::holds_alternative<BooleanLiteral>(*rhs));
@@ -384,7 +384,7 @@ TEST_CASE("Parser works correctly", "[parser]") {
         BooleanLiteral lhsBooleanLiteral = std::get<BooleanLiteral>(*orOperation.lhs);
         REQUIRE(lhsBooleanLiteral.value == false);
 
-        REQUIRE(orOperation.op == "||");
+        REQUIRE(orOperation.op == BinaryOperator::OR);
 
         auto& rhs = orOperation.rhs;
         REQUIRE(std::holds_alternative<BooleanLiteral>(*rhs));

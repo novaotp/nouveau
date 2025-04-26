@@ -51,7 +51,7 @@ BooleanLiteral::BooleanLiteral(NodeMetadata metadata, bool value) : metadata(met
 Identifier::Identifier(NodeMetadata metadata, std::string name) : metadata(metadata), name(name) {};
 LogicalNotOperation::LogicalNotOperation(NodeMetadata metadata, std::shared_ptr<Expression> expression)
     : metadata(metadata), expression(std::move(expression)) {};
-BinaryOperation::BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right)
+BinaryOperation::BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, BinaryOperator op, std::shared_ptr<Expression> right)
     : metadata(metadata), lhs(std::move(left)), op(op), rhs(std::move(right)) {};
 VariableDeclaration::VariableDeclaration(
     NodeMetadata metadata,
@@ -164,3 +164,21 @@ void Program::prettyPrint() {
         }, node);
     }
 }
+
+std::string binaryOperatorToString(BinaryOperator op) {
+    if (op == ADDITION) return "+";
+    if (op == SUBTRACTION) return "-";
+    if (op == MULTIPLICATION) return "*";
+    if (op == DIVISION) return "/";
+    if (op == MODULO) return "%";
+    if (op == EQUAL) return "==";
+    if (op == NOT_EQUAL) return "!=";
+    if (op == GREATER_THAN) return ">";
+    if (op == GREATER_OR_EQUAL) return ">=";
+    if (op == LESS_THAN) return "<";
+    if (op == LESS_OR_EQUAL) return "<=";
+    if (op == AND) return "&&";
+    if (op == OR) return "||";
+
+    throw std::runtime_error("Invalid operator to stringify");
+};

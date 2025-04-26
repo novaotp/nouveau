@@ -142,13 +142,31 @@ struct LogicalNotOperation {
     LogicalNotOperation(NodeMetadata metadata, std::shared_ptr<Expression> expression);
 };
 
+enum BinaryOperator {
+    ADDITION,
+    SUBTRACTION,
+    MULTIPLICATION,
+    DIVISION,
+    MODULO,
+    EQUAL,
+    NOT_EQUAL,
+    GREATER_THAN,
+    GREATER_OR_EQUAL,
+    LESS_THAN,
+    LESS_OR_EQUAL,
+    AND,
+    OR
+};
+
+std::string binaryOperatorToString(BinaryOperator op);
+
 struct BinaryOperation {
     NodeMetadata metadata;
     std::shared_ptr<Expression> lhs;
-    std::string op;
+    BinaryOperator op;
     std::shared_ptr<Expression> rhs;
 
-    BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, const std::string& op, std::shared_ptr<Expression> right);
+    BinaryOperation(NodeMetadata metadata, std::shared_ptr<Expression> left, BinaryOperator op, std::shared_ptr<Expression> right);
 };
 
 struct VariableDeclaration {

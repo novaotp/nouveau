@@ -139,14 +139,23 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
                 NodeType right = optRight.value();
 
                 std::visit([&e, &type](const auto& left, const auto& right) {
-                    if (e.op == "==" || e.op == "!=" || e.op == ">" || e.op == "<" || e.op == ">=" || e.op == "<=" || e.op == "&&" || e.op == "||") {
+                    if (
+                    e.op == BinaryOperator::EQUAL ||
+                    e.op == BinaryOperator::NOT_EQUAL ||
+                    e.op == BinaryOperator::GREATER_THAN ||
+                    e.op == BinaryOperator::LESS_THAN ||
+                    e.op == BinaryOperator::GREATER_OR_EQUAL ||
+                    e.op == BinaryOperator::LESS_OR_EQUAL ||
+                    e.op == BinaryOperator::AND ||
+                    e.op == BinaryOperator::OR
+                    ) {
                         type = std::make_shared<BooleanType>();
                     }
 
                     // Only arithmetic operations are left
 
                     if (left->compare(std::make_shared<IntegerType>()) && right->compare(std::make_shared<IntegerType>())) {
-                        if (e.op == "/") {
+                        if (e.op == BinaryOperator::DIVISION) {
                             type = std::make_shared<FloatType>();
                         } else {
                             type = std::make_shared<IntegerType>();
@@ -155,8 +164,16 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
                                (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<IntegerType>())) ||
                                (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<FloatType>()))
                               ) {
+                        // ? Need to rework this, but how
+                        // * Problem : float * 0 -> should be int
+                        // * However, type returns as float
+
                         type = std::make_shared<FloatType>();
-                    } else if (e.op == "+" && left->compare(std::make_shared<StringType>()) && right->compare(std::make_shared<StringType>())) {
+                    } else if (
+                    e.op == BinaryOperator::ADDITION &&
+                            left->compare(std::make_shared<StringType>()) &&
+                            right->compare(std::make_shared<StringType>())
+                    ) {
                         type = left;
                     }
                 }, optLeft.value(), optRight.value());
@@ -189,17 +206,22 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                std::is_same_v<RightType, FloatLiteral> ||
                                std::is_same_v<RightType, BooleanLiteral>)) {
             if constexpr (std::is_same_v<LeftType, StringLiteral> && std::is_same_v<RightType, StringLiteral>) {
-                if (n.op == "-" || n.op == "*" || n.op == "/" || n.op == "%") {
+                if (
+                n.op == BinaryOperator::SUBTRACTION ||
+                n.op == BinaryOperator::MULTIPLICATION ||
+                n.op == BinaryOperator::DIVISION ||
+                n.op == BinaryOperator::MODULO
+                ) {
                     this->errors.push_back(SemerError(
                                                SemerErrorType::SYNTAX_ERROR,
                                                SemerErrorLevel::ERROR,
                                                n.metadata,
                                                this->sourceCode,
-                                               "Cannot perform '" + n.op + "' operation on strings.",
+                                               "Cannot perform '" + binaryOperatorToString(n.op) + "' operation on strings.",
                                                "Please use a valid operator for strings."
                                            ));
                 }
-            } else if (std::is_same_v<LeftType, StringLiteral> && !(n.op == "&&" || n.op == "||")) {
+            } else if (std::is_same_v<LeftType, StringLiteral> && !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)) {
                 // * Strings can only perform '&&' and '||' operations with other types
 
                 this->errors.push_back(SemerError(
@@ -215,7 +237,7 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                  std::is_same_v<LeftType, FloatLiteral>) &&
                 !(std::is_same_v<RightType, IntLiteral> ||
                   std::is_same_v<RightType, FloatLiteral>) && // * Numbers can perform any operations with other numbers
-            !(n.op == "&&" || n.op == "||")
+            !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)
             ) {
                 // * Numbers can only perform '&&' and '||' operations with other types
 
@@ -227,7 +249,7 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                            "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
                                            "Please use a valid operator for numbers."
                                        ));
-            } else if (std::is_same_v<LeftType, BooleanLiteral> && !(n.op == "&&" || n.op == "||")) {
+            } else if (std::is_same_v<LeftType, BooleanLiteral> && !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)) {
                 // * Booleans can only perform '&&' and '||' operations with booleans and other types
 
                 this->errors.push_back(SemerError(
@@ -263,7 +285,7 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                            SemerErrorLevel::ERROR,
                                            n.metadata,
                                            this->sourceCode,
-                                           "Cannot perform '" + n.op + "' operation on between these values.",
+                                           "Cannot perform '" + binaryOperatorToString(n.op) + "' operation on between these values.",
                                            "Please use a valid operator."
                                        ));
             }
@@ -430,13 +452,13 @@ std::tuple<std::vector<SemerError>&, std::shared_ptr<Scope>> Semer::analyze() {
         const auto& node = this->program.body[i];
 
         std::visit([&](const auto& ptr) {
-            using PNodeType = std::decay_t<decltype(*ptr)>;
+            using StatementOrExpression = std::decay_t<decltype(*ptr)>;
 
-            if constexpr (std::is_same_v<PNodeType, Expression>) {
+            if constexpr (std::is_same_v<StatementOrExpression, Expression>) {
                 std::visit([&](const auto& expr) {
                     this->analyzeExpression(expr, this->rootScope);
                 }, *ptr);
-            } else if constexpr (std::is_same_v<PNodeType, Statement>) {
+            } else if constexpr (std::is_same_v<StatementOrExpression, Statement>) {
                 std::visit([&](const auto& expr) {
                     this->analyzeStatement(expr, this->rootScope);
                 }, *ptr);

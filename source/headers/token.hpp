@@ -6,6 +6,7 @@
 #include <vector>
 #include "ast.hpp"
 
+// ! Remember to sync with BinaryOperator if more operators are added later on
 enum TokenType {
     STRING,
     INTEGER,

@@ -74,6 +74,38 @@ const Token& Parser::expectToken(const std::vector<TokenType>& expected, std::st
     return currentToken;
 }
 
+BinaryOperator tokenTypeToBinaryOperator(TokenType tokenType) {
+    if (tokenType == TokenType::ADDITION_OPERATOR) {
+        return BinaryOperator::ADDITION;
+    } else if (tokenType == TokenType::SUBTRACTION_OPERATOR) {
+        return BinaryOperator::SUBTRACTION;
+    } else if (tokenType == TokenType::MULTIPLICATION_OPERATOR) {
+        return BinaryOperator::MULTIPLICATION;
+    } else if (tokenType == TokenType::DIVISION_OPERATOR) {
+        return BinaryOperator::DIVISION;
+    } else if (tokenType == TokenType::MODULO_OPERATOR) {
+        return BinaryOperator::MODULO;
+    } else if (tokenType == TokenType::EQUAL_OPERATOR) {
+        return BinaryOperator::EQUAL;
+    } else if (tokenType == TokenType::NOT_EQUAL_OPERATOR) {
+        return BinaryOperator::NOT_EQUAL;
+    } else if (tokenType == TokenType::GREATER_OR_EQUAL_OPERATOR) {
+        return BinaryOperator::GREATER_OR_EQUAL;
+    } else if (tokenType == TokenType::GREATER_THAN_OPERATOR) {
+        return BinaryOperator::GREATER_THAN;
+    } else if (tokenType == TokenType::LESS_OR_EQUAL_OPERATOR) {
+        return BinaryOperator::LESS_OR_EQUAL;
+    } else if (tokenType == TokenType::LESS_THAN_OPERATOR) {
+        return BinaryOperator::LESS_THAN;
+    } else if (tokenType == TokenType::AND_OPERATOR) {
+        return BinaryOperator::AND;
+    } else if (tokenType == TokenType::OR_OPERATOR) {
+        return BinaryOperator::OR;
+    } else {
+        throw std::runtime_error("Invalid TokenType to BinaryOperator conversion detected");
+    }
+}
+
 NodeType Parser::parseType() {
     return this->parsePrimitiveType();
 }
@@ -125,56 +157,56 @@ Program Parser::parse() {
 
 std::variant<Statement, Expression, std::monostate> Parser::parseStatementOrExpression() {
     switch (this->getCurrentToken().type) {
-        case TokenType::MUTABLE_KEYWORD:
-        case TokenType::TYPE:
-            return this->parseVariableDeclaration();
-        case TokenType::IDENTIFIER:
-            if (std::find(
-                tokenTypeAssignmentOperators.begin(),
-                tokenTypeAssignmentOperators.end(),
-                this->peekNextToken().type
-            ) != tokenTypeAssignmentOperators.end()) {
-                return this->parseVariableAssignment();
-            }
-
-            // * Identifier is not a variable assignment, so it must be an expression
-            return this->parseExpression();
-        case TokenType::SEMI_COLON: {
-            this->expectToken(TokenType::SEMI_COLON);
-            return std::monostate{};
+    case TokenType::MUTABLE_KEYWORD:
+    case TokenType::TYPE:
+        return this->parseVariableDeclaration();
+    case TokenType::IDENTIFIER:
+        if (std::find(
+                    tokenTypeAssignmentOperators.begin(),
+                    tokenTypeAssignmentOperators.end(),
+                    this->peekNextToken().type
+                ) != tokenTypeAssignmentOperators.end()) {
+            return this->parseVariableAssignment();
         }
 
-                                  // ? Explicitly handle cases to avoid C4061 warnings
+        // * Identifier is not a variable assignment, so it must be an expression
+        return this->parseExpression();
+    case TokenType::SEMI_COLON: {
+        this->expectToken(TokenType::SEMI_COLON);
+        return std::monostate{};
+    }
 
-        case TokenType::STRING:
-        case TokenType::INTEGER:
-        case TokenType::FLOAT:
-        case TokenType::BOOLEAN:
-        case TokenType::ADDITION_OPERATOR:
-        case TokenType::SUBTRACTION_OPERATOR:
-        case TokenType::MULTIPLICATION_OPERATOR:
-        case TokenType::DIVISION_OPERATOR:
-        case TokenType::MODULO_OPERATOR:
-        case TokenType::ASSIGNMENT_OPERATOR:
-        case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
-        case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
-        case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
-        case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
-        case TokenType::MODULO_ASSIGNMENT_OPERATOR:
-        case TokenType::EQUAL_OPERATOR:
-        case TokenType::NOT_EQUAL_OPERATOR:
-        case TokenType::GREATER_THAN_OPERATOR:
-        case TokenType::GREATER_OR_EQUAL_OPERATOR:
-        case TokenType::LESS_THAN_OPERATOR:
-        case TokenType::LESS_OR_EQUAL_OPERATOR:
-        case TokenType::AND_OPERATOR:
-        case TokenType::OR_OPERATOR:
-        case TokenType::EXCLAMATION_MARK:
-        case TokenType::LEFT_PARENTHESIS:
-        case TokenType::RIGHT_PARENTHESIS:
-        case TokenType::END_OF_FILE:
-        default:
-            return this->parseExpression();
+    // ? Explicitly handle cases to avoid C4061 warnings
+
+    case TokenType::STRING:
+    case TokenType::INTEGER:
+    case TokenType::FLOAT:
+    case TokenType::BOOLEAN:
+    case TokenType::ADDITION_OPERATOR:
+    case TokenType::SUBTRACTION_OPERATOR:
+    case TokenType::MULTIPLICATION_OPERATOR:
+    case TokenType::DIVISION_OPERATOR:
+    case TokenType::MODULO_OPERATOR:
+    case TokenType::ASSIGNMENT_OPERATOR:
+    case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
+    case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
+    case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
+    case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
+    case TokenType::MODULO_ASSIGNMENT_OPERATOR:
+    case TokenType::EQUAL_OPERATOR:
+    case TokenType::NOT_EQUAL_OPERATOR:
+    case TokenType::GREATER_THAN_OPERATOR:
+    case TokenType::GREATER_OR_EQUAL_OPERATOR:
+    case TokenType::LESS_THAN_OPERATOR:
+    case TokenType::LESS_OR_EQUAL_OPERATOR:
+    case TokenType::AND_OPERATOR:
+    case TokenType::OR_OPERATOR:
+    case TokenType::EXCLAMATION_MARK:
+    case TokenType::LEFT_PARENTHESIS:
+    case TokenType::RIGHT_PARENTHESIS:
+    case TokenType::END_OF_FILE:
+    default:
+        return this->parseExpression();
     }
 }
 
@@ -196,12 +228,12 @@ VariableDeclaration Parser::parseVariableDeclaration() {
         this->expectToken(TokenType::SEMI_COLON, "A variable declaration must end with a ';'. Did you forget it ?"); // Skip the ";" token
 
         return VariableDeclaration(
-            NodeMetadata(start, end),
-            isMutable,
-            type,
-            identifier,
-            std::nullopt
-        );
+                   NodeMetadata(start, end),
+                   isMutable,
+                   type,
+                   identifier,
+                   std::nullopt
+               );
     }
 
     this->expectToken(
@@ -230,9 +262,9 @@ VariableAssignment Parser::parseVariableAssignment() {
 
     std::string identifier = this->expectToken(TokenType::IDENTIFIER, "Assignment only works on a variable.").value;
     std::string op = this->expectToken(
-        tokenTypeAssignmentOperators,
-        "Use either a simple or a compund assignment operator."
-    ).value; // * Need the operator because of compound assignments
+                         tokenTypeAssignmentOperators,
+                         "Use either a simple or a compund assignment operator."
+                     ).value; // * Need the operator because of compound assignments
     Expression value = this->parseExpression();
 
     NodePosition end = this->getCurrentToken().metadata.toEndPosition();
@@ -260,11 +292,11 @@ Expression Parser::parseLogicalOrExpression() {
         Token op = this->expectToken(TokenType::OR_OPERATOR);
         Expression right = this->parseLogicalAndExpression();
         left = BinaryOperation(
-            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_shared<Expression>(std::move(left)),
-            op.value,
-            std::make_shared<Expression>(std::move(right))
-        );
+                   NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+                   std::make_shared<Expression>(std::move(left)),
+                   tokenTypeToBinaryOperator(op.type),
+                   std::make_shared<Expression>(std::move(right))
+               );
     }
 
     return left;
@@ -277,11 +309,11 @@ Expression Parser::parseLogicalAndExpression() {
         Token op = this->expectToken(TokenType::AND_OPERATOR);
         Expression right = this->parseComparitiveExpression();
         left = BinaryOperation(
-            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_shared<Expression>(std::move(left)),
-            op.value,
-            std::make_shared<Expression>(std::move(right))
-        );
+                   NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+                   std::make_shared<Expression>(std::move(left)),
+                   tokenTypeToBinaryOperator(op.type),
+                   std::make_shared<Expression>(std::move(right))
+               );
     }
 
     return left;
@@ -291,11 +323,11 @@ Expression Parser::parseComparitiveExpression() {
     Expression left = this->parseAdditiveExpression();
 
     while (this->getCurrentToken().type == TokenType::EQUAL_OPERATOR ||
-        this->getCurrentToken().type == TokenType::NOT_EQUAL_OPERATOR ||
-        this->getCurrentToken().type == TokenType::GREATER_THAN_OPERATOR ||
-        this->getCurrentToken().type == TokenType::GREATER_OR_EQUAL_OPERATOR ||
-        this->getCurrentToken().type == TokenType::LESS_THAN_OPERATOR ||
-        this->getCurrentToken().type == TokenType::LESS_OR_EQUAL_OPERATOR) {
+    this->getCurrentToken().type == TokenType::NOT_EQUAL_OPERATOR ||
+    this->getCurrentToken().type == TokenType::GREATER_THAN_OPERATOR ||
+    this->getCurrentToken().type == TokenType::GREATER_OR_EQUAL_OPERATOR ||
+    this->getCurrentToken().type == TokenType::LESS_THAN_OPERATOR ||
+    this->getCurrentToken().type == TokenType::LESS_OR_EQUAL_OPERATOR) {
         Token op = this->expectToken({
             TokenType::EQUAL_OPERATOR,
             TokenType::NOT_EQUAL_OPERATOR,
@@ -303,14 +335,14 @@ Expression Parser::parseComparitiveExpression() {
             TokenType::GREATER_OR_EQUAL_OPERATOR,
             TokenType::LESS_THAN_OPERATOR,
             TokenType::LESS_OR_EQUAL_OPERATOR
-            });
+        });
         Expression right = this->parseAdditiveExpression();
         left = BinaryOperation(
-            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_shared<Expression>(std::move(left)),
-            op.value,
-            std::make_shared<Expression>(std::move(right))
-        );
+                   NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+                   std::make_shared<Expression>(std::move(left)),
+                   tokenTypeToBinaryOperator(op.type),
+                   std::make_shared<Expression>(std::move(right))
+               );
     }
 
     return left;
@@ -320,15 +352,15 @@ Expression Parser::parseAdditiveExpression() {
     Expression left = this->parseMultiplicativeExpression();
 
     while (this->getCurrentToken().type == TokenType::ADDITION_OPERATOR ||
-        this->getCurrentToken().type == TokenType::SUBTRACTION_OPERATOR) {
+    this->getCurrentToken().type == TokenType::SUBTRACTION_OPERATOR) {
         Token op = this->expectToken({ TokenType::ADDITION_OPERATOR, TokenType::SUBTRACTION_OPERATOR });
         Expression right = this->parseMultiplicativeExpression();
         left = BinaryOperation(
-            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_shared<Expression>(std::move(left)),
-            op.value,
-            std::make_shared<Expression>(std::move(right))
-        );
+                   NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+                   std::make_shared<Expression>(std::move(left)),
+                   tokenTypeToBinaryOperator(op.type),
+                   std::make_shared<Expression>(std::move(right))
+               );
     }
 
     return left;
@@ -338,16 +370,16 @@ Expression Parser::parseMultiplicativeExpression() {
     Expression left = this->parseLogicalNotExpression();
 
     while (this->getCurrentToken().type == TokenType::MULTIPLICATION_OPERATOR ||
-        this->getCurrentToken().type == TokenType::DIVISION_OPERATOR ||
-        this->getCurrentToken().type == TokenType::MODULO_OPERATOR) {
+    this->getCurrentToken().type == TokenType::DIVISION_OPERATOR ||
+    this->getCurrentToken().type == TokenType::MODULO_OPERATOR) {
         Token op = this->expectToken({ TokenType::MULTIPLICATION_OPERATOR, TokenType::DIVISION_OPERATOR, TokenType::MODULO_OPERATOR });
         Expression right = this->parseLogicalNotExpression();
         left = BinaryOperation(
-            NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
-            std::make_shared<Expression>(std::move(left)),
-            op.value,
-            std::make_shared<Expression>(std::move(right))
-        );
+                   NodeMetadata(getExpressionMetadata(left).start, getExpressionMetadata(right).end),
+                   std::make_shared<Expression>(std::move(left)),
+                   tokenTypeToBinaryOperator(op.type),
+                   std::make_shared<Expression>(std::move(right))
+               );
     }
 
     return left;
@@ -361,9 +393,9 @@ Expression Parser::parseLogicalNotExpression() {
         Expression expression = this->parseLogicalNotExpression();
 
         return LogicalNotOperation(
-            NodeMetadata(start, getExpressionMetadata(expression).end),
-            std::make_shared<Expression>(std::move(expression))
-        );
+                   NodeMetadata(start, getExpressionMetadata(expression).end),
+                   std::make_shared<Expression>(std::move(expression))
+               );
     }
 
     return this->parsePrimitiveExpression();
@@ -373,75 +405,75 @@ Expression Parser::parsePrimitiveExpression() {
     Token currentToken = this->expectToken();
 
     switch (currentToken.type) {
-        case TokenType::STRING:
-            return StringLiteral(
-                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
-                currentToken.value
-            );
-        case TokenType::INTEGER:
-            return IntLiteral(
-                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
-                std::stoi(currentToken.value)
-            );
-        case TokenType::FLOAT:
-            return FloatLiteral(
-                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
-                std::stof(currentToken.value)
-            );
-        case TokenType::BOOLEAN:
-            return BooleanLiteral(
-                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
-                currentToken.value == "true"
-            );
-        case TokenType::IDENTIFIER:
-            return Identifier(
-                NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
-                currentToken.value
-            );
-        case TokenType::LEFT_PARENTHESIS: {
-            NodePosition start = currentToken.metadata.toStartPosition();
-            Expression expression = this->parseExpression();
-            NodePosition end = this->getCurrentToken().metadata.toEndPosition();
+    case TokenType::STRING:
+        return StringLiteral(
+                   NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                   currentToken.value
+               );
+    case TokenType::INTEGER:
+        return IntLiteral(
+                   NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                   std::stoi(currentToken.value)
+               );
+    case TokenType::FLOAT:
+        return FloatLiteral(
+                   NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                   std::stof(currentToken.value)
+               );
+    case TokenType::BOOLEAN:
+        return BooleanLiteral(
+                   NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+        currentToken.value == "true"
+               );
+    case TokenType::IDENTIFIER:
+        return Identifier(
+                   NodeMetadata(currentToken.metadata.toStartPosition(), currentToken.metadata.toEndPosition()),
+                   currentToken.value
+               );
+    case TokenType::LEFT_PARENTHESIS: {
+        NodePosition start = currentToken.metadata.toStartPosition();
+        Expression expression = this->parseExpression();
+        NodePosition end = this->getCurrentToken().metadata.toEndPosition();
 
-            this->expectToken(TokenType::RIGHT_PARENTHESIS, "Did you forget to close the parenthesis ?"); // Skip the ")" token
+        this->expectToken(TokenType::RIGHT_PARENTHESIS, "Did you forget to close the parenthesis ?"); // Skip the ")" token
 
-            // * Include the parentheses in the expression's metadata
-            std::visit([&start, &end](auto& node) {
-                node.metadata.start = start;
-                node.metadata.end = end;
-            }, expression);
+        // * Include the parentheses in the expression's metadata
+        std::visit([&start, &end](auto& node) {
+            node.metadata.start = start;
+            node.metadata.end = end;
+        }, expression);
 
-            return expression;
-        }
+        return expression;
+    }
 
-                                        // ? Explicitly handle cases to avoid C4061 warnings
+    // ? Explicitly handle cases to avoid C4061 warnings
 
-        case TokenType::ASSIGNMENT_OPERATOR:
-        case TokenType::ADDITION_OPERATOR:
-        case TokenType::SUBTRACTION_OPERATOR:
-        case TokenType::MULTIPLICATION_OPERATOR:
-        case TokenType::DIVISION_OPERATOR:
-        case TokenType::MODULO_OPERATOR:
-        case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
-        case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
-        case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
-        case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
-        case TokenType::MODULO_ASSIGNMENT_OPERATOR:
-        case TokenType::TYPE:
-        case TokenType::MUTABLE_KEYWORD:
-        case TokenType::SEMI_COLON:
-        case TokenType::EXCLAMATION_MARK:
-        case TokenType::AND_OPERATOR:
-        case TokenType::OR_OPERATOR:
-        case TokenType::EQUAL_OPERATOR:
-        case TokenType::NOT_EQUAL_OPERATOR:
-        case TokenType::GREATER_THAN_OPERATOR:
-        case TokenType::GREATER_OR_EQUAL_OPERATOR:
-        case TokenType::LESS_THAN_OPERATOR:
-        case TokenType::LESS_OR_EQUAL_OPERATOR:
-        case TokenType::RIGHT_PARENTHESIS:
-        case TokenType::END_OF_FILE:
-        default:
-            throw std::runtime_error("Unsupported token found : " + currentToken.value);
+    case TokenType::ASSIGNMENT_OPERATOR:
+    case TokenType::ADDITION_OPERATOR:
+    case TokenType::SUBTRACTION_OPERATOR:
+    case TokenType::MULTIPLICATION_OPERATOR:
+    case TokenType::DIVISION_OPERATOR:
+    case TokenType::MODULO_OPERATOR:
+    case TokenType::ADDITION_ASSIGNMENT_OPERATOR:
+    case TokenType::SUBTRACTION_ASSIGNMENT_OPERATOR:
+    case TokenType::MULTIPLICATION_ASSIGNMENT_OPERATOR:
+    case TokenType::DIVISION_ASSIGNMENT_OPERATOR:
+    case TokenType::MODULO_ASSIGNMENT_OPERATOR:
+    case TokenType::TYPE:
+    case TokenType::MUTABLE_KEYWORD:
+    case TokenType::SEMI_COLON:
+    case TokenType::EXCLAMATION_MARK:
+    case TokenType::AND_OPERATOR:
+    case TokenType::OR_OPERATOR:
+    case TokenType::EQUAL_OPERATOR:
+    case TokenType::NOT_EQUAL_OPERATOR:
+    case TokenType::GREATER_THAN_OPERATOR:
+    case TokenType::GREATER_OR_EQUAL_OPERATOR:
+    case TokenType::LESS_THAN_OPERATOR:
+    case TokenType::LESS_OR_EQUAL_OPERATOR:
+    case TokenType::RIGHT_PARENTHESIS:
+    case TokenType::END_OF_FILE:
+    default:
+        throw std::runtime_error("Unsupported token found : " + currentToken.value);
     }
 }
