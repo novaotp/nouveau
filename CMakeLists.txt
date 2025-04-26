@@ -4,18 +4,20 @@ project(nouveau VERSION 0.0.27 DESCRIPTION "A statically-typed general-purpose c
 cmake_policy(SET CMP0048 NEW)
 
 add_executable(nouveau
-    source/ast.cpp
-    source/lexer.cpp
-    source/parser.cpp
-    source/semer.cpp
-    source/token.cpp
-    source/utils.cpp
+    source/frontend/ast.cpp
+    source/frontend/lexer.cpp
+    source/frontend/parser.cpp
+    source/frontend/semer.cpp
+    source/frontend/token.cpp
+    source/frontend/utils.cpp
+    source/backend/constant_folding.cpp
     source/main.cpp
 )
 
 configure_file(source/config.h.in "${CMAKE_BINARY_DIR}/config.h" @ONLY)
 
-target_include_directories(nouveau PRIVATE source/headers)
+target_include_directories(nouveau PRIVATE source/frontend/headers)
+target_include_directories(nouveau PRIVATE source/backend/headers)
 target_include_directories(nouveau PRIVATE "${PROJECT_BINARY_DIR}")
 
 target_compile_features(nouveau PRIVATE cxx_std_17)
@@ -40,17 +42,20 @@ if(BUILD_TESTS)
         tests/test_semer.cpp
         tests/test_utils.cpp
         tests/test_token.cpp
-        source/ast.cpp
-        source/lexer.cpp
-        source/parser.cpp
-        source/semer.cpp
-        source/token.cpp
-        source/utils.cpp
+        tests/test_constant_folding.cpp
+        source/frontend/ast.cpp
+        source/frontend/lexer.cpp
+        source/frontend/parser.cpp
+        source/frontend/semer.cpp
+        source/frontend/token.cpp
+        source/frontend/utils.cpp
+        source/backend/constant_folding.cpp
     )
 
     target_link_libraries(nouveau_tests PRIVATE Catch2::Catch2WithMain)
 
-    target_include_directories(nouveau_tests PRIVATE source/headers)
+    target_include_directories(nouveau_tests PRIVATE source/frontend/headers)
+    target_include_directories(nouveau_tests PRIVATE source/backend/headers)
     target_include_directories(nouveau_tests PRIVATE "${PROJECT_BINARY_DIR}")
 
     target_compile_features(nouveau_tests PRIVATE cxx_std_17)

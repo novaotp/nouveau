@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <filesystem>
 #include "ast.hpp"
 #include "utils.hpp"
 #include "semer.hpp"
@@ -56,15 +57,24 @@ SemerError::SemerError(
     NodeMetadata metadata,
     const std::string& sourceCode,
     std::string message,
-    std::string hint
-) : type(type), level(level), metadata(metadata), sourceCode(sourceCode), message(std::move(message)), hint(std::move(hint)) {};
+    std::string hint,
+    std::string absoluteFilePath
+) :
+    type(type),
+    level(level),
+    metadata(metadata),
+    sourceCode(sourceCode),
+    message(std::move(message)),
+    hint(std::move(hint)),
+    absoluteFilePath(std::move(absoluteFilePath)) {};
 
 const std::string SemerError::toString() const {
     std::string result = "";
 
     auto COLOR = (this->level == SemerErrorLevel::WARNING ? YELLOW : RED);
 
-    result += "\n\tEncountered a " + getSemerErrorTypeString(this->type) + "\n";
+    result += std::string("\n") + UNDERLINE + this->absoluteFilePath + "(" + std::to_string(this->metadata.start.line) + ","
+              + std::to_string(this->metadata.start.column) +")" + RESET_UNDERLINE + ": " + getSemerErrorTypeString(this->type) + "\n";
 
     std::vector<std::string> lines = splitStringByNewline(this->sourceCode);
     for (size_t line = this->metadata.start.line; line <= this->metadata.end.line; ++line) {
@@ -103,7 +113,8 @@ const std::string SemerError::toString() const {
     return result;
 }
 
-Semer::Semer(const std::string& sourceCode, const Program& program) : sourceCode(sourceCode), program(program) {};
+Semer::Semer(const std::string& sourceCode, const Program& program, std::string absoluteFilePath)
+    : sourceCode(sourceCode), program(program), absoluteFilePath(absoluteFilePath) {};
 Semer::~Semer() {};
 
 std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scope& scope) {
@@ -218,7 +229,8 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                                n.metadata,
                                                this->sourceCode,
                                                "Cannot perform '" + binaryOperatorToString(n.op) + "' operation on strings.",
-                                               "Please use a valid operator for strings."
+                                               "Please use a valid operator for strings.",
+                                               this->absoluteFilePath
                                            ));
                 }
             } else if (std::is_same_v<LeftType, StringLiteral> && !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)) {
@@ -230,7 +242,8 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                            n.metadata,
                                            this->sourceCode,
                                            "Can only perform '&&' and '||' operations between 'string' and '" + this->resolveExpressionReturnTypeString(right, scope) + "'.",
-                                           "Please use a valid operator for strings."
+                                           "Please use a valid operator for strings.",
+                                           this->absoluteFilePath
                                        ));
             } else if (
                 (std::is_same_v<LeftType, IntLiteral> ||
@@ -247,7 +260,8 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                            n.metadata,
                                            this->sourceCode,
                                            "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
-                                           "Please use a valid operator for numbers."
+                                           "Please use a valid operator for numbers.",
+                                           this->absoluteFilePath
                                        ));
             } else if (std::is_same_v<LeftType, BooleanLiteral> && !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)) {
                 // * Booleans can only perform '&&' and '||' operations with booleans and other types
@@ -258,7 +272,8 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                            n.metadata,
                                            this->sourceCode,
                                            "Can only perform '&&' and '||' operations between 'bool' and '" + this->resolveExpressionReturnTypeString(right, scope) + "'.",
-                                           "Please use a valid operator for booleans."
+                                           "Please use a valid operator for booleans.",
+                                           this->absoluteFilePath
                                        ));
             }
         } else {
@@ -286,7 +301,8 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                            n.metadata,
                                            this->sourceCode,
                                            "Cannot perform '" + binaryOperatorToString(n.op) + "' operation on between these values.",
-                                           "Please use a valid operator."
+                                           "Please use a valid operator.",
+                                           this->absoluteFilePath
                                        ));
             }
 
@@ -307,7 +323,8 @@ void Semer::analyzeExpression(const T& n, Scope& scope) {
                                        n.metadata,
                                        this->sourceCode,
                                        "'" + n.name + "' is not defined in this scope.",
-                                       "Please define it before using it."
+                                       "Please define it before using it.",
+                                       this->absoluteFilePath
                                    ));
         } else {
             symbol->referenceCount++;
@@ -329,7 +346,8 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                        n.metadata,
                                        this->sourceCode,
                                        "'" + n.identifier + "' is already defined in this scope.",
-                                       "Please choose another name or assign to it instead."
+                                       "Please choose another name or assign to it instead.",
+                                       this->absoluteFilePath
                                    ));
         }
 
@@ -345,7 +363,8 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                        n.metadata,
                                        this->sourceCode,
                                        "'" + n.identifier + "' is defined as a " + word + " variable but has no initialization value. This will result in undefined behavior.",
-                                       "Note that 'null' values are not supported yet."
+                                       "Note that 'null' values are not supported yet.",
+                                       this->absoluteFilePath
                                    ));
         } else {
             std::visit([&](auto&& type, const auto& expr) {
@@ -363,7 +382,8 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                                n.metadata,
                                                this->sourceCode,
                                                "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
-                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
+                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.",
+                                               this->absoluteFilePath
                                            ));
                 }
 
@@ -382,7 +402,8 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                        n.metadata,
                                        this->sourceCode,
                                        "'" + n.identifier + "' is not defined in this scope.",
-                                       "Please define it before assigning to it."
+                                       "Please define it before assigning to it.",
+                                       this->absoluteFilePath
                                    ));
         } else {
             auto node = symbol->value;
@@ -394,7 +415,8 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                            n.metadata,
                                            this->sourceCode,
                                            "'" + n.identifier + "' is declared as a constant but you are trying to assign to it.",
-                                           "Declare it as mutable if you need to assign to it."
+                                           "Declare it as mutable if you need to assign to it.",
+                                           this->absoluteFilePath
                                        ));
             }
 
@@ -413,7 +435,8 @@ void Semer::analyzeStatement(const T& n, Scope& scope) {
                                                n.metadata,
                                                this->sourceCode,
                                                "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
-                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'."
+                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.",
+                                               this->absoluteFilePath
                                            ));
                 }
 
@@ -436,7 +459,8 @@ void Semer::warnUnusedSymbols(std::shared_ptr<Scope> scope) {
                                        symbol->value->metadata,
                                        this->sourceCode,
                                        "'" + symbol->value->identifier + "' is declared but never used. Did you forget to use it ?",
-                                       "Remove unused code to improve performance."
+                                       "Remove unused code to improve performance.",
+                                       this->absoluteFilePath
                                    ));
         }
     }

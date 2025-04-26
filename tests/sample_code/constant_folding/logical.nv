@@ -1,0 +1,8 @@
+5 && (true || false) && "Hello";    // should be true
+true || false;                      // should be true
+5 && "Hello";                       // should be true
+
+false && true;                      // should be false
+true && false;                      // should be false
+false && "Hello";                   // should be false
+!true || false;                     // should be false

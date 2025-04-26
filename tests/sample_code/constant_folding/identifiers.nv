@@ -1,0 +1,2 @@
+int count = 21;
+int nice = count + 48;
