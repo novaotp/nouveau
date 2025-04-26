@@ -146,9 +146,6 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
             std::optional<NodeType> optRight = this->resolveExpressionReturnType(*e.rhs, scope);
 
             if (optLeft.has_value() && optRight.has_value()) {
-                NodeType left = optLeft.value();
-                NodeType right = optRight.value();
-
                 std::visit([&e, &type](const auto& left, const auto& right) {
                     if (
                     e.op == BinaryOperator::EQUAL ||
@@ -175,11 +172,28 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
                                (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<IntegerType>())) ||
                                (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<FloatType>()))
                               ) {
-                        // ? Need to rework this, but how
-                        // * Problem : float * 0 -> should be int
-                        // * However, type returns as float
+                        // float * 0 -> int
 
-                        type = std::make_shared<FloatType>();
+                        type = std::visit([&e](auto&& lhs, auto&&rhs) -> NodeType {
+                            using LHSType = std::decay_t<decltype(lhs)>;
+                            using RHSType = std::decay_t<decltype(rhs)>;
+
+                            if (e.op == BinaryOperator::MULTIPLICATION) {
+                                if constexpr (std::is_same_v<LHSType, IntLiteral> || std::is_same_v<LHSType, FloatLiteral>) {
+                                    if (lhs.value == 0) {
+                                        return std::make_shared<IntegerType>();
+                                    }
+                                }
+
+                                if constexpr (std::is_same_v<RHSType, IntLiteral> || std::is_same_v<RHSType, FloatLiteral>) {
+                                    if (rhs.value == 0) {
+                                        return std::make_shared<IntegerType>();
+                                    }
+                                }
+                            }
+
+                            return std::make_shared<FloatType>();
+                        }, *e.lhs, *e.rhs);
                     } else if (
                     e.op == BinaryOperator::ADDITION &&
                             left->compare(std::make_shared<StringType>()) &&
@@ -250,8 +264,15 @@ void Semer::analyzeBinaryOperation(const BinaryOperation& node, Scope& scope) {
                                                this->absoluteFilePath
                                            ));
                 }
-            } else if (std::is_same_v<LeftType, StringLiteral> && !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR)) {
+            } else if (
+                std::is_same_v<LeftType, StringLiteral> &&
+                (
+            !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR) &&
+            !(std::is_same_v<RightType, IntLiteral> && node.op == BinaryOperator::MULTIPLICATION)
+                )
+            ) {
                 // * Strings can only perform '&&' and '||' operations with other types
+                // * But they can also be multiplied by an int
 
                 this->errors.push_back(SemerError(
                                            SemerErrorType::SYNTAX_ERROR,
@@ -263,23 +284,28 @@ void Semer::analyzeBinaryOperation(const BinaryOperation& node, Scope& scope) {
                                            this->absoluteFilePath
                                        ));
             } else if (
-                (std::is_same_v<LeftType, IntLiteral> ||
-                 std::is_same_v<LeftType, FloatLiteral>) &&
-                !(std::is_same_v<RightType, IntLiteral> ||
-                  std::is_same_v<RightType, FloatLiteral>) && // * Numbers can perform any operations with other numbers
+                (std::is_same_v<LeftType, IntLiteral> || std::is_same_v<LeftType, FloatLiteral>) &&
+                !(std::is_same_v<RightType, IntLiteral> || std::is_same_v<RightType, FloatLiteral>) &&
             !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR)
             ) {
                 // * Numbers can only perform '&&' and '||' operations with other types
+                // * But an int can multiply a string
 
-                this->errors.push_back(SemerError(
-                                           SemerErrorType::SYNTAX_ERROR,
-                                           SemerErrorLevel::ERROR,
-                                           node.metadata,
-                                           this->sourceCode,
-                                           "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
-                                           "Please use a valid operator for numbers.",
-                                           this->absoluteFilePath
-                                       ));
+                if (!(node.op == BinaryOperator::MULTIPLICATION &&
+                                 std::is_same_v<LeftType, IntLiteral> &&
+                        std::is_same_v<RightType, StringLiteral>
+                     )
+                   ) {
+                    this->errors.push_back(SemerError(
+                                               SemerErrorType::SYNTAX_ERROR,
+                                               SemerErrorLevel::ERROR,
+                                               node.metadata,
+                                               this->sourceCode,
+                                               "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
+                                               "Please use a valid operator for numbers.",
+                                               this->absoluteFilePath
+                                           ));
+                }
             } else if (std::is_same_v<LeftType, BooleanLiteral> && !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR)) {
                 // * Booleans can only perform '&&' and '||' operations with booleans and other types
 
