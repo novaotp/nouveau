@@ -85,14 +85,13 @@ private:
         }, type);
     } */
 
-    template <typename T>
-    void analyzeBinaryOperation(const T& n, Scope& scope);
+    void analyzeIdentifier(const Identifier& node, Scope& scope);
+    void analyzeBinaryOperation(const BinaryOperation& node, Scope& scope);
+    void analyzeExpression(const Expression& node, Scope& scope);
 
-    template <typename T>
-    void analyzeExpression(const T& n, Scope& scope);
-
-    template <typename T>
-    void analyzeStatement(const T& n, Scope& scope);
+    void analyzeVariableDeclaration(const VariableDeclaration& node, Scope& scope);
+    void analyzeVariableAssignment(const VariableAssignment& node, Scope& scope);
+    void analyzeStatement(const Statement& node, Scope& scope);
 
     void warnUnusedSymbols(std::shared_ptr<Scope> scope);
 

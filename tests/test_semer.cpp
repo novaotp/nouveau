@@ -195,6 +195,48 @@ TEST_CASE("Semer works correctly", "[semer]") {
                 REQUIRE(error.level == SemerErrorLevel::ERROR);
             }
         }
+
+        SECTION("Can multiply a string and an int") {
+            const std::string expected = "hellohellohello";
+
+            Program program;
+            program.body.push_back(
+                std::make_shared<Expression>(
+                    BinaryOperation(
+                        NodeMetadata(),
+                        std::make_shared<Expression>(StringLiteral(NodeMetadata(), "hello")),
+                        BinaryOperator::MULTIPLICATION,
+                        std::make_shared<Expression>(IntLiteral(NodeMetadata(), 3))
+                    )
+                )
+            );
+
+            Semer semer("", program, fakePath);
+            auto [errors, scope] = semer.analyze();
+
+            REQUIRE(errors.size() == 0);
+        }
+
+        SECTION("Can multiply an int and a string") {
+            const std::string expected = "hellohellohello";
+
+            Program program;
+            program.body.push_back(
+                std::make_shared<Expression>(
+                    BinaryOperation(
+                        NodeMetadata(),
+                        std::make_shared<Expression>(IntLiteral(NodeMetadata(), 3)),
+                        BinaryOperator::MULTIPLICATION,
+                        std::make_shared<Expression>(StringLiteral(NodeMetadata(), "hello"))
+                    )
+                )
+            );
+
+            Semer semer("", program, fakePath);
+            auto [errors, scope] = semer.analyze();
+
+            REQUIRE(errors.size() == 0);
+        }
     }
 
     SECTION("Symbol table works correctly") {

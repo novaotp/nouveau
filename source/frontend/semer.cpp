@@ -146,9 +146,6 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
             std::optional<NodeType> optRight = this->resolveExpressionReturnType(*e.rhs, scope);
 
             if (optLeft.has_value() && optRight.has_value()) {
-                NodeType left = optLeft.value();
-                NodeType right = optRight.value();
-
                 std::visit([&e, &type](const auto& left, const auto& right) {
                     if (
                     e.op == BinaryOperator::EQUAL ||
@@ -175,11 +172,28 @@ std::optional<NodeType> Semer::resolveExpressionReturnType(Expression expr, Scop
                                (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<IntegerType>())) ||
                                (left->compare(std::make_shared<FloatType>()) && right->compare(std::make_shared<FloatType>()))
                               ) {
-                        // ? Need to rework this, but how
-                        // * Problem : float * 0 -> should be int
-                        // * However, type returns as float
+                        // float * 0 -> int
 
-                        type = std::make_shared<FloatType>();
+                        type = std::visit([&e](auto&& lhs, auto&&rhs) -> NodeType {
+                            using LHSType = std::decay_t<decltype(lhs)>;
+                            using RHSType = std::decay_t<decltype(rhs)>;
+
+                            if (e.op == BinaryOperator::MULTIPLICATION) {
+                                if constexpr (std::is_same_v<LHSType, IntLiteral> || std::is_same_v<LHSType, FloatLiteral>) {
+                                    if (lhs.value == 0) {
+                                        return std::make_shared<IntegerType>();
+                                    }
+                                }
+
+                                if constexpr (std::is_same_v<RHSType, IntLiteral> || std::is_same_v<RHSType, FloatLiteral>) {
+                                    if (rhs.value == 0) {
+                                        return std::make_shared<IntegerType>();
+                                    }
+                                }
+                            }
+
+                            return std::make_shared<FloatType>();
+                        }, *e.lhs, *e.rhs);
                     } else if (
                     e.op == BinaryOperator::ADDITION &&
                             left->compare(std::make_shared<StringType>()) &&
@@ -203,8 +217,25 @@ std::string Semer::resolveExpressionReturnTypeString(Expression expr, Scope& sco
     }, this->resolveExpressionReturnType(expr, scope).value());
 }
 
-template <typename T>
-void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
+void Semer::analyzeIdentifier(const Identifier& node, Scope& scope) {
+    auto symbol = scope.find(node.name);
+
+    if (symbol == nullptr) {
+        this->errors.push_back(SemerError(
+                                   SemerErrorType::SYNTAX_ERROR,
+                                   SemerErrorLevel::ERROR,
+                                   node.metadata,
+                                   this->sourceCode,
+                                   "'" + node.name + "' is not defined in this scope.",
+                                   "Please define it before using it.",
+                                   this->absoluteFilePath
+                               ));
+    } else {
+        symbol->referenceCount++;
+    }
+};
+
+void Semer::analyzeBinaryOperation(const BinaryOperation& node, Scope& scope) {
     std::visit([&](const auto& left, const auto& right) {
         using LeftType = std::decay_t<decltype(left)>;
         using RightType = std::decay_t<decltype(right)>;
@@ -218,58 +249,70 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                                std::is_same_v<RightType, BooleanLiteral>)) {
             if constexpr (std::is_same_v<LeftType, StringLiteral> && std::is_same_v<RightType, StringLiteral>) {
                 if (
-                n.op == BinaryOperator::SUBTRACTION ||
-                n.op == BinaryOperator::MULTIPLICATION ||
-                n.op == BinaryOperator::DIVISION ||
-                n.op == BinaryOperator::MODULO
+                node.op == BinaryOperator::SUBTRACTION ||
+                node.op == BinaryOperator::MULTIPLICATION ||
+                node.op == BinaryOperator::DIVISION ||
+                node.op == BinaryOperator::MODULO
                 ) {
                     this->errors.push_back(SemerError(
                                                SemerErrorType::SYNTAX_ERROR,
                                                SemerErrorLevel::ERROR,
-                                               n.metadata,
+                                               node.metadata,
                                                this->sourceCode,
-                                               "Cannot perform '" + binaryOperatorToString(n.op) + "' operation on strings.",
+                                               "Cannot perform '" + binaryOperatorToString(node.op) + "' operation on strings.",
                                                "Please use a valid operator for strings.",
                                                this->absoluteFilePath
                                            ));
                 }
-            } else if (std::is_same_v<LeftType, StringLiteral> && !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)) {
+            } else if (
+                std::is_same_v<LeftType, StringLiteral> &&
+                (
+            !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR) &&
+            !(std::is_same_v<RightType, IntLiteral> && node.op == BinaryOperator::MULTIPLICATION)
+                )
+            ) {
                 // * Strings can only perform '&&' and '||' operations with other types
+                // * But they can also be multiplied by an int
 
                 this->errors.push_back(SemerError(
                                            SemerErrorType::SYNTAX_ERROR,
                                            SemerErrorLevel::ERROR,
-                                           n.metadata,
+                                           node.metadata,
                                            this->sourceCode,
                                            "Can only perform '&&' and '||' operations between 'string' and '" + this->resolveExpressionReturnTypeString(right, scope) + "'.",
                                            "Please use a valid operator for strings.",
                                            this->absoluteFilePath
                                        ));
             } else if (
-                (std::is_same_v<LeftType, IntLiteral> ||
-                 std::is_same_v<LeftType, FloatLiteral>) &&
-                !(std::is_same_v<RightType, IntLiteral> ||
-                  std::is_same_v<RightType, FloatLiteral>) && // * Numbers can perform any operations with other numbers
-            !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)
+                (std::is_same_v<LeftType, IntLiteral> || std::is_same_v<LeftType, FloatLiteral>) &&
+                !(std::is_same_v<RightType, IntLiteral> || std::is_same_v<RightType, FloatLiteral>) &&
+            !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR)
             ) {
                 // * Numbers can only perform '&&' and '||' operations with other types
+                // * But an int can multiply a string
 
-                this->errors.push_back(SemerError(
-                                           SemerErrorType::SYNTAX_ERROR,
-                                           SemerErrorLevel::ERROR,
-                                           n.metadata,
-                                           this->sourceCode,
-                                           "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
-                                           "Please use a valid operator for numbers.",
-                                           this->absoluteFilePath
-                                       ));
-            } else if (std::is_same_v<LeftType, BooleanLiteral> && !(n.op == BinaryOperator::AND || n.op == BinaryOperator::OR)) {
+                if (!(node.op == BinaryOperator::MULTIPLICATION &&
+                                 std::is_same_v<LeftType, IntLiteral> &&
+                        std::is_same_v<RightType, StringLiteral>
+                     )
+                   ) {
+                    this->errors.push_back(SemerError(
+                                               SemerErrorType::SYNTAX_ERROR,
+                                               SemerErrorLevel::ERROR,
+                                               node.metadata,
+                                               this->sourceCode,
+                                               "Can only perform '&&' and '||' operations between 'number' and '" + this->resolveExpressionReturnTypeString(right, scope)+ "'.",
+                                               "Please use a valid operator for numbers.",
+                                               this->absoluteFilePath
+                                           ));
+                }
+            } else if (std::is_same_v<LeftType, BooleanLiteral> && !(node.op == BinaryOperator::AND || node.op == BinaryOperator::OR)) {
                 // * Booleans can only perform '&&' and '||' operations with booleans and other types
 
                 this->errors.push_back(SemerError(
                                            SemerErrorType::SYNTAX_ERROR,
                                            SemerErrorLevel::ERROR,
-                                           n.metadata,
+                                           node.metadata,
                                            this->sourceCode,
                                            "Can only perform '&&' and '||' operations between 'bool' and '" + this->resolveExpressionReturnTypeString(right, scope) + "'.",
                                            "Please use a valid operator for booleans.",
@@ -298,9 +341,9 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
                 this->errors.push_back(SemerError(
                                            SemerErrorType::SYNTAX_ERROR,
                                            SemerErrorLevel::ERROR,
-                                           n.metadata,
+                                           node.metadata,
                                            this->sourceCode,
-                                           "Cannot perform '" + binaryOperatorToString(n.op) + "' operation on between these values.",
+                                           "Cannot perform '" + binaryOperatorToString(node.op) + "' operation on between these values.",
                                            "Please use a valid operator.",
                                            this->absoluteFilePath
                                        ));
@@ -308,146 +351,144 @@ void Semer::analyzeBinaryOperation(const T& n, Scope& scope) {
 
             // ? What to do next
         }
-    }, *n.lhs, *n.rhs);
+    }, *node.lhs, *node.rhs);
 };
 
-template <typename T>
-void Semer::analyzeExpression(const T& n, Scope& scope) {
-    if constexpr (std::is_same_v<T, Identifier>) {
-        auto symbol = scope.find(n.name);
+void Semer::analyzeExpression(const Expression& node, Scope& scope) {
+    std::visit([&](const auto& expression) {
+        using ExpressionType = std::decay_t<decltype(expression)>;
 
-        if (symbol == nullptr) {
-            this->errors.push_back(SemerError(
-                                       SemerErrorType::SYNTAX_ERROR,
-                                       SemerErrorLevel::ERROR,
-                                       n.metadata,
-                                       this->sourceCode,
-                                       "'" + n.name + "' is not defined in this scope.",
-                                       "Please define it before using it.",
-                                       this->absoluteFilePath
-                                   ));
-        } else {
-            symbol->referenceCount++;
+        if constexpr (std::is_same_v<ExpressionType, Identifier>) {
+            this->analyzeIdentifier(expression, scope);
+        } else if constexpr (std::is_same_v<ExpressionType, LogicalNotOperation>) {
+            this->analyzeExpression(*expression.expression, scope);
+        } else if constexpr (std::is_same_v<ExpressionType, BinaryOperation>) {
+            this->analyzeBinaryOperation(expression, scope);
         }
-    } else if constexpr (std::is_same_v<T, LogicalNotOperation>) {
-        this->analyzeExpression(*n.expression, scope);
-    } else if constexpr (std::is_same_v<T, BinaryOperation>) {
-        this->analyzeBinaryOperation(n, scope);
-    }
+    }, node);
 }
 
-template <typename T>
-void Semer::analyzeStatement(const T& n, Scope& scope) {
-    if constexpr (std::is_same_v<T, VariableDeclaration>) {
-        if (scope.find(n.identifier) != nullptr) {
-            this->errors.push_back(SemerError(
-                                       SemerErrorType::SYNTAX_ERROR,
-                                       SemerErrorLevel::ERROR,
-                                       n.metadata,
-                                       this->sourceCode,
-                                       "'" + n.identifier + "' is already defined in this scope.",
-                                       "Please choose another name or assign to it instead.",
-                                       this->absoluteFilePath
-                                   ));
-        }
+void Semer::analyzeVariableDeclaration(const VariableDeclaration& node, Scope& scope) {
+    if (scope.find(node.identifier) != nullptr) {
+        this->errors.push_back(SemerError(
+                                   SemerErrorType::SYNTAX_ERROR,
+                                   SemerErrorLevel::ERROR,
+                                   node.metadata,
+                                   this->sourceCode,
+                                   "'" + node.identifier + "' is already defined in this scope.",
+                                   "Please choose another name or assign to it instead.",
+                                   this->absoluteFilePath
+                               ));
+    }
 
-        if (!n.value.has_value()) {
-            // ? Currently, we don't support null
-            // TODO : after supporting null, remove this
+    if (!node.value.has_value()) {
+        // ? Currently, we don't support null
+        // TODO : after supporting null, remove this
 
-            std::string word = n.isMutable ? "mutable" : "const";
+        std::string word = node.isMutable ? "mutable" : "const";
 
-            this->errors.push_back(SemerError(
-                                       SemerErrorType::SEMANTIC_ERROR,
-                                       SemerErrorLevel::ERROR,
-                                       n.metadata,
-                                       this->sourceCode,
-                                       "'" + n.identifier + "' is defined as a " + word + " variable but has no initialization value. This will result in undefined behavior.",
-                                       "Note that 'null' values are not supported yet.",
-                                       this->absoluteFilePath
-                                   ));
-        } else {
-            std::visit([&](auto&& type, const auto& expr) {
-                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
+        this->errors.push_back(SemerError(
+                                   SemerErrorType::SEMANTIC_ERROR,
+                                   SemerErrorLevel::ERROR,
+                                   node.metadata,
+                                   this->sourceCode,
+                                   "'" + node.identifier + "' is defined as a " + word + " variable but has no initialization value. This will result in undefined behavior.",
+                                   "Note that 'null' values are not supported yet.",
+                                   this->absoluteFilePath
+                               ));
+    } else {
+        std::visit([&](auto&& type, const auto& expr) {
+            std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
 
-                if (exprType.has_value() && !type->compare(exprType.value())) {
-                    std::string typeString = type->toString();
-                    std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
-                        return ptr->toString();
-                    }, exprType.value());
+            if (exprType.has_value() && !type->compare(exprType.value())) {
+                std::string typeString = type->toString();
+                std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
+                    return ptr->toString();
+                }, exprType.value());
 
-                    this->errors.push_back(SemerError(
-                                               SemerErrorType::TYPE_ERROR,
-                                               SemerErrorLevel::ERROR,
-                                               n.metadata,
-                                               this->sourceCode,
-                                               "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
-                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.",
-                                               this->absoluteFilePath
-                                           ));
-                }
-
-                this->analyzeExpression(expr, scope);
-            }, n.type, *n.value.value());
-        }
-
-        scope.addSymbol(n.identifier, std::make_shared<VariableDeclaration>(n));
-    } else if constexpr (std::is_same_v<T, VariableAssignment>) {
-        auto symbol = scope.find(n.identifier);
-
-        if (symbol == nullptr) {
-            this->errors.push_back(SemerError(
-                                       SemerErrorType::SYNTAX_ERROR,
-                                       SemerErrorLevel::ERROR,
-                                       n.metadata,
-                                       this->sourceCode,
-                                       "'" + n.identifier + "' is not defined in this scope.",
-                                       "Please define it before assigning to it.",
-                                       this->absoluteFilePath
-                                   ));
-        } else {
-            auto node = symbol->value;
-
-            if (!node->isMutable) {
                 this->errors.push_back(SemerError(
-                                           SemerErrorType::SEMANTIC_ERROR,
+                                           SemerErrorType::TYPE_ERROR,
                                            SemerErrorLevel::ERROR,
-                                           n.metadata,
+                                           node.metadata,
                                            this->sourceCode,
-                                           "'" + n.identifier + "' is declared as a constant but you are trying to assign to it.",
-                                           "Declare it as mutable if you need to assign to it.",
+                                           "'" + node.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
+                                           "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.",
                                            this->absoluteFilePath
                                        ));
             }
 
-            std::visit([&](auto&& type, const auto& expr) {
-                std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
+            this->analyzeExpression(expr, scope);
+        }, node.type, *node.value.value());
+    }
 
-                if (exprType.has_value() && !type->compare(exprType.value())) {
-                    std::string typeString = type->toString();
-                    std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
-                        return ptr->toString();
-                    }, exprType.value());
+    scope.addSymbol(node.identifier, std::make_shared<VariableDeclaration>(node));
+}
 
-                    this->errors.push_back(SemerError(
-                                               SemerErrorType::TYPE_ERROR,
-                                               SemerErrorLevel::ERROR,
-                                               n.metadata,
-                                               this->sourceCode,
-                                               "'" + n.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
-                                               "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.",
-                                               this->absoluteFilePath
-                                           ));
-                }
+void Semer::analyzeVariableAssignment(const VariableAssignment& node, Scope& scope) {
+    auto symbol = scope.find(node.identifier);
 
-                this->analyzeExpression(expr, scope);
-            }, node->type, *n.value);
+    if (symbol == nullptr) {
+        this->errors.push_back(SemerError(
+                                   SemerErrorType::SYNTAX_ERROR,
+                                   SemerErrorLevel::ERROR,
+                                   node.metadata,
+                                   this->sourceCode,
+                                   "'" + node.identifier + "' is not defined in this scope.",
+                                   "Please define it before assigning to it.",
+                                   this->absoluteFilePath
+                               ));
+    } else {
+        auto variableDeclaration = symbol->value;
+
+        if (!variableDeclaration->isMutable) {
+            this->errors.push_back(SemerError(
+                                       SemerErrorType::SEMANTIC_ERROR,
+                                       SemerErrorLevel::ERROR,
+                                       node.metadata,
+                                       this->sourceCode,
+                                       "'" + node.identifier + "' is declared as a constant but you are trying to assign to it.",
+                                       "Declare it as mutable if you need to assign to it.",
+                                       this->absoluteFilePath
+                                   ));
         }
 
-        this->analyzeExpression(n.value, scope);
-    } else {
-        std::cout << RED << "Unknown statement encountered : " << typeid(T).name() << RESET << std::endl;
+        std::visit([&](auto&& type, const auto& expr) {
+            std::optional<NodeType> exprType = this->resolveExpressionReturnType(expr, scope);
+
+            if (exprType.has_value() && !type->compare(exprType.value())) {
+                std::string typeString = type->toString();
+                std::string exprTypeString = std::visit([](const auto& ptr) -> std::string {
+                    return ptr->toString();
+                }, exprType.value());
+
+                this->errors.push_back(SemerError(
+                                           SemerErrorType::TYPE_ERROR,
+                                           SemerErrorLevel::ERROR,
+                                           node.metadata,
+                                           this->sourceCode,
+                                           "'" + node.identifier + "' is defined as '" + typeString + "' but received '" + exprTypeString + "'.",
+                                           "Either change the type of the variable to '" + exprTypeString + "' or change the value to type '" + typeString + "'.",
+                                           this->absoluteFilePath
+                                       ));
+            }
+
+            this->analyzeExpression(expr, scope);
+        }, variableDeclaration->type, *node.value);
     }
+}
+
+void Semer::analyzeStatement(const Statement& node, Scope& scope) {
+    std::visit([&](const auto& statement) {
+        using StatementType = std::decay_t<decltype(statement)>;
+
+        if constexpr (std::is_same_v<StatementType, VariableDeclaration>) {
+            this->analyzeVariableDeclaration(statement, scope);
+        } else if constexpr (std::is_same_v<StatementType, VariableAssignment>) {
+            this->analyzeVariableAssignment(statement, scope);
+        } else {
+            std::cout << RED << "Unknown statement encountered : " << typeid(StatementType).name() << RESET << std::endl;
+        }
+    }, node);
 }
 
 void Semer::warnUnusedSymbols(std::shared_ptr<Scope> scope) {
@@ -465,27 +506,20 @@ void Semer::warnUnusedSymbols(std::shared_ptr<Scope> scope) {
         }
     }
 
-    for (size_t i = 0; i < scope->scopes.size(); i++)
-    {
-        this->warnUnusedSymbols(scope->scopes.at(i));
+    for (const auto innerScope : scope->scopes) {
+        this->warnUnusedSymbols(innerScope);
     }
 };
 
 std::tuple<std::vector<SemerError>&, std::shared_ptr<Scope>> Semer::analyze() {
-    for (size_t i = 0; i < this->program.body.size(); i++) {
-        const auto& node = this->program.body[i];
-
+    for (const auto& node : this->program.body) {
         std::visit([&](const auto& ptr) {
             using StatementOrExpression = std::decay_t<decltype(*ptr)>;
 
             if constexpr (std::is_same_v<StatementOrExpression, Expression>) {
-                std::visit([&](const auto& expr) {
-                    this->analyzeExpression(expr, this->rootScope);
-                }, *ptr);
+                this->analyzeExpression(*ptr, this->rootScope);
             } else if constexpr (std::is_same_v<StatementOrExpression, Statement>) {
-                std::visit([&](const auto& expr) {
-                    this->analyzeStatement(expr, this->rootScope);
-                }, *ptr);
+                this->analyzeStatement(*ptr, this->rootScope);
             } else {
                 throw std::runtime_error("Unknown node type encountered");
             }
