@@ -1,6 +1,6 @@
 # Nouveau
 
-> While I had big ambitions with my language, I realized I'd rather build apps for users/clients rather than tools for developers. That's why I'm archiving this project, though feel free to look around.
+> ⚠ While I had big ambitions with my language, I realized I'd rather build apps for users/clients rather than tools for developers. That's why I'm archiving this project, though feel free to look around.
 
 A statically-typed general-purpose compiled programming language.
 
